@@ -33,3 +33,4 @@ export function errorHandler(
     message: err.message || 'An unexpected error occurred'
   });
 }
+

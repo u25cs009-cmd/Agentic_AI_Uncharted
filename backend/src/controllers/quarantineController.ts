@@ -85,3 +85,4 @@ export async function rejectQuarantine(req: Request, res: Response, next: NextFu
     next(err);
   }
 }
+

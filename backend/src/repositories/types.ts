@@ -51,3 +51,4 @@ export interface Repository {
   // Live SSE listener
   subscribeEvents(listener: (event: MemoryEvent) => void): () => void;
 }
+
