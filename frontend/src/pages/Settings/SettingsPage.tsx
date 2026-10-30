@@ -13,7 +13,8 @@ import {
   Sparkles,
   Sliders,
   AlertTriangle,
-  Radio
+  Radio,
+  Archive
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Badge } from '../../components/common/Badge';
@@ -98,10 +99,10 @@ export const SettingsPage: React.FC = () => {
           <h2 className="text-base font-semibold text-white tracking-tight">Interactive Demonstration Deck (Module 12)</h2>
         </div>
         <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-          Simulate incoming external webhook events (from n8n workflows W1 & W2) live in the browser without external network dependencies.
+          Simulate external webhook events and scheduled lifecycle tasks (n8n workflows W1, W2 & W4) live with one click.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Incident Alert Trigger */}
           <div className="glass-panel p-5 rounded-xl border-amber-500/30 flex flex-col justify-between group hover:border-amber-500/60 transition-all shadow-[0_0_15px_rgba(245,158,11,0.08)]">
             <div>
@@ -155,6 +156,34 @@ export const SettingsPage: React.FC = () => {
               className="w-full py-2.5 bg-gradient-to-r from-cyan-500/20 to-cyan-600/20 hover:from-cyan-500/30 hover:to-cyan-600/30 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-98"
             >
               Trigger Deployment Event (W2)
+            </button>
+          </div>
+
+          {/* Memory Lifecycle Consolidation Trigger */}
+          <div className="glass-panel p-5 rounded-xl border-purple-500/30 flex flex-col justify-between group hover:border-purple-500/60 transition-all shadow-[0_0_15px_rgba(168,85,247,0.08)]">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                    <Archive className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-white">Consolidate Lifecycle</span>
+                </div>
+                <Badge variant="purple" size="sm">W4 Pipeline</Badge>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed mb-5">
+                Executes scheduled temporal maintenance: demotes hot to cold storage, expires aged memories past TTL, and archives stale items.
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                const res = await api.consolidateMemories();
+                setNotice(res.message || `Consolidation complete: ${res.expiredCount} expired, ${res.archivedCount} archived.`);
+                setTimeout(() => setNotice(null), 4000);
+              }}
+              className="w-full py-2.5 bg-gradient-to-r from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 text-purple-300 border border-purple-500/40 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-98"
+            >
+              Run Consolidation (W4)
             </button>
           </div>
         </div>

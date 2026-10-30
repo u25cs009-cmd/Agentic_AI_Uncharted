@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -11,20 +11,48 @@ import {
   MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Network, Zap, CheckCircle2, ShieldCheck, Database, Layers, Radio, Sparkles, X } from 'lucide-react';
+import { Network, Zap, CheckCircle2, ShieldCheck, Database, Layers, Radio, Sparkles, X, RefreshCw } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
+import { api } from '../../services/api';
+import { Memory } from '../../types/memory';
 
 export const EntityGraphPage: React.FC = () => {
   const [highlightDeployment, setHighlightDeployment] = useState(true);
   const [selectedNodeInfo, setSelectedNodeInfo] = useState<any | null>(null);
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const initialNodes: Node[] = useMemo(
-    () => [
+  // Fetch live memories from MongoDB / API
+  const fetchGraphData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.getMemories();
+      if (Array.isArray(data) && data.length > 0) {
+        setMemories(data);
+      }
+    } catch (err) {
+      console.warn('EntityGraph: fallback to default mock memories', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGraphData();
+  }, [fetchGraphData]);
+
+  // Generate topological nodes & edges dynamically from live memories
+  const { generatedNodes, generatedEdges } = useMemo(() => {
+    const baseNodes: Node[] = [
       {
         id: 'svc-checkout',
         type: 'default',
         position: { x: 50, y: 150 },
         data: {
+          title: 'checkout-api',
+          kind: 'Service',
+          status: 'HEALTHY',
+          details: 'v2.1.0 • prod-us-east • Primary microservice gateway',
           label: (
             <div className="p-1.5 text-left">
               <div className="flex items-center justify-between mb-1">
@@ -50,6 +78,10 @@ export const EntityGraphPage: React.FC = () => {
         type: 'default',
         position: { x: 310, y: 150 },
         data: {
+          title: 'pg-pool / db-conn',
+          kind: 'Component',
+          status: highlightDeployment ? 'MUTATED' : 'STABLE',
+          details: 'Altered in Deploy v2.1.0 (Pool bounds reconfigured)',
           label: (
             <div className="p-1.5 text-left">
               <div className="flex items-center justify-between mb-1">
@@ -73,60 +105,14 @@ export const EntityGraphPage: React.FC = () => {
         },
       },
       {
-        id: 'mem-001',
-        type: 'default',
-        position: { x: 620, y: 60 },
-        data: {
-          label: (
-            <div className="p-1.5 text-left">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">ACTIVE MEMORY</span>
-                <span className="text-[9px] bg-emerald-500/25 text-emerald-300 px-1.5 py-0.2 rounded font-mono font-bold">TRUST: 1.00</span>
-              </div>
-              <div className="text-xs font-bold text-white tracking-wide">mem-001: Pool Max: 50</div>
-              <div className="text-[10px] text-slate-300">Human-approved resolution</div>
-            </div>
-          ),
-        },
-        style: {
-          background: 'rgba(8, 26, 18, 0.9)',
-          border: '1px solid #10b981',
-          borderRadius: '14px',
-          width: 220,
-          color: '#fff',
-          boxShadow: '0 0 15px rgba(16, 185, 129, 0.2)',
-        },
-      },
-      {
-        id: 'mem-004',
-        type: 'default',
-        position: { x: 620, y: 240 },
-        data: {
-          label: (
-            <div className="p-1.5 text-left">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-mono text-amber-400 font-bold uppercase tracking-wider">STALE MEMORY</span>
-                <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono font-bold">INVALIDATED</span>
-              </div>
-              <div className="text-xs font-bold text-white tracking-wide">mem-004: pg_ctlcluster</div>
-              <div className="text-[10px] text-slate-400 italic">Obsolete Postgres fix</div>
-            </div>
-          ),
-        },
-        style: {
-          background: 'rgba(25, 16, 8, 0.9)',
-          border: '1px solid #f59e0b',
-          borderRadius: '14px',
-          width: 220,
-          color: '#fff',
-          opacity: 0.85,
-        },
-      },
-      {
         id: 'dep-webhook',
         type: 'default',
         position: { x: 310, y: 340 },
         data: {
+          title: 'Deploy Event v2.1.0',
+          kind: 'Deployment Event',
+          status: 'GITHUB HOOK',
+          details: 'n8n Automated Workflow W2: Invalidated dependent Postgres memories',
           label: (
             <div className="p-1.5 text-left">
               <div className="flex items-center justify-between mb-1">
@@ -152,6 +138,10 @@ export const EntityGraphPage: React.FC = () => {
         type: 'default',
         position: { x: 50, y: 340 },
         data: {
+          title: 'MongoDB Atlas',
+          kind: 'Infra Entity',
+          status: 'PRIMARY',
+          details: 'Cluster shakti2-primary • Governed Vector & Graph Collection',
           label: (
             <div className="p-1.5 text-left">
               <div className="flex items-center justify-between mb-1">
@@ -172,12 +162,9 @@ export const EntityGraphPage: React.FC = () => {
           boxShadow: '0 0 15px rgba(5, 150, 105, 0.2)',
         },
       },
-    ],
-    [highlightDeployment]
-  );
+    ];
 
-  const initialEdges: Edge[] = useMemo(
-    () => [
+    const baseEdges: Edge[] = [
       {
         id: 'e1',
         source: 'svc-checkout',
@@ -186,22 +173,6 @@ export const EntityGraphPage: React.FC = () => {
         animated: true,
         style: { stroke: '#06b6d4', strokeWidth: 2 },
         markerEnd: { type: MarkerType.ArrowClosed, color: '#06b6d4' },
-      },
-      {
-        id: 'e2',
-        source: 'cmp-pool',
-        target: 'mem-001',
-        label: 'governed_by',
-        style: { stroke: '#10b981', strokeWidth: 2 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' },
-      },
-      {
-        id: 'e3',
-        source: 'cmp-pool',
-        target: 'mem-004',
-        label: 'invalidated_fix',
-        style: { stroke: '#f59e0b', strokeWidth: 2, strokeDasharray: '4 4' },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#f59e0b' },
       },
       {
         id: 'e4',
@@ -220,12 +191,154 @@ export const EntityGraphPage: React.FC = () => {
         style: { stroke: '#34d399', strokeWidth: 1.5 },
         markerEnd: { type: MarkerType.ArrowClosed, color: '#34d399' },
       },
-    ],
-    []
-  );
+    ];
 
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+    // Select dynamic memories to display (up to 4 representative items)
+    const displayMemories = memories.length > 0
+      ? memories.slice(0, 4)
+      : [
+          {
+            _id: 'mem-001',
+            type: 'procedural',
+            status: 'active',
+            trust: 1.0,
+            confidence: 0.95,
+            attribute_key: 'db_pool_max',
+            value: '50',
+            content: 'Set max_connections=50 for checkout-api under high load.',
+            owner: 'SRE-Lead',
+          } as any,
+          {
+            _id: 'mem-004',
+            type: 'procedural',
+            status: 'stale',
+            trust: 0.4,
+            confidence: 0.3,
+            attribute_key: 'pg_ctlcluster',
+            value: 'restart',
+            content: 'Legacy Postgres fix: run pg_ctlcluster 14 main reload.',
+            owner: 'legacy-system',
+          } as any,
+        ];
+
+    const memoryNodes: Node[] = displayMemories.map((mem, idx) => {
+      const isStale = mem.status === 'stale' || mem.status === 'expired';
+      const isQuarantined = mem.status === 'quarantined';
+      const isActive = mem.status === 'active';
+      const memId = mem._id || (mem as any).id || `mem-${idx + 1}`;
+      const title = mem.attribute_key ? `${memId}: ${mem.attribute_key}` : `${memId}: ${mem.content.slice(0, 22)}`;
+      const subtitle = mem.value ? `Value: ${mem.value}` : mem.content.slice(0, 28);
+
+      let borderCol = '#06b6d4';
+      let bgCol = 'rgba(10, 16, 30, 0.9)';
+      let badgeBg = 'bg-cyan-500/20 text-cyan-300';
+      let statusLabel = mem.status.toUpperCase();
+      let headerCol = 'text-cyan-400';
+
+      if (isActive) {
+        borderCol = '#10b981';
+        bgCol = 'rgba(8, 26, 18, 0.9)';
+        badgeBg = 'bg-emerald-500/25 text-emerald-300';
+        headerCol = 'text-emerald-400';
+        statusLabel = `TRUST: ${(mem.trust || 1.0).toFixed(2)}`;
+      } else if (isStale) {
+        borderCol = '#f59e0b';
+        bgCol = highlightDeployment ? 'rgba(35, 18, 8, 0.9)' : 'rgba(25, 16, 8, 0.9)';
+        badgeBg = 'bg-amber-500/20 text-amber-300';
+        headerCol = 'text-amber-400';
+        statusLabel = 'INVALIDATED';
+      } else if (isQuarantined) {
+        borderCol = '#f43f5e';
+        bgCol = 'rgba(35, 10, 15, 0.9)';
+        badgeBg = 'bg-rose-500/20 text-rose-300';
+        headerCol = 'text-rose-400';
+        statusLabel = 'QUARANTINED';
+      }
+
+      return {
+        id: memId,
+        type: 'default',
+        position: { x: 620, y: 50 + idx * 115 },
+        data: {
+          title,
+          kind: `${mem.type ? mem.type.toUpperCase() : 'GOVERNED'} MEMORY`,
+          status: mem.status.toUpperCase(),
+          details: mem.content,
+          trust: mem.trust,
+          confidence: mem.confidence,
+          label: (
+            <div className="p-1.5 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-[10px] font-mono ${headerCol} font-bold uppercase tracking-wider`}>
+                  {mem.type ? mem.type.toUpperCase() : 'MEMORY'}
+                </span>
+                <span className={`text-[9px] ${badgeBg} px-1.5 py-0.2 rounded font-mono font-bold`}>
+                  {statusLabel}
+                </span>
+              </div>
+              <div className="text-xs font-bold text-white tracking-wide truncate max-w-[190px]">{title}</div>
+              <div className="text-[10px] text-slate-300 truncate max-w-[190px]">{subtitle}</div>
+            </div>
+          ),
+        },
+        style: {
+          background: bgCol,
+          border: `1px solid ${borderCol}`,
+          borderRadius: '14px',
+          width: 220,
+          color: '#fff',
+          boxShadow: isStale && highlightDeployment ? '0 0 16px rgba(245, 158, 11, 0.3)' : `0 0 14px ${borderCol}33`,
+        },
+      };
+    });
+
+    const memoryEdges: Edge[] = displayMemories.map((mem, idx) => {
+      const isStale = mem.status === 'stale' || mem.status === 'expired';
+      const isQuarantined = mem.status === 'quarantined';
+      const memId = mem._id || (mem as any).id || `mem-${idx + 1}`;
+
+      let strokeCol = '#10b981';
+      let edgeLabel = 'governed_by';
+      let dashed = false;
+
+      if (isStale) {
+        strokeCol = '#f59e0b';
+        edgeLabel = 'invalidated_fix';
+        dashed = true;
+      } else if (isQuarantined) {
+        strokeCol = '#f43f5e';
+        edgeLabel = 'quarantined';
+        dashed = true;
+      }
+
+      return {
+        id: `e-mem-${memId}`,
+        source: 'cmp-pool',
+        target: memId,
+        label: edgeLabel,
+        style: {
+          stroke: strokeCol,
+          strokeWidth: 2,
+          strokeDasharray: dashed ? '4 4' : undefined,
+        },
+        markerEnd: { type: MarkerType.ArrowClosed, color: strokeCol },
+      };
+    });
+
+    return {
+      generatedNodes: [...baseNodes, ...memoryNodes],
+      generatedEdges: [...baseEdges, ...memoryEdges],
+    };
+  }, [memories, highlightDeployment]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(generatedNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(generatedEdges);
+
+  // Sync state when generated nodes/edges change
+  useEffect(() => {
+    setNodes(generatedNodes);
+    setEdges(generatedEdges);
+  }, [generatedNodes, generatedEdges, setNodes, setEdges]);
 
   const onNodeClick = (_: any, node: Node) => {
     setSelectedNodeInfo(node);
@@ -242,7 +355,7 @@ export const EntityGraphPage: React.FC = () => {
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="text-2xl font-bold tracking-tight text-white">Entity Graph</h1>
-              <Badge variant="purple" size="sm" glow>React Flow & $graphLookup</Badge>
+              <Badge variant="purple" size="sm" glow>Live MongoDB & $graphLookup</Badge>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Interactive topological relationship graph mapping services, components, deployment events, and governing memory bindings.
@@ -250,21 +363,33 @@ export const EntityGraphPage: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => setHighlightDeployment(!highlightDeployment)}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-xs font-semibold transition-all ${
-            highlightDeployment
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-500/10'
-              : 'glass-panel text-slate-400 hover:text-white'
-          }`}
-        >
-          <Zap className="w-3.5 h-3.5 text-amber-400" />
-          <span>{highlightDeployment ? 'Deployment Invalidation: ACTIVE' : 'Neutral View'}</span>
-        </button>
+        <div className="flex items-center space-x-2.5">
+          <button
+            onClick={fetchGraphData}
+            disabled={loading}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-slate-700 glass-panel text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-600 transition-all shadow-sm"
+            title="Refresh Live Topology from Database"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-purple-400' : 'text-slate-400'}`} />
+            <span>Sync Live DB</span>
+          </button>
+
+          <button
+            onClick={() => setHighlightDeployment(!highlightDeployment)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl border text-xs font-semibold transition-all ${
+              highlightDeployment
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-500/10'
+                : 'glass-panel text-slate-400 hover:text-white'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <span>{highlightDeployment ? 'Deployment Invalidation: ACTIVE' : 'Neutral View'}</span>
+          </button>
+        </div>
       </div>
 
       {/* React Flow Graph Visualizer Canvas */}
-      <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl relative h-[540px] border-slate-800">
+      <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl relative h-[560px] border-slate-800">
         {/* Floating Legend Overlay */}
         <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3 bg-slate-950/85 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 shadow-xl">
           <div className="flex items-center space-x-1.5">
@@ -280,8 +405,12 @@ export const EntityGraphPage: React.FC = () => {
             <span>Active Memory</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             <span>Stale / Invalid</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+            <span>Quarantined</span>
           </div>
           <div className="flex items-center space-x-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.5)]" />
@@ -305,8 +434,10 @@ export const EntityGraphPage: React.FC = () => {
             nodeColor={(n) => {
               if (n.id.includes('svc')) return '#06b6d4';
               if (n.id.includes('cmp')) return '#f59e0b';
-              if (n.id.includes('001')) return '#10b981';
-              if (n.id.includes('004')) return '#f43f5e';
+              if (n.id.includes('ent')) return '#059669';
+              if (n.data?.status === 'ACTIVE') return '#10b981';
+              if (n.data?.status === 'STALE' || n.data?.status === 'INVALIDATED') return '#f59e0b';
+              if (n.data?.status === 'QUARANTINED') return '#f43f5e';
               return '#a855f7';
             }}
             className="bg-slate-950/80 border border-slate-800 rounded-xl overflow-hidden shadow-2xl"
@@ -315,21 +446,36 @@ export const EntityGraphPage: React.FC = () => {
 
         {/* Node Detail Drawer Overlay */}
         {selectedNodeInfo && (
-          <div className="absolute bottom-4 left-4 right-4 z-10 glass-panel border-cyan-500/40 p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-fade-in bg-slate-950/90">
-            <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
+          <div className="absolute bottom-4 left-4 right-4 z-10 glass-panel border-cyan-500/40 p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-fade-in bg-slate-950/95 backdrop-blur-md">
+            <div className="flex items-start space-x-3 max-w-3xl">
+              <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold font-mono text-cyan-300 text-xs">
-                  Active Entity: {selectedNodeInfo.id}
-                </span>
-                <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
-                  Interactive topological entity verified. Governing memories and dependent services are bound via bi-directional invariant checks.
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold font-mono text-cyan-300 text-xs">
+                    {selectedNodeInfo.data?.title || selectedNodeInfo.id}
+                  </span>
+                  <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">
+                    {selectedNodeInfo.data?.kind || 'ENTITY'}
+                  </span>
+                  {selectedNodeInfo.data?.status && (
+                    <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded font-mono font-bold">
+                      {selectedNodeInfo.data.status}
+                    </span>
+                  )}
+                  {selectedNodeInfo.data?.trust !== undefined && (
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono">
+                      Trust: {selectedNodeInfo.data.trust}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                  {selectedNodeInfo.data?.details || 'Topological entity mapped in memory graph. Invariant and governance checks active.'}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setSelectedNodeInfo(null)}
-              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors shrink-0 ml-3"
             >
               <X className="w-4 h-4" />
             </button>
