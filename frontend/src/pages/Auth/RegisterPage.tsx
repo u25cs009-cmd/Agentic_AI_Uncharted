@@ -8,9 +8,7 @@ import {
   ArrowRight, 
   Eye, 
   EyeOff, 
-  AlertCircle,
-  ShieldCheck,
-  Check
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -74,7 +72,6 @@ export const RegisterPage: React.FC = () => {
     if (googleClientId && (window as any).google?.accounts?.id) {
       (window as any).google.accounts.id.prompt();
     } else {
-      // Direct mock Google flow for demo & hackathon evaluation
       try {
         const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
         const payload = btoa(
@@ -145,28 +142,23 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
-      {/* Background Glow */}
-      <div className="absolute w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] -top-40 -right-40 pointer-events-none" />
-      <div className="absolute w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[130px] -bottom-32 -left-32 pointer-events-none" />
-      <div className="absolute w-full h-full bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-25 pointer-events-none" />
-
-      <div className="w-full max-w-md bg-[#0f1422]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10 glow-border-cyan">
+    <div className="min-h-screen bg-[#1a1a1a] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+      <div className="w-full max-w-md bg-[#252525] border border-[#383838] rounded-2xl p-8 shadow-2xl relative z-10">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-cyan-500/25 border border-cyan-400/30">
-            <Cpu className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center mx-auto mb-4 shadow-lg text-[#cc8b3c]">
+            <Cpu className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">Create Your Account</h1>
-          <p className="text-xs text-slate-400 mt-1.5 font-medium">
+          <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Create Your Account</h1>
+          <p className="text-xs text-[#b4b4b4] mt-1.5 font-medium">
             Deploy an isolated ANCHOR memory instance for XYRO101
           </p>
         </div>
 
         {/* Global Error Banner */}
         {error && (
-          <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start space-x-2 animate-shake">
-            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="mb-5 p-3 rounded-xl bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] text-xs text-[#f07070] flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 text-[#f07070] flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
@@ -176,7 +168,7 @@ export const RegisterPage: React.FC = () => {
           type="button"
           onClick={handleGoogleClick}
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-[#141b2d] hover:bg-[#1a233b] border border-white/10 hover:border-cyan-400/40 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center justify-center space-x-3 shadow-md hover:shadow-cyan-950/40 active:scale-95 disabled:opacity-50"
+          className="w-full py-2.5 px-4 bg-[#2e2e2e] hover:bg-[#383838] border border-[#484848] rounded-xl text-xs font-semibold text-[#ececec] transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-95 disabled:opacity-50"
         >
           <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
@@ -200,19 +192,19 @@ export const RegisterPage: React.FC = () => {
         </button>
 
         <div className="flex items-center my-4">
-          <div className="flex-1 border-t border-slate-800" />
-          <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-slate-500">
+          <div className="flex-1 border-t border-[#383838]" />
+          <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-[#888]">
             or register with email
           </span>
-          <div className="flex-1 border-t border-slate-800" />
+          <div className="flex-1 border-t border-[#383838]" />
         </div>
 
         {/* Registration Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="text-xs font-mono text-slate-400 block mb-1">Full name</label>
+            <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Full name</label>
             <div className="relative">
-              <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <UserIcon className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
               <input
                 type="text"
                 value={name}
@@ -221,9 +213,9 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.name) setValidationErrors(prev => ({ ...prev, name: undefined }));
                 }}
                 placeholder="Yashi Aadarsh"
-                className={`w-full bg-[#070a12] border ${
-                  validationErrors.name ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors`}
+                className={`w-full bg-[#1e1e1e] border ${
+                  validationErrors.name ? 'border-rose-500' : 'border-[#484848]'
+                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
               />
             </div>
             {validationErrors.name && (
@@ -232,9 +224,9 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-slate-400 block mb-1">Email address</label>
+            <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Email address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Mail className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
               <input
                 type="email"
                 value={email}
@@ -243,9 +235,9 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.email) setValidationErrors(prev => ({ ...prev, email: undefined }));
                 }}
                 placeholder="yashi@company.io"
-                className={`w-full bg-[#070a12] border ${
-                  validationErrors.email ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors`}
+                className={`w-full bg-[#1e1e1e] border ${
+                  validationErrors.email ? 'border-rose-500' : 'border-[#484848]'
+                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
               />
             </div>
             {validationErrors.email && (
@@ -254,9 +246,9 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-slate-400 block mb-1">Password</label>
+            <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -265,14 +257,14 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.password) setValidationErrors(prev => ({ ...prev, password: undefined }));
                 }}
                 placeholder="At least 6 characters"
-                className={`w-full bg-[#070a12] border ${
-                  validationErrors.password ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors`}
+                className={`w-full bg-[#1e1e1e] border ${
+                  validationErrors.password ? 'border-rose-500' : 'border-[#484848]'
+                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-200 transition-colors"
+                className="absolute right-3 top-3 text-[#888] hover:text-[#ececec] transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -283,9 +275,9 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-slate-400 block mb-1">Confirm password</label>
+            <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Confirm password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
@@ -294,14 +286,14 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.confirmPassword) setValidationErrors(prev => ({ ...prev, confirmPassword: undefined }));
                 }}
                 placeholder="Re-enter password"
-                className={`w-full bg-[#070a12] border ${
-                  validationErrors.confirmPassword ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors`}
+                className={`w-full bg-[#1e1e1e] border ${
+                  validationErrors.confirmPassword ? 'border-rose-500' : 'border-[#484848]'
+                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-200 transition-colors"
+                className="absolute right-3 top-3 text-[#888] hover:text-[#ececec] transition-colors"
               >
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -314,7 +306,7 @@ export const RegisterPage: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-2 py-2.5 bg-gradient-to-r from-cyan-600 via-indigo-600 to-indigo-500 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center space-x-2 shadow-lg shadow-cyan-600/30 border border-cyan-400/30 disabled:opacity-50 active:scale-95"
+            className="btn-primary w-full mt-2 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-95"
           >
             <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -322,9 +314,9 @@ export const RegisterPage: React.FC = () => {
         </form>
 
         {/* Link to Login */}
-        <div className="mt-5 text-center text-xs text-slate-400">
+        <div className="mt-5 text-center text-xs text-[#b4b4b4]">
           <span>Already have an account? </span>
-          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2">
+          <Link to="/login" className="text-[#cc8b3c] hover:text-[#e8a84e] font-semibold underline underline-offset-2">
             Sign In
           </Link>
         </div>

@@ -16,13 +16,13 @@ export const Badge: React.FC<BadgeProps> = ({
   className = '',
 }) => {
   const variantStyles = {
-    primary: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' + (glow ? ' shadow-[0_0_12px_rgba(99,102,241,0.25)]' : ''),
-    success: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' + (glow ? ' shadow-[0_0_12px_rgba(16,185,129,0.25)]' : ''),
-    warning: 'bg-amber-500/10 text-amber-300 border-amber-500/30' + (glow ? ' shadow-[0_0_12px_rgba(245,158,11,0.25)]' : ''),
-    danger: 'bg-rose-500/10 text-rose-300 border-rose-500/30' + (glow ? ' shadow-[0_0_12px_rgba(244,63,94,0.25)]' : ''),
-    purple: 'bg-purple-500/10 text-purple-300 border-purple-500/30' + (glow ? ' shadow-[0_0_12px_rgba(168,85,247,0.25)]' : ''),
-    cyan: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30' + (glow ? ' shadow-[0_0_12px_rgba(6,182,212,0.25)]' : ''),
-    neutral: 'bg-slate-800/50 text-slate-300 border-slate-700/50',
+    primary: 'bg-[rgba(204,139,60,0.18)] text-[#f0aa55] border-[rgba(204,139,60,0.4)]' + (glow ? ' shadow-[0_0_12px_rgba(204,139,60,0.25)]' : ''),
+    success: 'bg-[rgba(76,175,125,0.15)] text-[#60d49a] border-[rgba(76,175,125,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(76,175,125,0.25)]' : ''),
+    warning: 'bg-[rgba(220,170,60,0.15)] text-[#e8c060] border-[rgba(220,170,60,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(220,170,60,0.25)]' : ''),
+    danger: 'bg-[rgba(220,80,80,0.15)] text-[#f07070] border-[rgba(220,80,80,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(220,80,80,0.25)]' : ''),
+    purple: 'bg-[rgba(168,130,220,0.15)] text-[#c4a5f5] border-[rgba(168,130,220,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(168,130,220,0.25)]' : ''),
+    cyan: 'bg-[rgba(120,160,240,0.15)] text-[#90b4f0] border-[rgba(120,160,240,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(120,160,240,0.25)]' : ''),
+    neutral: 'bg-[#2a2a2a] text-[#b4b4b4] border-[#404040]',
   };
 
   const sizeStyles = {
@@ -33,7 +33,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center font-medium border rounded-full font-mono backdrop-blur-sm transition-all duration-200 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center font-medium border rounded-full font-mono transition-all duration-200 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
     >
       {children}
     </span>

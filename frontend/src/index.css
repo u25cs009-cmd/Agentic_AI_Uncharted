@@ -86,6 +86,11 @@
   border: 1px solid #3a3a3a;
   border-radius: 12px;
 }
+.glass-panel {
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 12px;
+}
 .card-elevated {
   background: #2e2e2e;
   border: 1px solid #484848;
