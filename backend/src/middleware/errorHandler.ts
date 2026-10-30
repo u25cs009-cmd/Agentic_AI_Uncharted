@@ -16,9 +16,10 @@ export function errorHandler(
   next: NextFunction
 ) {
   if (err instanceof ZodError) {
+    const list = (err as any).issues || (err as any).errors || [];
     return res.status(400).json({
       error: 'Validation Error',
-      details: err.errors.map(e => ({ path: e.path.join('.'), message: e.message }))
+      details: list.map((e: any) => ({ path: e.path?.join('.') || '', message: e.message }))
     });
   }
 
@@ -33,4 +34,3 @@ export function errorHandler(
     message: err.message || 'An unexpected error occurred'
   });
 }
-

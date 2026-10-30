@@ -27,7 +27,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
 
     for (const mem of allMemories) {
       const contentTokens = `${mem.content} ${mem.attribute_key} ${mem.entities.join(' ')}`.toLowerCase().split(/\W+/);
-      const matches = queryTokens.filter(t => contentTokens.includes(t));
+      const matches = queryTokens.filter((t: string) => contentTokens.includes(t));
       const overlap = queryTokens.length > 0 ? matches.length / queryTokens.length : 0.1;
       const sim = Number(Math.min(0.98, Math.max(0.15, overlap > 0 ? 0.70 + (overlap * 0.25) : 0.20)).toFixed(3));
 
@@ -233,7 +233,7 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
       status: 'active'
     });
 
-    const candidateTrust = TRUST_LADDER[sourceKind] ?? 0.80;
+    const candidateTrust = (TRUST_LADDER as Record<string, number>)[sourceKind] ?? 0.80;
 
     // Guard Rule #3: Deduplication - duplicate facts with identical key and value are IGNORED
     const isDuplicate = existingMemories.some(m => m.value.trim().toLowerCase() === candidate.value.trim().toLowerCase());

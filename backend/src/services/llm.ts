@@ -179,7 +179,7 @@ export class LLMService {
       clearTimeout(timeout);
 
       if (!res.ok) return null;
-      const data = await res.json();
+      const data = (await res.json()) as any;
       return data.choices?.[0]?.message?.content || null;
     } catch {
       clearTimeout(timeout);
@@ -211,7 +211,7 @@ export class LLMService {
       clearTimeout(timeout);
 
       if (!res.ok) return null;
-      const data = await res.json();
+      const data = (await res.json()) as any;
       return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
     } catch {
       clearTimeout(timeout);
@@ -250,7 +250,7 @@ export class LLMService {
       clearTimeout(timeout);
 
       if (!res.ok) return null;
-      const data = await res.json();
+      const data = (await res.json()) as any;
       return data.choices?.[0]?.message?.content || null;
     } catch {
       clearTimeout(timeout);
@@ -283,7 +283,7 @@ export class LLMService {
       clearTimeout(timeout);
 
       if (!res.ok) return null;
-      const data = await res.json();
+      const data = (await res.json()) as any;
       return data.choices?.[0]?.message?.content || null;
     } catch {
       clearTimeout(timeout);

@@ -1,3 +1,5 @@
+import dns from 'node:dns';
+import { INITIAL_MEMORIES, INITIAL_EVENTS } from '../data/seedData.js';
 import { MongoClient, Db, Collection } from 'mongodb';
 import { EventEmitter } from 'events';
 import {
@@ -33,6 +35,7 @@ export class MongoRepository implements Repository {
   private conversationsCol!: Collection<Conversation>;
 
   constructor(private uri: string, private dbName: string) {
+    try { dns.setServers(["8.8.8.8", "1.1.1.1"]); } catch {} 
     this.client = new MongoClient(this.uri);
     this.emitter.setMaxListeners(50);
   }
@@ -59,6 +62,13 @@ export class MongoRepository implements Repository {
       await this.conversationsCol.createIndex({ userId: 1, updatedAt: -1 });
 
       logger.info('MongoDB Atlas indexes verified successfully.');
+
+      const memCount = await this.memoriesCol.countDocuments();
+      if (memCount === 0) {
+        logger.info('Empty MongoDB database detected. Auto-seeding initial memories and events...');
+        await this.memoriesCol.insertMany(INITIAL_MEMORIES.map(m => ({ ...m })) as any);
+        await this.eventsCol.insertMany(INITIAL_EVENTS.map(e => ({ ...e })) as any);
+      }
       this.initChangeStreamOrPolling();
     } catch (err) {
       logger.error({ err }, 'Failed to initialize MongoRepository');

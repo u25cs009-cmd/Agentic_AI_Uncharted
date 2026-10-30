@@ -1,3 +1,4 @@
+import dns from 'node:dns';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -6,6 +7,13 @@ import { logger } from './utils/logger.js';
 import { apiRouter } from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { getRepository } from './repositories/index.js';
+
+// Ensure reliable SRV record resolution for MongoDB Atlas on Windows/ISP networks
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Gracefully fallback to default resolver in restricted environments
+}
 
 const app = express();
 
