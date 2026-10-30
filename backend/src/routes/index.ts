@@ -35,7 +35,17 @@ import {
 import { handleDeployEvent, handleOutcomeFeedback } from '../controllers/eventController.js';
 import { timeTravel } from '../controllers/timeTravelController.js';
 import { sseStream } from '../controllers/streamController.js';
-import { chat, ingestObservation, retrieveMemories, agentTriage } from '../controllers/aiPlaceholderController.js';
+import {
+  chat,
+  ingestObservation,
+  retrieveMemories,
+  agentTriage
+} from '../controllers/aiEngineController.js';
+import {
+  runBenchmark,
+  getBenchmarkResults
+} from '../controllers/benchmarkController.js';
+import { consolidateMemories } from '../controllers/lifecycleController.js';
 import { authenticateUser, requireAuth, requireInternalKey } from '../middleware/auth.js';
 import { config } from '../config/index.js';
 
@@ -100,3 +110,10 @@ apiRouter.post('/chat', authenticateUser, chat);
 apiRouter.post('/ingest', authenticateUser, ingestObservation);
 apiRouter.post('/retrieve', authenticateUser, retrieveMemories);
 apiRouter.post('/agent/triage', requireInternalKey, agentTriage);
+
+// 10. 15-Scenario Empirical Benchmark Matrix
+apiRouter.post('/benchmark/run', authenticateUser, runBenchmark);
+apiRouter.get('/benchmark/results', authenticateUser, getBenchmarkResults);
+
+// 11. Automated Memory Lifecycle & Consolidation (W4)
+apiRouter.post('/lifecycle/consolidate', authenticateUser, consolidateMemories);

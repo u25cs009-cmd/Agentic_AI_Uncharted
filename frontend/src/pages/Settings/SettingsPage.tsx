@@ -9,7 +9,11 @@ import {
   CheckCircle, 
   Cpu, 
   Sliders, 
-  Radio 
+  Radio,
+  Archive,
+  Database,
+  Sparkles,
+  AlertTriangle
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Badge } from '../../components/common/Badge';
@@ -57,13 +61,13 @@ export const SettingsPage: React.FC = () => {
       {/* Header & Title HUD */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.18)] border border-[rgba(204,139,60,0.35)] flex items-center justify-center text-[#cc8b3c] shadow-sm">
-            <Sliders className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
+            <Sliders className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Engine Calibration &amp; Sandbox</h1>
-              <Badge variant="primary" size="sm">XYRO101 Runtime</Badge>
+              <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Engine Settings &amp; Governance</h1>
+              <Badge variant="warning" size="sm">Evaluation Ready</Badge>
             </div>
             <p className="text-xs text-[#b4b4b4] mt-0.5">
               Configure temporal half-life decay, simulate webhook events for evaluators, and execute privacy compliance operations.
@@ -91,10 +95,10 @@ export const SettingsPage: React.FC = () => {
           <h2 className="text-base font-semibold text-[#f0f0f0] tracking-tight">Interactive Demonstration Deck (Module 12)</h2>
         </div>
         <p className="text-xs text-[#b4b4b4] mb-6 leading-relaxed">
-          Simulate incoming external webhook events (from n8n workflows W1 &amp; W2) live in the browser without external network dependencies.
+          Simulate external webhook events and scheduled lifecycle tasks (n8n workflows W1, W2 &amp; W4) live with one click.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Incident Alert Trigger */}
           <div className="card p-5 rounded-xl border-[rgba(220,170,60,0.3)] flex flex-col justify-between group hover:border-[rgba(220,170,60,0.5)] transition-all">
             <div>
@@ -148,6 +152,34 @@ export const SettingsPage: React.FC = () => {
               className="w-full py-2.5 bg-[rgba(204,139,60,0.18)] hover:bg-[rgba(204,139,60,0.28)] text-[#f0aa55] border border-[rgba(204,139,60,0.35)] rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-98"
             >
               Trigger Deployment Event (W2)
+            </button>
+          </div>
+
+          {/* Memory Lifecycle Consolidation Trigger */}
+          <div className="card p-5 rounded-xl border-[rgba(168,85,247,0.3)] flex flex-col justify-between group hover:border-[rgba(168,85,247,0.5)] transition-all">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  <div className="w-7 h-7 rounded-lg bg-[rgba(168,85,247,0.15)] border border-[rgba(168,85,247,0.3)] flex items-center justify-center text-purple-400">
+                    <Archive className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-[#f0f0f0]">Consolidate Lifecycle</span>
+                </div>
+                <Badge variant="purple" size="sm">W4 Pipeline</Badge>
+              </div>
+              <p className="text-xs text-[#b4b4b4] leading-relaxed mb-5">
+                Executes scheduled temporal maintenance: demotes hot to cold storage, expires aged memories past TTL, and archives stale items.
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                const res = await api.consolidateMemories();
+                setNotice(res.message || `Consolidation complete: ${res.expiredCount} expired, ${res.archivedCount} archived.`);
+                setTimeout(() => setNotice(null), 4000);
+              }}
+              className="w-full py-2.5 bg-[rgba(168,85,247,0.18)] hover:bg-[rgba(168,85,247,0.28)] text-purple-300 border border-[rgba(168,85,247,0.35)] rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-98"
+            >
+              Run Consolidation (W4)
             </button>
           </div>
         </div>
