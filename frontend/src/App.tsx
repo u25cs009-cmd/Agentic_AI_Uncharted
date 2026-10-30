@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
+import { LoadingIndicator } from './components/common/LoadingIndicator';
 import { LoginPage } from './pages/Auth/LoginPage';
 import { RegisterPage } from './pages/Auth/RegisterPage';
 import { ChatPage } from './pages/Chat/ChatPage';
@@ -11,9 +12,15 @@ import { InspectorPage } from './pages/Inspector/InspectorPage';
 import { MemoryExplorerPage } from './pages/MemoryExplorer/MemoryExplorerPage';
 import { QuarantinePage } from './pages/Quarantine/QuarantinePage';
 import { TimelinePage } from './pages/Timeline/TimelinePage';
-import { EntityGraphPage } from './pages/EntityGraph/EntityGraphPage';
-import { BenchmarkPage } from './pages/Benchmark/BenchmarkPage';
 import { SettingsPage } from './pages/Settings/SettingsPage';
+
+// Task F: Code splitting via dynamic imports for heavy visualization pages
+const EntityGraphPage = React.lazy(() => 
+  import('./pages/EntityGraph/EntityGraphPage').then(m => ({ default: m.EntityGraphPage }))
+);
+const BenchmarkPage = React.lazy(() => 
+  import('./pages/Benchmark/BenchmarkPage').then(m => ({ default: m.BenchmarkPage }))
+);
 
 const queryClient = new QueryClient();
 
@@ -35,8 +42,22 @@ export const App: React.FC = () => {
                 <Route path="explorer" element={<MemoryExplorerPage />} />
                 <Route path="quarantine" element={<QuarantinePage />} />
                 <Route path="timeline" element={<TimelinePage />} />
-                <Route path="entity-graph" element={<EntityGraphPage />} />
-                <Route path="benchmark" element={<BenchmarkPage />} />
+                <Route 
+                  path="entity-graph" 
+                  element={
+                    <Suspense fallback={<LoadingIndicator message="Loading Entity Topology Graph..." className="h-96" />}>
+                      <EntityGraphPage />
+                    </Suspense>
+                  } 
+                />
+                <Route 
+                  path="benchmark" 
+                  element={
+                    <Suspense fallback={<LoadingIndicator message="Loading 15-Scenario Benchmark Matrix..." className="h-96" />}>
+                      <BenchmarkPage />
+                    </Suspense>
+                  } 
+                />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Route>

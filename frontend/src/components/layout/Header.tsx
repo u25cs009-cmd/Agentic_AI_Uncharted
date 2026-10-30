@@ -68,7 +68,14 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
         <div className="hidden md:flex items-center space-x-1.5 text-xs text-slate-400">
           <ShieldCheck className="w-4 h-4 text-emerald-400" />
           <span>Agent Model:</span>
-          <span className="text-slate-200 font-medium">XYRO101 Engine (OpenAI + MongoDB Atlas)</span>
+          <span className="text-slate-200 font-medium">XYRO101 Engine</span>
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+            api.getConnectionStatus().isLiveBackend 
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+              : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+          }`}>
+            {api.getConnectionStatus().isLiveBackend ? '● Live Backend' : '● Simulation Engine'}
+          </span>
         </div>
       </div>
 

@@ -3,6 +3,47 @@ import { INITIAL_MEMORIES, INITIAL_EVENTS, BENCHMARK_SCENARIOS } from './mockDat
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
+let isLiveBackend = false;
+let hasCheckedBackend = false;
+
+// Check backend health silently to determine live vs demo mode
+export async function checkBackendConnection(): Promise<boolean> {
+  if (!BASE_URL) {
+    isLiveBackend = false;
+    hasCheckedBackend = true;
+    return false;
+  }
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+    const res = await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    isLiveBackend = res.ok;
+  } catch {
+    isLiveBackend = false;
+  }
+  hasCheckedBackend = true;
+  return isLiveBackend;
+}
+
+// Safe network request helper that suppresses unhandled network crash logs
+async function safeFetch(url: string, options?: RequestInit): Promise<Response | null> {
+  if (!hasCheckedBackend) {
+    await checkBackendConnection();
+  }
+  if (!isLiveBackend && !BASE_URL) {
+    return null;
+  }
+  try {
+    const res = await fetch(url, options);
+    if (!isLiveBackend && res.ok) isLiveBackend = true;
+    return res;
+  } catch {
+    isLiveBackend = false;
+    return null;
+  }
+}
+
 // Local state for interactive fallback demo
 let memoryStore: Memory[] = (() => {
   const saved = localStorage.getItem('anchor_memories');
@@ -41,16 +82,25 @@ export function calculateRecency(createdAt: string, type: string): number {
 }
 
 export const api = {
+  // Connection and Demo mode status
+  getConnectionStatus(): { isLiveBackend: boolean; mode: 'live' | 'simulation'; baseUrl: string } {
+    return {
+      isLiveBackend,
+      mode: isLiveBackend ? 'live' : 'simulation',
+      baseUrl: BASE_URL || 'Local ANCHOR Engine (Simulation)',
+    };
+  },
+
   // Authentication
   async login(email: string): Promise<{ token: string; user: { email: string; name: string } }> {
     try {
-      const res = await fetch(`${BASE_URL}/api/auth/login`, {
+      const res = await safeFetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {
+      if (res && res.ok) return await res.json();
+    } catch {
       // Fallback
     }
     const token = `jwt_mock_${Date.now()}`;
@@ -65,23 +115,36 @@ export const api = {
   },
 
   // Memories
-  async getMemories(filter?: { status?: string; type?: string; search?: string }): Promise<Memory[]> {
+  async getMemories(filter?: { status?: string; type?: string; tier?: string; source?: string; search?: string }): Promise<Memory[]> {
     try {
-      const queryParams = new URLSearchParams(filter as any).toString();
-      const res = await fetch(`${BASE_URL}/api/memories?${queryParams}`, {
+      const activeFilter: Record<string, string> = {};
+      if (filter?.status && filter.status !== 'all') activeFilter.status = filter.status;
+      if (filter?.type && filter.type !== 'all') activeFilter.type = filter.type;
+      if (filter?.tier && filter.tier !== 'all') activeFilter.tier = filter.tier;
+      if (filter?.source && filter.source !== 'all') activeFilter.source = filter.source;
+      if (filter?.search) activeFilter.search = filter.search;
+
+      const queryParams = new URLSearchParams(activeFilter).toString();
+      const res = await safeFetch(`${BASE_URL}/api/memories?${queryParams}`, {
         headers: getAuthHeaders(),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {
+      if (res && res.ok) return await res.json();
+    } catch {
       // Fallback
     }
 
     let result = [...memoryStore];
-    if (filter?.status) {
+    if (filter?.status && filter.status !== 'all') {
       result = result.filter(m => m.status === filter.status);
     }
-    if (filter?.type) {
+    if (filter?.type && filter.type !== 'all') {
       result = result.filter(m => m.type === filter.type);
+    }
+    if (filter?.tier && filter.tier !== 'all') {
+      result = result.filter(m => m.tier === filter.tier);
+    }
+    if (filter?.source && filter.source !== 'all') {
+      result = result.filter(m => m.source?.kind === filter.source);
     }
     if (filter?.search) {
       const q = filter.search.toLowerCase();
@@ -96,13 +159,13 @@ export const api = {
 
   async updateMemory(id: string, updates: Partial<Memory>): Promise<Memory> {
     try {
-      const res = await fetch(`${BASE_URL}/api/memories/${id}`, {
+      const res = await safeFetch(`${BASE_URL}/api/memories/${id}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify(updates),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {
+      if (res && res.ok) return await res.json();
+    } catch {
       // Fallback
     }
 
@@ -125,12 +188,12 @@ export const api = {
 
   async deleteMemory(id: string): Promise<{ success: boolean }> {
     try {
-      const res = await fetch(`${BASE_URL}/api/memories/${id}`, {
+      const res = await safeFetch(`${BASE_URL}/api/memories/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {
+      if (res && res.ok) return await res.json();
+    } catch {
       // Fallback
     }
 
@@ -185,21 +248,21 @@ export const api = {
   // Timeline & Time Travel
   async getEvents(): Promise<MemoryEvent[]> {
     try {
-      const res = await fetch(`${BASE_URL}/api/memories/events`, {
+      const res = await safeFetch(`${BASE_URL}/api/memories/events`, {
         headers: getAuthHeaders(),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
+      if (res && res.ok) return await res.json();
+    } catch {}
     return eventStore;
   },
 
   async getTimeTravelState(timestamp: string): Promise<Memory[]> {
     try {
-      const res = await fetch(`${BASE_URL}/api/timetravel?timestamp=${encodeURIComponent(timestamp)}`, {
+      const res = await safeFetch(`${BASE_URL}/api/timetravel?timestamp=${encodeURIComponent(timestamp)}`, {
         headers: getAuthHeaders(),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
+      if (res && res.ok) return await res.json();
+    } catch {}
 
     // In mock fallback: filter memories that were created on or before timestamp
     const targetTime = new Date(timestamp).getTime();
@@ -212,13 +275,13 @@ export const api = {
   // Chat with XYRO101
   async chat(message: string, mode: 'none' | 'naive' | 'governed'): Promise<ChatModeResult> {
     try {
-      const res = await fetch(`${BASE_URL}/api/chat`, {
+      const res = await safeFetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ message, mode, agent: 'XYRO101' }),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
+      if (res && res.ok) return await res.json();
+    } catch {}
 
     // Realistic ANCHOR Engine simulation for XYRO101
     const query = message.toLowerCase();
@@ -363,13 +426,13 @@ export const api = {
   // Ingest observation
   async ingestObservation(text: string, sourceKind: string = 'user_stated'): Promise<{ success: boolean; action: string; reason: string; memory?: Memory }> {
     try {
-      const res = await fetch(`${BASE_URL}/api/ingest`, {
+      const res = await safeFetch(`${BASE_URL}/api/ingest`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({ text, source: { kind: sourceKind } }),
       });
-      if (res.ok) return await res.json();
-    } catch (e) {}
+      if (res && res.ok) return await res.json();
+    } catch {}
 
     // Check for injection keywords
     const lower = text.toLowerCase();
