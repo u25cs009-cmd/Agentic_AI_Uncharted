@@ -2,6 +2,8 @@ import dns from 'node:dns';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
 import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
 import { apiRouter } from './routes/index.js';
@@ -42,6 +44,23 @@ app.use((req, res, next) => {
 // API Routes
 app.use('/api', apiRouter);
 
+// Serve frontend static assets if built
+const candidateDistPaths = [
+  path.resolve(process.cwd(), 'frontend', 'dist'),
+  path.resolve(process.cwd(), '..', 'frontend', 'dist'),
+  path.resolve(__dirname, '..', '..', 'frontend', 'dist'),
+];
+const distPath = candidateDistPaths.find((p) => fs.existsSync(p));
+
+if (distPath) {
+  logger.info({ distPath }, 'Serving static frontend UI assets');
+  app.use(express.static(distPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
 // Centralized Error Handler
 app.use(errorHandler);
 
@@ -52,7 +71,7 @@ async function startServer() {
     const repo = await getRepository();
     logger.info({ store: repo.name }, 'Active repository connected');
 
-    const server = app.listen(config.port, () => {
+    const server = app.listen(config.port, '0.0.0.0', () => {
       logger.info(`================================================================`);
       logger.info(`🚀 ANCHOR Backend Server running on http://localhost:${config.port}`);
       logger.info(`📦 Storage Mode: [${config.store.toUpperCase()}] (${repo.name})`);

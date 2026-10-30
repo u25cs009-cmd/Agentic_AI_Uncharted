@@ -296,3 +296,4 @@ export async function getBenchmarkResults(req: Request, res: Response, next: Nex
     next(err);
   }
 }
+

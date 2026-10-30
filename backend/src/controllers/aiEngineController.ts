@@ -4,6 +4,7 @@ import { maskPII } from '../utils/pii.js';
 import { Memory, RetrievalResult, ScoredMemory } from '../types/index.js';
 import { LLMService } from '../services/llm.js';
 import { CandidateFactExtractor, TRUST_LADDER } from '../engine/extractor.js';
+import { SourceKind } from '../engine/types.js';
 import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
 
 export async function chat(req: Request, res: Response, next: NextFunction) {
@@ -160,7 +161,7 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
 
     // 1. PII Masking (Implementation Plan Module 3)
     const scrubbedText = maskPII(text);
-    const sourceKind = source?.kind || 'user_stated';
+    const sourceKind: SourceKind = (source?.kind as SourceKind) || 'user_stated';
 
     // 2. Safety Screening (Guard Rule #1: Prompt Injection forces QUARANTINE)
     const lower = scrubbedText.toLowerCase();
@@ -406,3 +407,4 @@ export async function agentTriage(req: Request, res: Response, next: NextFunctio
     next(err);
   }
 }
+
