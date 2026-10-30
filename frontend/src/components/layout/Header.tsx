@@ -1,10 +1,9 @@
-﻿import React, { useState } from 'react';
-import { 
-  BellRing, 
-  Rocket, 
-  RotateCcw, 
-  Layers, 
-  User, 
+import React, { useState } from 'react';
+import {
+  BellRing,
+  Rocket,
+  RotateCcw,
+  Layers,
   CheckCircle,
   ShieldCheck,
   LogOut
@@ -55,80 +54,89 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
     }
   };
 
+  const isLive = api.getConnectionStatus().isLiveBackend;
+
   return (
-    <header className="h-16 bg-[bg-bg-side border-bg-side]/90 backdrop-blur-md border-b border-[border-bg-side] px-6 flex items-center justify-between z-10 sticky top-0">
-      {/* Left: Workspace & Active Mode */}
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-xs font-mono bg-[bg-bg-main border-bg-main] px-3 py-1.5 rounded-lg border border-[#1e293b] text-slate-300">
-          <Layers className="w-3.5 h-3.5 text-indigo-400" />
+    <header
+      className="h-10 flex items-center justify-between px-4 shrink-0 border-b border-vsc-border"
+      style={{ background: '#323233' }}
+    >
+      {/* Left: Workspace info */}
+      <div className="flex items-center gap-4">
+        {/* Workspace badge */}
+        <div className="flex items-center gap-1.5 text-xs font-mono text-vsc-fg-dim">
+          <Layers className="w-3.5 h-3.5 text-vsc-syn-var" />
           <span>Workspace:</span>
-          <span className="text-indigo-300 font-semibold">{user?.workspace || 'ws-primary'}</span>
+          <span className="text-vsc-syn-var font-semibold">{user?.workspace || 'ws-primary'}</span>
         </div>
 
-        <div className="hidden md:flex items-center space-x-1.5 text-xs text-slate-400">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Agent Model:</span>
-          <span className="text-slate-200 font-medium">XYRO101 Engine</span>
-          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
-            api.getConnectionStatus().isLiveBackend 
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
-              : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
-          }`}>
-            {api.getConnectionStatus().isLiveBackend ? 'â— Live Backend' : 'â— Simulation Engine'}
+        {/* Engine mode */}
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-vsc-fg-dim">
+          <ShieldCheck className="w-3.5 h-3.5 text-vsc-success" />
+          <span>XYRO101 Engine</span>
+          <span
+            className={`text-[10px] font-mono px-2 py-0.5 rounded-sm border ${
+              isLive
+                ? 'bg-vsc-success/20 text-vsc-success border-vsc-success/40'
+                : 'bg-vsc-accent/20 text-vsc-syn-const border-vsc-accent/40'
+            }`}
+          >
+            {isLive ? '● Live' : '● Simulation'}
           </span>
         </div>
       </div>
 
-      {/* Middle Notice Toast */}
+      {/* Center: Notice toast */}
       {actionNotice && (
-        <div className="hidden lg:flex items-center space-x-2 bg-indigo-950/80 border border-indigo-500/40 px-3 py-1 rounded-full text-xs text-indigo-200 animate-fade-in shadow-lg">
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="hidden lg:flex items-center gap-2 bg-vsc-actbar border border-vsc-border px-3 py-1 text-xs text-vsc-fg-dim font-mono">
+          <CheckCircle className="w-3.5 h-3.5 text-vsc-success" />
           <span>{actionNotice}</span>
         </div>
       )}
 
-      {/* Right: Simulation Controls & User */}
-      <div className="flex items-center space-x-2.5">
+      {/* Right: Controls + user */}
+      <div className="flex items-center gap-1.5">
         <button
           onClick={triggerSimulateAlert}
           disabled={isAlerting}
-          className="flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all duration-150 disabled:opacity-50"
-          title="Simulate incoming incident alert from n8n / monitoring"
+          className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-vsc-tabbar hover:bg-vsc-highlight text-vsc-syn-str border border-vsc-border transition-colors disabled:opacity-50"
+          title="Simulate incoming incident alert"
         >
           <BellRing className={`w-3.5 h-3.5 ${isAlerting ? 'animate-spin' : ''}`} />
-          <span>{isAlerting ? 'Alerting...' : 'Simulate Alert (W1)'}</span>
+          <span>{isAlerting ? 'Alerting...' : 'Simulate Alert'}</span>
         </button>
 
         <button
           onClick={triggerSimulateDeploy}
           disabled={isDeploying}
-          className="flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-all duration-150 disabled:opacity-50"
-          title="Simulate service deployment event marking outdated memories stale"
+          className="flex items-center gap-1.5 text-xs px-2.5 py-1 bg-vsc-tabbar hover:bg-vsc-highlight text-vsc-syn-const border border-vsc-border transition-colors disabled:opacity-50"
+          title="Simulate service deployment"
         >
           <Rocket className={`w-3.5 h-3.5 ${isDeploying ? 'animate-bounce' : ''}`} />
-          <span>{isDeploying ? 'Deploying...' : 'Simulate Deploy (W2)'}</span>
+          <span>{isDeploying ? 'Deploying...' : 'Simulate Deploy'}</span>
         </button>
 
         <button
           onClick={handleReset}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-slate-700/50 transition-colors"
+          className="p-1.5 text-vsc-fg-dim hover:text-vsc-fg hover:bg-vsc-highlight border border-transparent hover:border-vsc-border transition-colors"
           title="Reset demo data"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
 
-        <div className="h-6 w-px bg-slate-800 mx-1" />
+        <div className="w-px h-5 bg-vsc-border mx-1" />
 
-        <div className="flex items-center space-x-2 bg-[bg-bg-side border-bg-main] px-2.5 py-1 rounded-lg border border-[#1e293b]">
-          <div className="w-6 h-6 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-xs uppercase">
-            {user?.name ? user.name[0] : 'Y'}
+        {/* User badge */}
+        <div className="flex items-center gap-2 px-2.5 py-1 bg-vsc-actbar border border-vsc-border">
+          <div className="w-5 h-5 rounded-full bg-vsc-accent/30 border border-vsc-accent/60 flex items-center justify-center text-vsc-accent text-[10px] font-bold uppercase font-mono">
+            {user?.name ? user.name[0] : 'A'}
           </div>
-          <span className="text-xs font-medium text-slate-200 hidden sm:inline">
-            {user?.name || 'Yashi Aadarsh'}
+          <span className="text-xs text-vsc-fg hidden sm:inline font-ui">
+            {user?.name || 'Ayush Singh'}
           </span>
           <button
             onClick={logout}
-            className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 rounded transition-colors"
+            className="text-vsc-fg-dim hover:text-vsc-error p-0.5 transition-colors"
             title="Log Out"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -138,4 +146,3 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
     </header>
   );
 };
-

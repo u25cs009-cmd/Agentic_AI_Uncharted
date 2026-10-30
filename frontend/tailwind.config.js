@@ -8,35 +8,46 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0a0d14',
-        surface: '#111726',
-        'surface-elevated': '#172033',
-        border: '#1f293d',
-        primary: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
-        },
-        accent: {
-          cyan: '#06b6d4',
-          emerald: '#10b981',
-          amber: '#f59e0b',
-          rose: '#f43f5e',
-          purple: '#a855f7'
+        // VS Code Dark Modern - Core UI
+        vsc: {
+          editor:    '#1E1E1E',   // Main editor / page background
+          sidebar:   '#252526',   // Sidebar background
+          actbar:    '#333333',   // Activity bar
+          tabbar:    '#2D2D2D',   // Tab bar / header
+          panel:     '#1E1E1E',   // Bottom panel
+          border:    '#454545',   // Default border
+          'border-focus': '#0078D4', // Focused border
+          fg:        '#CCCCCC',   // Default text
+          'fg-dim':  '#858585',   // Dimmed / disabled text
+          'fg-hi':   '#FFFFFF',   // Highlighted / active text
+          accent:    '#0078D4',   // Accent blue (buttons, links)
+          'accent-hover': '#1184DB',
+          success:   '#2EA043',   // Green success
+          error:     '#F85149',   // Red error
+          warning:   '#CCA700',   // Yellow warning
+          selection: '#264F78',   // Text selection background
+          highlight: '#2A2D2E',   // Hovered item background
+          // Dark+ Syntax colours
+          'syn-var':   '#9CDCFE',   // Variables / parameters
+          'syn-fn':    '#DCDCAA',   // Functions / methods
+          'syn-kw':    '#C586C0',   // Keywords
+          'syn-str':   '#CE9178',   // Strings
+          'syn-num':   '#B5CEA8',   // Numbers
+          'syn-type':  '#4EC9B0',   // Types / classes
+          'syn-const': '#4FC1FF',   // Constants / enums
         }
       },
       fontFamily: {
-        mono: ['Fira Code', 'JetBrains Mono', 'Consolas', 'monospace'],
-      }
+        ui:   ['"Segoe UI"', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['Consolas', '"Cascadia Code"', '"Fira Code"', 'monospace'],
+      },
+      fontSize: {
+        'xxs': '0.65rem',
+        'xs':  '0.75rem',
+        'sm':  '0.8125rem',
+        'base':'0.875rem',
+      },
     },
   },
   plugins: [],
 }
-
