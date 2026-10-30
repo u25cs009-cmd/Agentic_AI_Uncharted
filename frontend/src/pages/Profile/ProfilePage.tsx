@@ -6,18 +6,14 @@ import {
   Shield, 
   Calendar, 
   Key, 
-  Camera, 
   CheckCircle, 
   AlertCircle, 
   LogOut, 
   Layers, 
   MessageSquare, 
   Database, 
-  Cpu, 
   Sparkles,
-  Lock,
-  Download,
-  Trash2
+  Download
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -145,10 +141,7 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
       {/* Top Banner Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#111728]/95 via-[#0e162a]/95 to-[#151c33]/95 border border-white/10 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-60 h-60 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="relative overflow-hidden rounded-2xl card p-6 sm:p-8 shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center space-x-4 sm:space-x-5">
             <div className="relative">
@@ -156,45 +149,45 @@ export const ProfilePage: React.FC = () => {
                 <img
                   src={profilePicture}
                   alt={user?.name}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-indigo-400/50 shadow-xl"
+                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-[rgba(204,139,60,0.5)] shadow-xl"
                 />
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 flex items-center justify-center text-white text-3xl font-extrabold shadow-xl border border-white/20 uppercase">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[#cc8b3c] flex items-center justify-center text-white text-3xl font-extrabold shadow-xl border border-white/20 uppercase">
                   {user?.name ? user.name[0] : 'U'}
                 </div>
               )}
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#111728] shadow-sm" />
+              <div className="dot-live absolute -bottom-1 -right-1 border-2 border-[#252525]" />
             </div>
 
             <div>
               <div className="flex items-center space-x-2.5">
-                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#f0f0f0] tracking-tight">
                   {user?.name || 'ANCHOR Operator'}
                 </h1>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[rgba(204,139,60,0.18)] text-[#f0aa55] border border-[rgba(204,139,60,0.35)]">
                   Verified
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1 flex items-center space-x-1.5 font-medium">
-                <Mail className="w-3.5 h-3.5 text-slate-500" />
+              <p className="text-xs text-[#b4b4b4] mt-1 flex items-center space-x-1.5 font-medium">
+                <Mail className="w-3.5 h-3.5 text-[#888]" />
                 <span>{user?.email}</span>
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-300 border border-slate-700/50 flex items-center space-x-1">
-                  <Layers className="w-3 h-3 text-indigo-400" />
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#1e1e1e] text-[#d0d0d0] border border-[#383838] flex items-center space-x-1">
+                  <Layers className="w-3 h-3 text-[#cc8b3c]" />
                   <span>Workspace: {user?.workspace || 'ws-primary'}</span>
                 </span>
                 {user?.authProviders?.includes('google') ? (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center space-x-1">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[rgba(220,80,80,0.15)] text-[#f07070] border border-[rgba(220,80,80,0.35)] flex items-center space-x-1">
                     <span>Google OAuth</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 flex items-center space-x-1">
-                    <span>Email & Password</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[rgba(204,139,60,0.15)] text-[#f0aa55] border border-[rgba(204,139,60,0.35)] flex items-center space-x-1">
+                    <span>Email &amp; Password</span>
                   </span>
                 )}
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-800/80 text-slate-400 border border-slate-700/50 flex items-center space-x-1">
-                  <Calendar className="w-3 h-3 text-slate-500" />
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#1e1e1e] text-[#888] border border-[#383838] flex items-center space-x-1">
+                  <Calendar className="w-3 h-3 text-[#888]" />
                   <span>Joined {new Date(user?.createdAt || Date.now()).toLocaleDateString([], { month: 'short', year: 'numeric' })}</span>
                 </span>
               </div>
@@ -205,7 +198,7 @@ export const ProfilePage: React.FC = () => {
             <button
               type="button"
               onClick={handleLogout}
-              className="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center space-x-2 transition-all active:scale-95 shadow-sm"
+              className="btn-danger flex items-center space-x-2 text-xs font-semibold"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Log Out</span>
@@ -216,46 +209,46 @@ export const ProfilePage: React.FC = () => {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl bg-[#0e1320]/90 border border-white/5 p-4 flex items-center space-x-3.5 shadow-lg">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+        <div className="card p-4 flex items-center space-x-3.5 shadow-lg">
+          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-mono text-slate-400">Chat Conversations</p>
-            <p className="text-xl font-bold text-white">{conversationCount} Sessions</p>
+            <p className="text-[11px] font-mono text-[#888]">Chat Conversations</p>
+            <p className="text-xl font-bold text-[#f0f0f0]">{conversationCount} Sessions</p>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#0e1320]/90 border border-white/5 p-4 flex items-center space-x-3.5 shadow-lg">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+        <div className="card p-4 flex items-center space-x-3.5 shadow-lg">
+          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
             <Database className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-mono text-slate-400">Active Memories</p>
-            <p className="text-xl font-bold text-white">{memoryCount} Isolated Records</p>
+            <p className="text-[11px] font-mono text-[#888]">Active Memories</p>
+            <p className="text-xl font-bold text-[#f0f0f0]">{memoryCount} Isolated Records</p>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-[#0e1320]/90 border border-white/5 p-4 flex items-center space-x-3.5 shadow-lg">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+        <div className="card p-4 flex items-center space-x-3.5 shadow-lg">
+          <div className="w-10 h-10 rounded-xl bg-[rgba(76,175,125,0.15)] border border-[rgba(76,175,125,0.3)] flex items-center justify-center text-[#60d49a]">
             <Shield className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[11px] font-mono text-slate-400">Security Clearance</p>
-            <p className="text-xl font-bold text-emerald-300">Governed Hot Tier</p>
+            <p className="text-[11px] font-mono text-[#888]">Security Clearance</p>
+            <p className="text-xl font-bold text-[#60d49a]">Governed Hot Tier</p>
           </div>
         </div>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-white/10 space-x-6 text-xs font-semibold">
+      <div className="flex border-b border-[#383838] space-x-6 text-xs font-semibold">
         <button
           type="button"
           onClick={() => setSearchParams({ tab: 'profile' })}
           className={`pb-3 flex items-center space-x-2 transition-colors relative ${
             activeTab === 'profile'
-              ? 'text-indigo-400 border-b-2 border-indigo-500'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-[#f0aa55] border-b-2 border-[#cc8b3c]'
+              : 'text-[#888] hover:text-[#ececec]'
           }`}
         >
           <UserIcon className="w-4 h-4" />
@@ -267,12 +260,12 @@ export const ProfilePage: React.FC = () => {
           onClick={() => setSearchParams({ tab: 'security' })}
           className={`pb-3 flex items-center space-x-2 transition-colors relative ${
             activeTab === 'security'
-              ? 'text-indigo-400 border-b-2 border-indigo-500'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-[#f0aa55] border-b-2 border-[#cc8b3c]'
+              : 'text-[#888] hover:text-[#ececec]'
           }`}
         >
           <Key className="w-4 h-4" />
-          <span>Security & Password</span>
+          <span>Security &amp; Password</span>
         </button>
 
         <button
@@ -280,21 +273,21 @@ export const ProfilePage: React.FC = () => {
           onClick={() => setSearchParams({ tab: 'workspace' })}
           className={`pb-3 flex items-center space-x-2 transition-colors relative ${
             activeTab === 'workspace'
-              ? 'text-indigo-400 border-b-2 border-indigo-500'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'text-[#f0aa55] border-b-2 border-[#cc8b3c]'
+              : 'text-[#888] hover:text-[#ececec]'
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>Workspace & Isolation</span>
+          <span>Workspace &amp; Isolation</span>
         </button>
       </div>
 
       {/* Tab 1: Profile Information */}
       {activeTab === 'profile' && (
-        <div className="rounded-3xl bg-[#0e1424]/90 border border-white/5 p-6 shadow-xl backdrop-blur-xl space-y-6">
+        <div className="card p-6 shadow-xl space-y-6">
           <div>
-            <h2 className="text-base font-bold text-white">Edit Profile Details</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h2 className="text-base font-bold text-[#f0f0f0]">Edit Profile Details</h2>
+            <p className="text-xs text-[#b4b4b4] mt-0.5">
               Update your display name and profile avatar across ANCHOR and XYRO101.
             </p>
           </div>
@@ -303,14 +296,14 @@ export const ProfilePage: React.FC = () => {
             <div
               className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
                 profileNotice.type === 'success'
-                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
-                  : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+                  ? 'bg-[rgba(76,175,125,0.15)] border border-[rgba(76,175,125,0.35)] text-[#60d49a]'
+                  : 'bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] text-[#f07070]'
               }`}
             >
               {profileNotice.type === 'success' ? (
-                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#60d49a] flex-shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 text-[#f07070] flex-shrink-0" />
               )}
               <span>{profileNotice.message}</span>
             </div>
@@ -318,43 +311,43 @@ export const ProfilePage: React.FC = () => {
 
           <form onSubmit={handleUpdateProfile} className="space-y-5">
             <div>
-              <label className="text-xs font-mono text-slate-400 block mb-1.5">Full Name</label>
+              <label className="text-xs font-mono text-[#888] block mb-1.5">Full Name</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Operator Name"
                 required
-                className="w-full max-w-lg bg-[#070a12] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full max-w-lg bg-[#1e1e1e] border border-[#484848] rounded-xl px-4 py-2.5 text-sm text-[#ececec] focus:outline-none focus:border-[#cc8b3c] transition-colors"
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-slate-400 block mb-1.5">Email Address</label>
+              <label className="text-xs font-mono text-[#888] block mb-1.5">Email Address</label>
               <input
                 type="email"
                 value={user?.email || ''}
                 disabled
-                className="w-full max-w-lg bg-[#070a12]/50 border border-slate-800/60 rounded-xl px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed opacity-75"
+                className="w-full max-w-lg bg-[#1e1e1e]/50 border border-[#383838] rounded-xl px-4 py-2.5 text-sm text-[#666] cursor-not-allowed opacity-75"
               />
-              <p className="text-[11px] text-slate-500 mt-1">Email is verified and linked to your workspace identity.</p>
+              <p className="text-[11px] text-[#666] mt-1">Email is verified and linked to your workspace identity.</p>
             </div>
 
             <div>
-              <label className="text-xs font-mono text-slate-400 block mb-1.5">Avatar Image URL</label>
+              <label className="text-xs font-mono text-[#888] block mb-1.5">Avatar Image URL</label>
               <div className="flex items-center space-x-3 max-w-lg">
                 <input
                   type="url"
                   value={profilePicture}
                   onChange={(e) => setProfilePicture(e.target.value)}
                   placeholder="https://example.com/photo.jpg"
-                  className="flex-1 bg-[#070a12] border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="flex-1 bg-[#1e1e1e] border border-[#484848] rounded-xl px-4 py-2 text-xs text-[#ececec] focus:outline-none focus:border-[#cc8b3c]"
                 />
                 {profilePicture && (
                   <button
                     type="button"
                     onClick={() => setProfilePicture('')}
-                    className="text-xs text-slate-400 hover:text-rose-400 px-2 py-1"
+                    className="text-xs text-[#888] hover:text-[#f07070] px-2 py-1"
                   >
                     Clear
                   </button>
@@ -363,7 +356,7 @@ export const ProfilePage: React.FC = () => {
 
               {/* Avatar Presets Selection */}
               <div className="mt-3">
-                <p className="text-[11px] text-slate-400 mb-2 font-mono">Or select a preset avatar:</p>
+                <p className="text-[11px] text-[#888] mb-2 font-mono">Or select a preset avatar:</p>
                 <div className="flex items-center space-x-2.5">
                   {AVATAR_PRESETS.map((url, idx) => (
                     <button
@@ -371,7 +364,7 @@ export const ProfilePage: React.FC = () => {
                       type="button"
                       onClick={() => setProfilePicture(url)}
                       className={`w-10 h-10 rounded-xl overflow-hidden border-2 transition-all active:scale-95 ${
-                        profilePicture === url ? 'border-indigo-400 ring-2 ring-indigo-500/40' : 'border-slate-800 hover:border-slate-600'
+                        profilePicture === url ? 'border-[#cc8b3c] ring-2 ring-[rgba(204,139,60,0.4)]' : 'border-[#383838] hover:border-[#555]'
                       }`}
                     >
                       <img src={url} alt={`Preset ${idx}`} className="w-full h-full object-cover" />
@@ -385,7 +378,7 @@ export const ProfilePage: React.FC = () => {
               <button
                 type="submit"
                 disabled={profileLoading}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all active:scale-95 disabled:opacity-50"
+                className="btn-primary"
               >
                 {profileLoading ? 'Saving Changes...' : 'Save Profile Changes'}
               </button>
@@ -396,10 +389,10 @@ export const ProfilePage: React.FC = () => {
 
       {/* Tab 2: Security & Password */}
       {activeTab === 'security' && (
-        <div className="rounded-3xl bg-[#0e1424]/90 border border-white/5 p-6 shadow-xl backdrop-blur-xl space-y-6">
+        <div className="card p-6 shadow-xl space-y-6">
           <div>
-            <h2 className="text-base font-bold text-white">Password & Authentication Security</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h2 className="text-base font-bold text-[#f0f0f0]">Password &amp; Authentication Security</h2>
+            <p className="text-xs text-[#b4b4b4] mt-0.5">
               Manage your password and authentication methods for this account.
             </p>
           </div>
@@ -408,26 +401,26 @@ export const ProfilePage: React.FC = () => {
             <div
               className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${
                 passwordNotice.type === 'success'
-                  ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
-                  : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+                  ? 'bg-[rgba(76,175,125,0.15)] border border-[rgba(76,175,125,0.35)] text-[#60d49a]'
+                  : 'bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] text-[#f07070]'
               }`}
             >
               {passwordNotice.type === 'success' ? (
-                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 text-[#60d49a] flex-shrink-0" />
               ) : (
-                <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 text-[#f07070] flex-shrink-0" />
               )}
               <span>{passwordNotice.message}</span>
             </div>
           )}
 
           {user?.authProviders?.includes('google') && !user?.authProviders?.includes('local') ? (
-            <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 max-w-lg">
+            <div className="p-4 rounded-2xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.35)] max-w-lg">
               <div className="flex items-start space-x-3">
-                <Sparkles className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+                <Sparkles className="w-5 h-5 text-[#cc8b3c] flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-white">Google OAuth Managed Account</h4>
-                  <p className="text-xs text-indigo-200/80 mt-1">
+                  <h4 className="text-xs font-bold text-[#f0f0f0]">Google OAuth Managed Account</h4>
+                  <p className="text-xs text-[#b4b4b4] mt-1">
                     Your account is securely managed via Google OAuth. To set a standalone password for email sign-in, enter your desired password below.
                   </p>
                 </div>
@@ -438,38 +431,38 @@ export const ProfilePage: React.FC = () => {
           <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
             {(!user?.authProviders?.includes('google') || user?.authProviders?.includes('local')) && (
               <div>
-                <label className="text-xs font-mono text-slate-400 block mb-1">Current Password</label>
+                <label className="text-xs font-mono text-[#888] block mb-1">Current Password</label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-[#070a12] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1e1e1e] border border-[#484848] rounded-xl px-4 py-2.5 text-sm text-[#ececec] focus:outline-none focus:border-[#cc8b3c]"
                 />
               </div>
             )}
 
             <div>
-              <label className="text-xs font-mono text-slate-400 block mb-1">New Password</label>
+              <label className="text-xs font-mono text-[#888] block mb-1">New Password</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 6 characters"
                 required
-                className="w-full bg-[#070a12] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#1e1e1e] border border-[#484848] rounded-xl px-4 py-2.5 text-sm text-[#ececec] focus:outline-none focus:border-[#cc8b3c]"
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-slate-400 block mb-1">Confirm New Password</label>
+              <label className="text-xs font-mono text-[#888] block mb-1">Confirm New Password</label>
               <input
                 type="password"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
                 placeholder="Re-enter new password"
                 required
-                className="w-full bg-[#070a12] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[#1e1e1e] border border-[#484848] rounded-xl px-4 py-2.5 text-sm text-[#ececec] focus:outline-none focus:border-[#cc8b3c]"
               />
             </div>
 
@@ -477,7 +470,7 @@ export const ProfilePage: React.FC = () => {
               <button
                 type="submit"
                 disabled={passwordLoading}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all active:scale-95 disabled:opacity-50"
+                className="btn-primary"
               >
                 {passwordLoading ? 'Updating Password...' : 'Update Password'}
               </button>
@@ -488,34 +481,34 @@ export const ProfilePage: React.FC = () => {
 
       {/* Tab 3: Workspace & Isolation */}
       {activeTab === 'workspace' && (
-        <div className="rounded-3xl bg-[#0e1424]/90 border border-white/5 p-6 shadow-xl backdrop-blur-xl space-y-6">
+        <div className="card p-6 shadow-xl space-y-6">
           <div>
-            <h2 className="text-base font-bold text-white">Tenant & Data Isolation</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h2 className="text-base font-bold text-[#f0f0f0]">Tenant &amp; Data Isolation</h2>
+            <p className="text-xs text-[#b4b4b4] mt-0.5">
               ANCHOR enforces hardware-level multi-tenant isolation across all memory vectors and audit events.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
-            <div className="p-4 rounded-2xl bg-[#080c16] border border-slate-800">
-              <p className="text-[11px] font-mono text-slate-400">User Identification</p>
-              <p className="text-sm font-mono text-slate-200 mt-1 font-bold">{user?.id || 'usr-shakti2'}</p>
+            <div className="p-4 rounded-2xl bg-[#1e1e1e] border border-[#383838]">
+              <p className="text-[11px] font-mono text-[#888]">User Identification</p>
+              <p className="text-sm font-mono text-[#ececec] mt-1 font-bold">{user?.id || 'usr-shakti2'}</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#080c16] border border-slate-800">
-              <p className="text-[11px] font-mono text-slate-400">Isolated Workspace Bucket</p>
-              <p className="text-sm font-mono text-slate-200 mt-1 font-bold">{user?.workspace || 'ws-primary'}</p>
+            <div className="p-4 rounded-2xl bg-[#1e1e1e] border border-[#383838]">
+              <p className="text-[11px] font-mono text-[#888]">Isolated Workspace Bucket</p>
+              <p className="text-sm font-mono text-[#ececec] mt-1 font-bold">{user?.workspace || 'ws-primary'}</p>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex flex-wrap gap-4">
+          <div className="pt-4 border-t border-[#383838] flex flex-wrap gap-4">
             <button
               type="button"
               onClick={handleExportData}
-              className="px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center space-x-2 transition-all active:scale-95"
+              className="btn-ghost flex items-center space-x-2"
             >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Export User Profile & Records (JSON)</span>
+              <Download className="w-3.5 h-3.5 text-[#cc8b3c]" />
+              <span>Export User Profile &amp; Records (JSON)</span>
             </button>
           </div>
         </div>
