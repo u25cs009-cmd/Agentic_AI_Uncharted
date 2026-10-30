@@ -1,7 +1,20 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+// Automatically locate .env in backend directory, current working directory, or parent root
+const potentialEnvPaths = [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), 'backend', '.env'),
+  path.resolve(process.cwd(), '..', '.env')
+];
+
+for (const envPath of potentialEnvPaths) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+    break;
+  }
+}
 
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
@@ -9,6 +22,7 @@ export const config = {
   store: (process.env.STORE || 'memory').toLowerCase() as 'memory' | 'mongo',
   
   jwtSecret: process.env.JWT_SECRET || 'anchor_dev_jwt_secret_change_in_production_key_2026',
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   internalApiKey: process.env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks',
 
   mongo: {
@@ -32,4 +46,3 @@ export const config = {
     webhookUrl: process.env.N8N_WEBHOOK_URL || '',
   }
 };
-

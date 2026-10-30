@@ -109,13 +109,45 @@ export interface Entity {
   metadata?: Record<string, any>;
 }
 
+export type AuthProviderType = 'local' | 'google';
+
 export interface User {
   id: string;
+  _id?: string;
   email: string;
   name: string;
-  passwordHash: string;
+  passwordHash?: string;
+  googleId?: string;
+  profilePicture?: string;
+  authProviders: AuthProviderType[];
   workspace: string;
-  created_at: string;
+  createdAt: string;
+  created_at?: string;
+  updatedAt?: string;
+  lastLoginAt?: string;
+  isActive: boolean;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  sender: 'user' | 'agent';
+  text: string;
+  timestamp: string;
+  mode?: 'none' | 'naive' | 'governed';
+  result?: any;
+  comparison?: any;
+}
+
+export interface Conversation {
+  id: string;
+  _id?: string;
+  userId: string;
+  title: string;
+  messages: ConversationMessage[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface MemoryFilter {
@@ -146,4 +178,3 @@ export interface RetrievalResult {
   abstention: boolean;
   abstention_reason?: string;
 }
-

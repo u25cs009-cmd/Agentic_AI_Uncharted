@@ -6,6 +6,12 @@ export interface User {
   email: string;
   name: string;
   workspace?: string;
+  googleId?: string;
+  profilePicture?: string;
+  authProviders?: string[];
+  createdAt?: string;
+  lastLoginAt?: string;
+  isActive?: boolean;
 }
 
 interface AuthContextType {
@@ -13,7 +19,11 @@ interface AuthContextType {
   token: string | null;
   login: (email: string, password?: string) => Promise<void>;
   register: (email: string, password?: string, name?: string) => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<void>;
+  updateProfile: (updates: { name?: string; profilePicture?: string }) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -28,48 +38,89 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Set default demo session if nothing exists yet
+  // Hydrate user profile on load if token is present
   useEffect(() => {
-    if (!token && !localStorage.getItem('anchor_logged_out')) {
-      const defaultToken = `jwt_shakti2_${Date.now()}`;
-      const defaultUser = { email: 'yashi@shakti2.io', name: 'Yashi Aadarsh', workspace: 'ws-primary' };
-      localStorage.setItem('anchor_token', defaultToken);
-      localStorage.setItem('anchor_user', JSON.stringify(defaultUser));
-      setToken(defaultToken);
-      setUser(defaultUser);
-    }
-  }, [token]);
+    const initAuth = async () => {
+      const storedToken = localStorage.getItem('anchor_token');
+      if (storedToken) {
+        try {
+          const res = await api.me();
+          if (res?.user) {
+            setUser(res.user);
+          }
+        } catch {
+          // If token verification fails and we are not in offline fallback, logout cleanly
+          const savedUser = localStorage.getItem('anchor_user');
+          if (!savedUser) {
+            logout();
+          }
+        }
+      }
+    };
+    initAuth();
+  }, []);
 
-  const login = async (email: string) => {
+  const login = async (email: string, password?: string) => {
     setIsLoading(true);
     try {
-      const res = await api.login(email);
+      const res = await api.login(email, password);
       setToken(res.token);
       setUser(res.user);
-      localStorage.removeItem('anchor_logged_out');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (email: string, _password?: string, name?: string) => {
+  const register = async (email: string, password?: string, name?: string) => {
     setIsLoading(true);
     try {
-      const res = await api.register(email);
-      const updatedUser = { ...res.user, name: name || res.user.name };
-      localStorage.setItem('anchor_user', JSON.stringify(updatedUser));
+      const res = await api.register(email, password, name);
       setToken(res.token);
-      setUser(updatedUser);
-      localStorage.removeItem('anchor_logged_out');
+      setUser(res.user);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loginWithGoogle = async (credential: string) => {
+    setIsLoading(true);
+    try {
+      const res = await api.googleLogin(credential);
+      setToken(res.token);
+      setUser(res.user);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateProfile = async (updates: { name?: string; profilePicture?: string }) => {
+    setIsLoading(true);
+    try {
+      const res = await api.updateProfile(updates);
+      setUser(res.user);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setIsLoading(true);
+    try {
+      await api.changePassword(currentPassword, newPassword);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const res = await api.me();
+      if (res?.user) setUser(res.user);
+    } catch {}
   };
 
   const logout = () => {
-    localStorage.removeItem('anchor_token');
-    localStorage.removeItem('anchor_user');
-    localStorage.setItem('anchor_logged_out', 'true');
+    api.logout();
     setToken(null);
     setUser(null);
   };
@@ -81,8 +132,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         login,
         register,
+        loginWithGoogle,
+        updateProfile,
+        changePassword,
         logout,
-        isAuthenticated: !!token,
+        refreshUser,
+        isAuthenticated: !!token && !!user,
         isLoading,
       }}
     >
