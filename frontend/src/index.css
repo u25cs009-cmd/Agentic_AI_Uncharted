@@ -1,13 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
 @layer base {
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
+  *, *::before, *::after { box-sizing: border-box; }
 
   html, body, #root {
     height: 100%;
@@ -24,56 +22,102 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Minimal scrollbar */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
+  ::-webkit-scrollbar        { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: #2A2A2A; border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: #404040; }
 
   ::selection { background: #10B98130; color: #E5E5E5; }
 }
 
-@layer components {
-  /* Reusable card */
-  .card {
-    @apply bg-app-surface border border-app-border rounded-lg;
-  }
-  .card-elevated {
-    @apply bg-app-elevated border border-app-border rounded-lg;
-  }
+/* ── Reusable component classes (plain CSS, no @apply with custom tokens) ── */
 
-  /* Accent button */
-  .btn-accent {
-    @apply bg-app-accent text-black text-xs font-semibold px-3 py-1.5 rounded
-           hover:bg-app-accent-hi transition-colors duration-150;
-  }
-  /* Ghost button */
-  .btn-ghost {
-    @apply text-app-fg-muted text-xs px-3 py-1.5 rounded border border-app-border
-           hover:bg-app-elevated hover:text-app-fg hover:border-app-border-hi transition-colors duration-150;
-  }
-  /* Danger button */
-  .btn-danger {
-    @apply bg-app-danger-bg text-app-danger text-xs px-3 py-1.5 rounded border border-app-danger/30
-           hover:bg-app-danger/20 transition-colors duration-150;
-  }
-
-  /* Input field */
-  .input {
-    @apply bg-app-panel border border-app-border text-app-fg text-sm px-3 py-2 rounded
-           focus:outline-none focus:border-app-accent transition-colors placeholder-app-fg-faint;
-  }
-
-  /* Tag / badge */
-  .tag {
-    @apply text-[10px] font-mono font-medium px-2 py-0.5 rounded-sm;
-  }
-  .tag-accent  { @apply bg-app-accent-bg  text-app-accent  border border-app-accent/20;  }
-  .tag-danger  { @apply bg-app-danger-bg  text-app-danger  border border-app-danger/20;  }
-  .tag-warning { @apply bg-app-warning-bg text-app-warning border border-app-warning/20; }
-  .tag-info    { @apply bg-app-info-bg    text-app-info    border border-app-info/20;    }
-  .tag-muted   { @apply bg-app-elevated   text-app-fg-muted border border-app-border;   }
+.card {
+  background-color: #141414;
+  border: 1px solid #2A2A2A;
+  border-radius: 8px;
 }
 
-/* Pulse glow for the status dot */
-.glow-green { box-shadow: 0 0 8px 0 #10B98160; }
+.card-elevated {
+  background-color: #1C1C1C;
+  border: 1px solid #2A2A2A;
+  border-radius: 8px;
+}
+
+.btn-accent {
+  background-color: #10B981;
+  color: #000;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.btn-accent:hover { background-color: #34D399; }
+
+.btn-ghost {
+  background: transparent;
+  color: #737373;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #2A2A2A;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-ghost:hover {
+  background-color: #1C1C1C;
+  color: #E5E5E5;
+  border-color: #404040;
+}
+
+.btn-danger {
+  background-color: rgba(239,68,68,0.1);
+  color: #EF4444;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(239,68,68,0.3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-danger:hover { background-color: rgba(239,68,68,0.2); }
+
+.input {
+  background-color: #111111;
+  border: 1px solid #2A2A2A;
+  color: #E5E5E5;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.input::placeholder { color: #404040; }
+.input:focus { border-color: #10B981; }
+
+/* Tags */
+.tag {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.tag-accent  { background: rgba(16,185,129,0.12); color:#10B981; border:1px solid rgba(16,185,129,0.25); }
+.tag-danger  { background: rgba(239,68,68,0.12);  color:#EF4444; border:1px solid rgba(239,68,68,0.25);  }
+.tag-warning { background: rgba(245,158,11,0.12); color:#F59E0B; border:1px solid rgba(245,158,11,0.25); }
+.tag-info    { background: rgba(99,102,241,0.12); color:#6366F1; border:1px solid rgba(99,102,241,0.25); }
+.tag-muted   { background: #1C1C1C; color: #737373; border: 1px solid #2A2A2A; }
+
+/* Glow */
+.glow-green { box-shadow: 0 0 8px 0 rgba(16,185,129,0.4); }
+
+/* Animations */
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp  { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in  { animation: fadeIn 0.15s ease-out; }
+.animate-slide-up { animation: slideUp 0.2s ease-out; }
