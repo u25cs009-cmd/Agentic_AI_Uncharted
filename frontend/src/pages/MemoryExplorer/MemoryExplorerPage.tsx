@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Database, 
   Search, 
@@ -242,7 +242,7 @@ export const MemoryExplorerPage: React.FC = () => {
 
         <div className="flex items-center space-x-2">
           {/* View Mode Toggle */}
-          <div className="bg-[#111726] border border-[#1f293d] p-1 rounded-xl flex items-center space-x-1">
+          <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] p-1 rounded-xl flex items-center space-x-1">
             <button
               onClick={() => setViewMode('cards')}
               className={`p-1.5 rounded-lg text-xs flex items-center space-x-1 font-medium transition-all ${
@@ -269,7 +269,7 @@ export const MemoryExplorerPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="text-xs font-mono text-slate-400 bg-[#111726] border border-[#1f293d] px-3 py-1.5 rounded-xl flex items-center">
+          <div className="text-xs font-mono text-slate-400 bg-[bg-bg-side border-bg-main] border border-[border-bg-main] px-3 py-1.5 rounded-xl flex items-center">
             <Database className="w-3.5 h-3.5 mr-1.5 text-indigo-400" />
             <span>{memories.length} Records</span>
           </div>
@@ -294,7 +294,7 @@ export const MemoryExplorerPage: React.FC = () => {
       )}
 
       {/* Complete Filter Bar (Task A) */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-4 flex flex-wrap items-center gap-3 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-4 flex flex-wrap items-center gap-3 shadow-sm">
         {/* Search */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -303,7 +303,7 @@ export const MemoryExplorerPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search content, attribute key, or entity tags..."
-            className="w-full bg-[#0a0d14] border border-[#1f293d] rounded-xl pl-9 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-xl pl-9 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
 
@@ -313,7 +313,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#0a0d14] border border-[#1f293d] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            className="bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
@@ -329,7 +329,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-[#0a0d14] border border-[#1f293d] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            className="bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
           >
             <option value="all">All Types</option>
             <option value="semantic">Semantic</option>
@@ -344,7 +344,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value)}
-            className="bg-[#0a0d14] border border-[#1f293d] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            className="bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
           >
             <option value="all">All Tiers</option>
             <option value="hot">Hot (Core)</option>
@@ -359,7 +359,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
-            className="bg-[#0a0d14] border border-[#1f293d] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            className="bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
           >
             <option value="all">All Sources</option>
             <option value="human_approved">Human Approved (1.00)</option>
@@ -431,7 +431,7 @@ export const MemoryExplorerPage: React.FC = () => {
                       className={`p-4 rounded-xl border cursor-pointer transition-all ${
                         isSelected
                           ? 'bg-[#141d33] border-indigo-500 shadow-md shadow-indigo-950 ring-1 ring-indigo-500/50'
-                          : 'bg-[#111726] border-[#1f293d] hover:border-slate-700'
+                          : 'bg-[bg-bg-side border-bg-main] border-[border-bg-main] hover:border-slate-700'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -504,7 +504,7 @@ export const MemoryExplorerPage: React.FC = () => {
         {/* Right Column: Detailed Inspector & Action Drawer */}
         <div className="lg:col-span-1">
           {selectedMemory ? (
-            <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 sticky top-20 shadow-xl space-y-4 animate-fade-in">
+            <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 sticky top-20 shadow-xl space-y-4 animate-fade-in">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center space-x-2">
                   <span className="font-mono text-xs font-bold text-indigo-400">
@@ -541,7 +541,7 @@ export const MemoryExplorerPage: React.FC = () => {
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
                       rows={3}
-                      className="w-full bg-[#0a0d14] border border-indigo-500 rounded-lg p-2 text-xs text-slate-100 focus:outline-none"
+                      className="w-full bg-[bg-bg-main text-text-primary] border border-indigo-500 rounded-lg p-2 text-xs text-slate-100 focus:outline-none"
                     />
                     <div className="flex justify-end space-x-2">
                       <button
@@ -559,7 +559,7 @@ export const MemoryExplorerPage: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-200 bg-[#0a0d14] p-3 rounded-lg border border-slate-800 leading-relaxed">
+                  <p className="text-xs text-slate-200 bg-[bg-bg-main text-text-primary] p-3 rounded-lg border border-slate-800 leading-relaxed">
                     {selectedMemory.content}
                   </p>
                 )}
@@ -574,7 +574,7 @@ export const MemoryExplorerPage: React.FC = () => {
                 <div className="flex justify-between py-1 border-b border-slate-800/60">
                   <span className="text-slate-400">Memory Tier:</span>
                   <span className="font-mono font-bold text-indigo-400 uppercase">
-                    {selectedMemory.tier} {selectedMemory.tier === 'hot' && '🔥 (Core)'}
+                    {selectedMemory.tier} {selectedMemory.tier === 'hot' && 'ðŸ”¥ (Core)'}
                   </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-800/60">
@@ -660,7 +660,7 @@ export const MemoryExplorerPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-8 text-center text-slate-500 text-xs">
+            <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-8 text-center text-slate-500 text-xs">
               Select a memory from the table or card list to view its complete properties and governance actions.
             </div>
           )}
@@ -669,3 +669,4 @@ export const MemoryExplorerPage: React.FC = () => {
     </div>
   );
 };
+

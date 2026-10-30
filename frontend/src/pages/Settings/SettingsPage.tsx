@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   Settings, 
   Download, 
@@ -74,7 +74,7 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {/* Simulator Panel for Judges (Module 12) */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-6 shadow-sm">
         <div className="flex items-center space-x-2 mb-2">
           <Cpu className="w-5 h-5 text-indigo-400" />
           <h2 className="text-base font-semibold text-white">Interactive Demonstration Panel (Module 12)</h2>
@@ -84,7 +84,7 @@ export const SettingsPage: React.FC = () => {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#0a0d14] p-4 rounded-xl border border-amber-500/30 flex flex-col justify-between">
+          <div className="bg-[bg-bg-main text-text-primary] p-4 rounded-xl border border-amber-500/30 flex flex-col justify-between">
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <BellRing className="w-4 h-4 text-amber-400" />
@@ -106,7 +106,7 @@ export const SettingsPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-[#0a0d14] p-4 rounded-xl border border-cyan-500/30 flex flex-col justify-between">
+          <div className="bg-[bg-bg-main text-text-primary] p-4 rounded-xl border border-cyan-500/30 flex flex-col justify-between">
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <Rocket className="w-4 h-4 text-cyan-400" />
@@ -131,7 +131,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Temporal Half-Life Settings */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 shadow-sm space-y-4">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-6 shadow-sm space-y-4">
         <div className="flex items-center space-x-2 mb-2">
           <Clock className="w-5 h-5 text-indigo-400" />
           <h2 className="text-base font-semibold text-white">Temporal Decay & Half-Life Parameters</h2>
@@ -141,7 +141,7 @@ export const SettingsPage: React.FC = () => {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          <div className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800">
+          <div className="bg-[bg-bg-main text-text-primary] p-4 rounded-xl border border-slate-800">
             <span className="text-xs text-slate-400 font-mono block mb-1">Episodic Memories</span>
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold text-white font-mono">{episodicHalfLife} Days</span>
@@ -149,7 +149,7 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800">
+          <div className="bg-[bg-bg-main text-text-primary] p-4 rounded-xl border border-slate-800">
             <span className="text-xs text-slate-400 font-mono block mb-1">Semantic Memories</span>
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold text-white font-mono">{semanticHalfLife} Days</span>
@@ -157,7 +157,7 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800">
+          <div className="bg-[bg-bg-main text-text-primary] p-4 rounded-xl border border-slate-800">
             <span className="text-xs text-slate-400 font-mono block mb-1">Procedural Fixes</span>
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold text-white font-mono">{proceduralHalfLife} Days</span>
@@ -168,7 +168,7 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       {/* Privacy, Export & Cascade Forgetting (Module 11) */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 shadow-sm space-y-4">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-6 shadow-sm space-y-4">
         <div className="flex items-center space-x-2 mb-2">
           <Shield className="w-5 h-5 text-indigo-400" />
           <h2 className="text-base font-semibold text-white">Privacy, Export & Cascade Forgetting</h2>
@@ -198,4 +198,5 @@ export const SettingsPage: React.FC = () => {
     </div>
   );
 };
+
 

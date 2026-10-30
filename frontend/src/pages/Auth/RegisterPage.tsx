@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Cpu, Lock, Mail, User, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -23,10 +23,10 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0d14] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-[bg-bg-main text-text-primary] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
       <div className="absolute w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-3xl -top-32 -right-32 pointer-events-none" />
 
-      <div className="w-full max-w-md bg-[#111726]/90 backdrop-blur-xl border border-[#1f293d] rounded-3xl p-8 shadow-2xl relative z-10 glow-border-cyan">
+      <div className="w-full max-w-md bg-[bg-bg-side border-bg-main]/90 backdrop-blur-xl border border-[border-bg-main] rounded-3xl p-8 shadow-2xl relative z-10 glow-border-cyan">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-cyan-500/25">
             <Cpu className="w-8 h-8 text-white" />
@@ -54,7 +54,7 @@ export const RegisterPage: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Yashi Aadarsh"
-                className="w-full bg-[#0a0d14] border border-[#1f293d] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
           </div>
@@ -69,7 +69,7 @@ export const RegisterPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="yashi@shakti2.io"
-                className="w-full bg-[#0a0d14] border border-[#1f293d] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                className="w-full bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
           </div>
@@ -83,8 +83,8 @@ export const RegisterPage: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#0a0d14] border border-[#1f293d] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                className="w-full bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               />
             </div>
           </div>
@@ -109,4 +109,5 @@ export const RegisterPage: React.FC = () => {
     </div>
   );
 };
+
 

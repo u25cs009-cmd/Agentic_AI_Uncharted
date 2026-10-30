@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Database } from 'lucide-react';
 
 interface EmptyStateProps {
@@ -17,7 +17,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
 }) => {
   return (
-    <div className="bg-[#111726]/60 border border-slate-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-3">
+    <div className="bg-[bg-bg-side border-bg-main]/60 border border-slate-800 rounded-2xl p-10 text-center flex flex-col items-center justify-center space-y-3">
       <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400">
         {icon || <Database className="w-6 h-6" />}
       </div>
@@ -36,4 +36,5 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     </div>
   );
 };
+
 

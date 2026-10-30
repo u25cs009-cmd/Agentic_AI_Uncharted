@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, 
   Check, 
@@ -100,7 +100,7 @@ export const QuarantinePage: React.FC = () => {
       )}
 
       {/* Summary Banner */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
             <Lock className="w-6 h-6" />
@@ -114,16 +114,16 @@ export const QuarantinePage: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2 text-xs font-mono text-slate-400 bg-[#0a0d14] px-3 py-2 rounded-xl border border-slate-800">
+        <div className="flex items-center space-x-2 text-xs font-mono text-slate-400 bg-[bg-bg-main text-text-primary] px-3 py-2 rounded-xl border border-slate-800">
           <Info className="w-4 h-4 text-cyan-400" />
-          <span>Poisoning Resistance: Active (P1–P4)</span>
+          <span>Poisoning Resistance: Active (P1â€“P4)</span>
         </div>
       </div>
 
       {/* Quarantined Items List */}
       <div className="space-y-6">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 text-sm font-mono bg-[#111726] rounded-2xl border border-slate-800">
+          <div className="p-12 text-center text-slate-400 text-sm font-mono bg-[bg-bg-side border-bg-main] rounded-2xl border border-slate-800">
             Scanning quarantine vault & cross-referencing active facts...
           </div>
         ) : quarantined.length === 0 ? (
@@ -142,7 +142,7 @@ export const QuarantinePage: React.FC = () => {
             return (
               <div
                 key={item._id || item.id}
-                className="bg-[#111726] border border-rose-900/50 rounded-2xl p-5 shadow-sm space-y-4 hover:border-rose-700/60 transition-all"
+                className="bg-[bg-bg-side border-bg-main] border border-rose-900/50 rounded-2xl p-5 shadow-sm space-y-4 hover:border-rose-700/60 transition-all"
               >
                 {/* Header info */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
@@ -179,7 +179,7 @@ export const QuarantinePage: React.FC = () => {
                 </div>
 
                 {/* Task C: Conflicting Memory Comparison Section */}
-                <div className="bg-[#0a0d14] rounded-xl p-4 border border-slate-800 space-y-3">
+                <div className="bg-[bg-bg-main text-text-primary] rounded-xl p-4 border border-slate-800 space-y-3">
                   <div className="flex items-center space-x-2 text-xs font-mono text-slate-300">
                     <Scale className="w-4 h-4 text-cyan-400" />
                     <span className="font-bold uppercase tracking-wider">
@@ -190,7 +190,7 @@ export const QuarantinePage: React.FC = () => {
                   {conflictingActive ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                       {/* Left: Current Established Fact */}
-                      <div className="bg-[#0f172a] p-3.5 rounded-xl border border-emerald-500/40 glow-border-cyan flex flex-col justify-between">
+                      <div className="bg-[bg-bg-main] p-3.5 rounded-xl border border-emerald-500/40 glow-border-cyan flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[11px] font-mono text-emerald-400 font-bold uppercase flex items-center">
@@ -226,7 +226,7 @@ export const QuarantinePage: React.FC = () => {
                       </div>
 
                       {/* Right: Proposed Conflicting Fact */}
-                      <div className="bg-[#1f1018] p-3.5 rounded-xl border border-rose-500/40 flex flex-col justify-between">
+                      <div className="bg-[bg-bg-side] p-3.5 rounded-xl border border-rose-500/40 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[11px] font-mono text-rose-400 font-bold uppercase flex items-center">
@@ -262,7 +262,7 @@ export const QuarantinePage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-[#0f172a]/60 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-400 leading-relaxed">
+                    <div className="bg-[bg-bg-main]/60 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-400 leading-relaxed">
                       <div className="text-slate-300 font-medium mb-1 flex items-center">
                         <FileText className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
                         Standalone Unverified Observation:
@@ -278,7 +278,7 @@ export const QuarantinePage: React.FC = () => {
                 {/* Action Buttons */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                   <span className="text-[11px] font-mono text-slate-500">
-                    Source: {item.source.kind} • Created: {new Date(item.valid_from).toLocaleDateString()}
+                    Source: {item.source.kind} â€¢ Created: {new Date(item.valid_from).toLocaleDateString()}
                   </span>
 
                   <div className="flex items-center space-x-3">
@@ -309,3 +309,4 @@ export const QuarantinePage: React.FC = () => {
     </div>
   );
 };
+

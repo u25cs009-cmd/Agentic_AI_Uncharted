@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, 
   Cpu, 
@@ -37,7 +37,7 @@ export const ChatPage: React.FC = () => {
     {
       id: 'init-1',
       sender: 'agent',
-      text: "Hello! I am **XYRO101**, your Governed Agentic Memory Engine (built on ANCHOR architecture).\n\nI can answer questions and triage incidents using three distinct operating modes:\n\n• **None Mode**: Standard LLM without memory recall\n• **Naive Mode**: Pure vector similarity (vulnerable to stale/poisoned data)\n• **Governed Mode**: Complete ANCHOR governance (source trust, recency decay, dependency fingerprints, and abstention)\n\nTry asking: *'Which database are we currently using?'* or *'How do I fix the checkout DB timeout right now?'*",
+      text: "Hello! I am **XYRO101**, your Governed Agentic Memory Engine (built on ANCHOR architecture).\n\nI can answer questions and triage incidents using three distinct operating modes:\n\nâ€¢ **None Mode**: Standard LLM without memory recall\nâ€¢ **Naive Mode**: Pure vector similarity (vulnerable to stale/poisoned data)\nâ€¢ **Governed Mode**: Complete ANCHOR governance (source trust, recency decay, dependency fingerprints, and abstention)\n\nTry asking: *'Which database are we currently using?'* or *'How do I fix the checkout DB timeout right now?'*",
       timestamp: 'Just now',
       mode: 'governed'
     }
@@ -131,7 +131,7 @@ export const ChatPage: React.FC = () => {
         {
           id: `ing-${Date.now()}`,
           sender: 'agent',
-          text: `📥 **Observation Ingested as Governed Memory**\n• Source: \`${sourceKind}\`\n• Decision: **${res.action}**\n• Reason: ${res.reason}\n\n*Observation text:* "${observation}"`,
+          text: `ðŸ“¥ **Observation Ingested as Governed Memory**\nâ€¢ Source: \`${sourceKind}\`\nâ€¢ Decision: **${res.action}**\nâ€¢ Reason: ${res.reason}\n\n*Observation text:* "${observation}"`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           mode: 'governed'
         }
@@ -144,13 +144,13 @@ export const ChatPage: React.FC = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)] max-w-6xl mx-auto">
       {/* Top Controls Bar */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
         {/* Operating Mode Selector */}
         <div className="flex items-center space-x-2">
           <span className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center">
             <Sliders className="w-3.5 h-3.5 mr-1.5 text-indigo-400" /> Mode:
           </span>
-          <div className="bg-[#0d121f] p-1 rounded-lg border border-[#1f293d] flex items-center space-x-1">
+          <div className="bg-[bg-bg-side] p-1 rounded-lg border border-[border-bg-main] flex items-center space-x-1">
             <button
               onClick={() => { setActiveMode('none'); setCompareMode(false); }}
               className={`text-xs px-3 py-1 rounded-md font-medium transition-all ${
@@ -191,7 +191,7 @@ export const ChatPage: React.FC = () => {
             className={`flex items-center space-x-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all ${
               compareMode
                 ? 'bg-purple-600/20 text-purple-300 border-purple-500/50 font-semibold ring-1 ring-purple-500/30'
-                : 'bg-[#0d121f] text-slate-400 border-[#1f293d] hover:text-slate-200'
+                : 'bg-[bg-bg-side] text-slate-400 border-[border-bg-main] hover:text-slate-200'
             }`}
           >
             <Split className="w-3.5 h-3.5" />
@@ -243,9 +243,9 @@ export const ChatPage: React.FC = () => {
             {/* Content Box */}
             {msg.comparison ? (
               // Side-by-side 3 mode comparison card
-              <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 bg-[#111726]/80 p-4 rounded-xl border border-[#1f293d]">
+              <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 bg-[bg-bg-side border-bg-main]/80 p-4 rounded-xl border border-[border-bg-main]">
                 {/* 1. None */}
-                <div className="bg-[#0a0f1c] p-3.5 rounded-lg border border-slate-800 flex flex-col justify-between">
+                <div className="bg-[bg-bg-side border-bg-side] p-3.5 rounded-lg border border-slate-800 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-mono font-bold text-slate-400">1. NONE</span>
@@ -262,7 +262,7 @@ export const ChatPage: React.FC = () => {
                 </div>
 
                 {/* 2. Naive */}
-                <div className="bg-[#0a0f1c] p-3.5 rounded-lg border border-amber-900/40 flex flex-col justify-between">
+                <div className="bg-[bg-bg-side border-bg-side] p-3.5 rounded-lg border border-amber-900/40 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-mono font-bold text-amber-400">2. NAIVE</span>
@@ -286,7 +286,7 @@ export const ChatPage: React.FC = () => {
                 </div>
 
                 {/* 3. Governed */}
-                <div className="bg-[#0a0f1c] p-3.5 rounded-lg border border-indigo-600/40 flex flex-col justify-between glow-border-indigo">
+                <div className="bg-[bg-bg-side border-bg-side] p-3.5 rounded-lg border border-indigo-600/40 flex flex-col justify-between glow-border-indigo">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-mono font-bold text-indigo-400">3. GOVERNED (ANCHOR)</span>
@@ -324,7 +324,7 @@ export const ChatPage: React.FC = () => {
                 className={`max-w-3xl rounded-2xl p-4 text-sm leading-relaxed whitespace-pre-line shadow-md ${
                   msg.sender === 'user'
                     ? 'bg-indigo-600 text-white rounded-tr-none'
-                    : 'bg-[#111726] border border-[#1f293d] text-slate-200 rounded-tl-none'
+                    : 'bg-[bg-bg-side border-bg-main] border border-[border-bg-main] text-slate-200 rounded-tl-none'
                 }`}
               >
                 {/* Abstention alert if present */}
@@ -377,7 +377,7 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* Input Form & Observation Ingestion */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-3 shadow-lg">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-3 shadow-lg">
         <form onSubmit={handleSend} className="space-y-2">
           <div className="flex items-center space-x-2">
             <input
@@ -391,7 +391,7 @@ export const ChatPage: React.FC = () => {
                   ? "Ask XYRO101 anything (e.g., 'Which database are we using?', 'How to fix checkout timeout?')..."
                   : `Ask in ${activeMode.toUpperCase()} mode...`
               }
-              className="flex-1 bg-[#0a0d14] border border-[#1f293d] rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="flex-1 bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
             />
             <button
               type="submit"
@@ -409,7 +409,7 @@ export const ChatPage: React.FC = () => {
               <select
                 value={sourceKind}
                 onChange={(e) => setSourceKind(e.target.value as any)}
-                className="bg-[#0a0d14] border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none"
+                className="bg-[bg-bg-main text-text-primary] border border-slate-700 rounded px-2 py-0.5 text-xs text-slate-300 focus:outline-none"
               >
                 <option value="user_stated">user_stated (Trust: 0.80)</option>
                 <option value="human_approved">human_approved (Trust: 1.00)</option>
@@ -427,8 +427,8 @@ export const ChatPage: React.FC = () => {
             </div>
 
             <div className="hidden sm:flex items-center space-x-3 text-[11px] text-slate-500">
-              <span>💡 Enter to send</span>
-              <span>•</span>
+              <span>ðŸ’¡ Enter to send</span>
+              <span>â€¢</span>
               <span>1536-dim Cosine Vector Search</span>
             </div>
           </div>
@@ -437,4 +437,5 @@ export const ChatPage: React.FC = () => {
     </div>
   );
 };
+
 

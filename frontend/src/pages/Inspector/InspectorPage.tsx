@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   Filter, 
@@ -73,7 +73,7 @@ export const InspectorPage: React.FC = () => {
       </div>
 
       {/* Query Search Bar */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-4 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-4 shadow-sm">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -88,7 +88,7 @@ export const InspectorPage: React.FC = () => {
               value={testQuery}
               onChange={(e) => setTestQuery(e.target.value)}
               placeholder="Enter search query to inspect retrieval decisions..."
-              className="w-full bg-[#0a0d14] border border-[#1f293d] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[bg-bg-main text-text-primary] border border-[border-bg-main] rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
             />
           </div>
           <button
@@ -148,7 +148,7 @@ export const InspectorPage: React.FC = () => {
       {/* Main Grid: Usable vs Excluded */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Section 1: Retained & Usable Memories */}
-        <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 shadow-sm">
+        <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -168,7 +168,7 @@ export const InspectorPage: React.FC = () => {
               {results.retrieved.map((m) => (
                 <div
                   key={m.memory_id}
-                  className="bg-[#0a0f1c] p-4 rounded-xl border border-indigo-500/30 glow-border-indigo"
+                  className="bg-[bg-bg-side border-bg-side] p-4 rounded-xl border border-indigo-500/30 glow-border-indigo"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
@@ -187,7 +187,7 @@ export const InspectorPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-200 mb-3 font-medium bg-[#111726] p-2.5 rounded-lg border border-slate-800">
+                  <p className="text-xs text-slate-200 mb-3 font-medium bg-[bg-bg-side border-bg-main] p-2.5 rounded-lg border border-slate-800">
                     "{m.content}"
                   </p>
 
@@ -205,7 +205,7 @@ export const InspectorPage: React.FC = () => {
         </div>
 
         {/* Section 2: Excluded Memories & Reasons */}
-        <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 shadow-sm">
+        <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <XCircle className="w-5 h-5 text-rose-400" />
@@ -225,7 +225,7 @@ export const InspectorPage: React.FC = () => {
               {results.excluded.map((m) => (
                 <div
                   key={m.memory_id}
-                  className="bg-[#0a0f1c] p-4 rounded-xl border border-rose-900/40 opacity-90"
+                  className="bg-[bg-bg-side border-bg-side] p-4 rounded-xl border border-rose-900/40 opacity-90"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-mono text-xs text-slate-400">{m.memory_id}</span>
@@ -236,20 +236,20 @@ export const InspectorPage: React.FC = () => {
 
                   <p className="text-xs text-slate-400 mb-2 italic">"{m.content}"</p>
 
-                  <div className="text-[11px] text-slate-500 bg-[#111726] p-2 rounded border border-slate-800 font-mono">
+                  <div className="text-[11px] text-slate-500 bg-[bg-bg-side border-bg-main] p-2 rounded border border-slate-800 font-mono">
                     {m.exclusion_reason === 'stale' && (
                       <span className="text-amber-400">
-                        ⚡ Dependency Invalidation: Deprecated by deployment event or component upgrade.
+                        âš¡ Dependency Invalidation: Deprecated by deployment event or component upgrade.
                       </span>
                     )}
                     {m.exclusion_reason === 'quarantined' && (
                       <span className="text-rose-400">
-                        🛡️ Safety Screener: Quarantined adversarial or low-trust payload.
+                        ðŸ›¡ï¸ Safety Screener: Quarantined adversarial or low-trust payload.
                       </span>
                     )}
                     {m.exclusion_reason === 'low_score' && (
                       <span className="text-slate-400">
-                        📉 Score Floor: Final score ({m.final_score.toFixed(2)}) is below the required 0.25 minimum.
+                        ðŸ“‰ Score Floor: Final score ({m.final_score.toFixed(2)}) is below the required 0.25 minimum.
                       </span>
                     )}
                   </div>
@@ -261,16 +261,16 @@ export const InspectorPage: React.FC = () => {
       </div>
 
       {/* Blueprint Scoring Formula Sandbox */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 shadow-sm">
         <div className="flex items-center space-x-2 mb-4">
           <Calculator className="w-5 h-5 text-indigo-400" />
           <h2 className="text-base font-semibold text-white">Interactive Scoring Sandbox</h2>
           <span className="text-xs text-slate-400 font-mono">
-            final_score = similarity × trust × confidence × 0.5^(age / half_life)
+            final_score = similarity Ã— trust Ã— confidence Ã— 0.5^(age / half_life)
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-[#0a0d14] p-4 rounded-xl border border-slate-800">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-[bg-bg-main text-text-primary] p-4 rounded-xl border border-slate-800">
           <div>
             <label className="text-xs text-slate-400 block mb-1">
               Similarity: <span className="text-indigo-400 font-mono">{simSimilarity.toFixed(2)}</span>
@@ -331,7 +331,7 @@ export const InspectorPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex flex-col justify-center items-center bg-[#111726] p-2 rounded-lg border border-slate-800">
+          <div className="flex flex-col justify-center items-center bg-[bg-bg-side border-bg-main] p-2 rounded-lg border border-slate-800">
             <span className="text-[11px] text-slate-400 uppercase font-mono">Resulting Score</span>
             <span
               className={`text-xl font-bold font-mono ${
@@ -341,7 +341,7 @@ export const InspectorPage: React.FC = () => {
               {calculatedFinalScore.toFixed(3)}
             </span>
             <span className="text-[10px] text-slate-500">
-              {calculatedFinalScore >= 0.25 ? 'Passes (≥ 0.25)' : 'Abstains (< 0.25)'}
+              {calculatedFinalScore >= 0.25 ? 'Passes (â‰¥ 0.25)' : 'Abstains (< 0.25)'}
             </span>
           </div>
         </div>
@@ -349,4 +349,5 @@ export const InspectorPage: React.FC = () => {
     </div>
   );
 };
+
 

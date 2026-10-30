@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   BellRing, 
   Rocket, 
@@ -56,10 +56,10 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
   };
 
   return (
-    <header className="h-16 bg-[#0a0f1c]/90 backdrop-blur-md border-b border-[#1a2336] px-6 flex items-center justify-between z-10 sticky top-0">
+    <header className="h-16 bg-[bg-bg-side border-bg-side]/90 backdrop-blur-md border-b border-[border-bg-side] px-6 flex items-center justify-between z-10 sticky top-0">
       {/* Left: Workspace & Active Mode */}
       <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2 text-xs font-mono bg-[#111827] px-3 py-1.5 rounded-lg border border-[#1e293b] text-slate-300">
+        <div className="flex items-center space-x-2 text-xs font-mono bg-[bg-bg-main border-bg-main] px-3 py-1.5 rounded-lg border border-[#1e293b] text-slate-300">
           <Layers className="w-3.5 h-3.5 text-indigo-400" />
           <span>Workspace:</span>
           <span className="text-indigo-300 font-semibold">{user?.workspace || 'ws-primary'}</span>
@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
               : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
           }`}>
-            {api.getConnectionStatus().isLiveBackend ? '● Live Backend' : '● Simulation Engine'}
+            {api.getConnectionStatus().isLiveBackend ? 'â— Live Backend' : 'â— Simulation Engine'}
           </span>
         </div>
       </div>
@@ -119,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
 
         <div className="h-6 w-px bg-slate-800 mx-1" />
 
-        <div className="flex items-center space-x-2 bg-[#111726] px-2.5 py-1 rounded-lg border border-[#1e293b]">
+        <div className="flex items-center space-x-2 bg-[bg-bg-side border-bg-main] px-2.5 py-1 rounded-lg border border-[#1e293b]">
           <div className="w-6 h-6 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-xs uppercase">
             {user?.name ? user.name[0] : 'Y'}
           </div>
@@ -138,3 +138,4 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
     </header>
   );
 };
+

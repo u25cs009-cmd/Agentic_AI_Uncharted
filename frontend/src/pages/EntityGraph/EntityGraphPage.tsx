@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -32,7 +32,7 @@ export const EntityGraphPage: React.FC = () => {
                 <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded font-mono">HEALTHY</span>
               </div>
               <div className="text-xs font-bold text-white">checkout-api</div>
-              <div className="text-[10px] text-slate-400 font-mono">v2.1.0 • prod-us-east</div>
+              <div className="text-[10px] text-slate-400 font-mono">v2.1.0 â€¢ prod-us-east</div>
             </div>
           ),
         },
@@ -245,7 +245,7 @@ export const EntityGraphPage: React.FC = () => {
           className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
             highlightDeployment
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-              : 'bg-[#111726] text-slate-400 border-slate-700'
+              : 'bg-[bg-bg-side border-bg-main] text-slate-400 border-slate-700'
           }`}
         >
           <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -254,9 +254,9 @@ export const EntityGraphPage: React.FC = () => {
       </div>
 
       {/* React Flow Graph Visualizer Container */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-3xl overflow-hidden shadow-2xl relative h-[520px]">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-3xl overflow-hidden shadow-2xl relative h-[520px]">
         {/* Floating Legend Overlay */}
-        <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3 bg-[#0a0d14]/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-800 text-xs font-mono text-slate-400">
+        <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3 bg-[bg-bg-main text-text-primary]/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-800 text-xs font-mono text-slate-400">
           <div className="flex items-center space-x-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
             <span>Service</span>
@@ -287,10 +287,10 @@ export const EntityGraphPage: React.FC = () => {
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           fitView
-          className="bg-[#0a0d14]"
+          className="bg-[bg-bg-main text-text-primary]"
         >
-          <Background color="#1f293d" gap={18} size={1} />
-          <Controls className="bg-[#111726] border-slate-700 text-white fill-white stroke-white" />
+          <Background color="border-bg-main" gap={18} size={1} />
+          <Controls className="bg-[bg-bg-side border-bg-main] border-slate-700 text-white fill-white stroke-white" />
           <MiniMap
             nodeColor={(n) => {
               if (n.id.includes('svc')) return '#6366f1';
@@ -299,13 +299,13 @@ export const EntityGraphPage: React.FC = () => {
               if (n.id.includes('004')) return '#f59e0b';
               return '#a855f7';
             }}
-            className="bg-[#0d121f] border border-slate-800 rounded-xl overflow-hidden"
+            className="bg-[bg-bg-side] border border-slate-800 rounded-xl overflow-hidden"
           />
         </ReactFlow>
 
         {/* Node Detail Drawer Overlay */}
         {selectedNodeInfo && (
-          <div className="absolute bottom-4 left-4 right-4 z-10 bg-[#0d121f]/95 backdrop-blur-md border border-slate-700 p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-fade-in">
+          <div className="absolute bottom-4 left-4 right-4 z-10 bg-[bg-bg-side]/95 backdrop-blur-md border border-slate-700 p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-fade-in">
             <div className="flex items-center space-x-3">
               <CheckCircle2 className="w-5 h-5 text-indigo-400 flex-shrink-0" />
               <div>
@@ -329,3 +329,4 @@ export const EntityGraphPage: React.FC = () => {
     </div>
   );
 };
+

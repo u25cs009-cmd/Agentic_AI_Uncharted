@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -36,4 +36,5 @@ export const Badge: React.FC<BadgeProps> = ({
     </span>
   );
 };
+
 

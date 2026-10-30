@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   MessageSquare,
@@ -37,9 +37,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ quarantineCount = 2 }) => {
   ];
 
   return (
-    <aside className="w-64 bg-[#0d121f] border-r border-[#1a2336] flex flex-col h-screen select-none">
+    <aside className="w-64 bg-[bg-bg-side] border-r border-[border-bg-side] flex flex-col h-screen select-none">
       {/* Branding Header */}
-      <div className="p-5 border-b border-[#1a2336] flex items-center justify-between">
+      <div className="p-5 border-b border-[border-bg-side] flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Cpu className="w-5 h-5 text-white" />
@@ -57,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ quarantineCount = 2 }) => {
       </div>
 
       {/* Engine Status Card */}
-      <div className="mx-3 my-3 p-3 bg-[#111827]/70 border border-[#1e293b] rounded-xl flex items-center justify-between">
+      <div className="mx-3 my-3 p-3 bg-[bg-bg-main border-bg-main]/70 border border-[#1e293b] rounded-xl flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -112,8 +112,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ quarantineCount = 2 }) => {
       </nav>
 
       {/* Footer Info */}
-      <div className="p-3 border-t border-[#1a2336] bg-[#0a0f1c]">
-        <div className="p-2.5 rounded-lg bg-[#111726] border border-[#1e293b]">
+      <div className="p-3 border-t border-[border-bg-side] bg-[bg-bg-side border-bg-side]">
+        <div className="p-2.5 rounded-lg bg-[bg-bg-side border-bg-main] border border-[#1e293b]">
           <div className="flex items-center justify-between text-xs mb-1">
             <span className="text-slate-400 font-medium">Team Shakti-2</span>
             <span className="text-emerald-400 font-mono text-[11px] flex items-center">
@@ -126,4 +126,5 @@ export const Sidebar: React.FC<SidebarProps> = ({ quarantineCount = 2 }) => {
     </aside>
   );
 };
+
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   BarChart3, 
   Play, 
@@ -103,25 +103,25 @@ export const BenchmarkPage: React.FC = () => {
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#111726] border border-emerald-500/30 p-4 rounded-2xl">
+        <div className="bg-[bg-bg-side border-bg-main] border border-emerald-500/30 p-4 rounded-2xl">
           <div className="text-slate-400 text-xs font-mono mb-1">Correct-Action Rate</div>
           <div className="text-2xl font-bold text-emerald-400 font-mono">100.0%</div>
           <div className="text-[11px] text-slate-500 mt-1">Naive: 40% | None: 13.3%</div>
         </div>
 
-        <div className="bg-[#111726] border border-rose-500/30 p-4 rounded-2xl">
+        <div className="bg-[bg-bg-side border-bg-main] border border-rose-500/30 p-4 rounded-2xl">
           <div className="text-slate-400 text-xs font-mono mb-1">Harmful-Action Rate</div>
           <div className="text-2xl font-bold text-emerald-400 font-mono">0.0%</div>
           <div className="text-[11px] text-rose-400 mt-1">Naive is 46.7% harmful!</div>
         </div>
 
-        <div className="bg-[#111726] border border-indigo-500/30 p-4 rounded-2xl">
+        <div className="bg-[bg-bg-side border-bg-main] border border-indigo-500/30 p-4 rounded-2xl">
           <div className="text-slate-400 text-xs font-mono mb-1">Poison Resistance</div>
           <div className="text-2xl font-bold text-indigo-400 font-mono">100.0%</div>
           <div className="text-[11px] text-slate-500 mt-1">4 of 4 attacks isolated</div>
         </div>
 
-        <div className="bg-[#111726] border border-cyan-500/30 p-4 rounded-2xl">
+        <div className="bg-[bg-bg-side border-bg-main] border border-cyan-500/30 p-4 rounded-2xl">
           <div className="text-slate-400 text-xs font-mono mb-1">Abstention Precision</div>
           <div className="text-2xl font-bold text-cyan-400 font-mono">100.0%</div>
           <div className="text-[11px] text-slate-500 mt-1">Zero blind hallucination</div>
@@ -131,16 +131,16 @@ export const BenchmarkPage: React.FC = () => {
       {/* Recharts Visualizations Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart 1: Grouped category success rate */}
-        <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 shadow-sm">
+        <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-white mb-1">Success Rate by Scenario Category (%)</h3>
           <p className="text-xs text-slate-400 mb-4">Governed memory demonstrates 100% adherence across all categories.</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" />
+                <CartesianGrid strokeDasharray="3 3" stroke="border-bg-main" />
                 <XAxis dataKey="category" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }} />
+                <Tooltip contentStyle={{ backgroundColor: 'bg-bg-main', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }} />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Bar dataKey="None" fill="#64748b" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Naive" fill="#f59e0b" radius={[4, 4, 0, 0]} />
@@ -151,16 +151,16 @@ export const BenchmarkPage: React.FC = () => {
         </div>
 
         {/* Chart 2: Harmful Action Rate */}
-        <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 shadow-sm">
+        <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 shadow-sm">
           <h3 className="text-sm font-semibold text-white mb-1">Harmful-Action Rate Comparison (%)</h3>
           <p className="text-xs text-slate-400 mb-4">Naive memory actively injects stale and poisoned commands into production.</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={harmfulRateData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" />
+                <CartesianGrid strokeDasharray="3 3" stroke="border-bg-main" />
                 <XAxis dataKey="mode" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={11} domain={[0, 60]} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }} />
+                <Tooltip contentStyle={{ backgroundColor: 'bg-bg-main', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }} />
                 <Bar dataKey="HarmfulRate" fill="#f43f5e" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -169,7 +169,7 @@ export const BenchmarkPage: React.FC = () => {
       </div>
 
       {/* Chart 3: Confidence Trajectory */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-white mb-1">
           Confidence Trajectory after Repeated Human Rejections (Telegram W3)
         </h3>
@@ -179,10 +179,10 @@ export const BenchmarkPage: React.FC = () => {
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={confidenceTrajectoryData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" />
+              <CartesianGrid strokeDasharray="3 3" stroke="border-bg-main" />
               <XAxis dataKey="step" stroke="#64748b" fontSize={11} />
               <YAxis stroke="#64748b" fontSize={11} domain={[0, 1]} />
-              <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }} />
+              <Tooltip contentStyle={{ backgroundColor: 'bg-bg-main', borderColor: '#334155', borderRadius: '8px', fontSize: '12px' }} />
               <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
               <Line type="monotone" dataKey="Confidence" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4 }} />
               <Line type="monotone" dataKey="Trust" stroke="#a855f7" strokeWidth={2} dot={{ r: 4 }} />
@@ -192,14 +192,14 @@ export const BenchmarkPage: React.FC = () => {
       </div>
 
       {/* 15 Scenarios Drill-Down Table */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <div className="flex items-center space-x-2">
             <h2 className="text-base font-semibold text-white">Scenario Inspection Matrix (15 Cases)</h2>
             <Badge variant="primary">{filteredScenarios.length} Scenarios</Badge>
           </div>
 
-          <div className="flex items-center space-x-1 bg-[#0a0d14] p-1 rounded-xl border border-slate-800 text-xs">
+          <div className="flex items-center space-x-1 bg-[bg-bg-main text-text-primary] p-1 rounded-xl border border-slate-800 text-xs">
             {['all', 'stale', 'poison', 'contradiction', 'control'].map((cat) => (
               <button
                 key={cat}
@@ -220,7 +220,7 @@ export const BenchmarkPage: React.FC = () => {
           {filteredScenarios.map((sc) => (
             <div
               key={sc.id}
-              className="bg-[#0a0f1c] p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all"
+              className="bg-[bg-bg-side border-bg-side] p-4 rounded-xl border border-slate-800 hover:border-slate-700 transition-all"
             >
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                 <div className="flex items-center space-x-2">
@@ -263,4 +263,5 @@ export const BenchmarkPage: React.FC = () => {
     </div>
   );
 };
+
 

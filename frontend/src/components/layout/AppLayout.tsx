@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
@@ -21,15 +21,16 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#0a0d14] text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-[bg-bg-main text-text-primary] text-slate-100 overflow-hidden font-sans">
       <Sidebar quarantineCount={quarantineCount} />
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <Header onRefresh={fetchQuarantineCount} />
-        <main className="flex-1 overflow-y-auto p-6 bg-[#0a0d14]">
+        <main className="flex-1 overflow-y-auto p-6 bg-[bg-bg-main text-text-primary]">
           <Outlet />
         </main>
       </div>
     </div>
   );
 };
+
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import { LoadingIndicator } from './LoadingIndicator';
 import { EmptyState } from './EmptyState';
@@ -91,7 +91,7 @@ export function DataTable<T extends Record<string, any>>({
 
   if (isLoading) {
     return (
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-6">
         <LoadingIndicator message={loadingMessage} />
       </div>
     );
@@ -107,12 +107,12 @@ export function DataTable<T extends Record<string, any>>({
   }
 
   return (
-    <div className={`bg-[#111726] border border-[#1f293d] rounded-2xl overflow-hidden shadow-sm flex flex-col ${className}`}>
+    <div className={`bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl overflow-hidden shadow-sm flex flex-col ${className}`}>
       {/* Scrollable Table Area */}
       <div className="overflow-x-auto flex-1">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-[#1f293d] bg-[#0d121f]/90 text-slate-400 font-mono uppercase tracking-wider text-[11px]">
+            <tr className="border-b border-[border-bg-main] bg-[bg-bg-side]/90 text-slate-400 font-mono uppercase tracking-wider text-[11px]">
               {columns.map((col) => {
                 const isSorted = sortKey === col.key;
                 const alignClass =
@@ -151,7 +151,7 @@ export function DataTable<T extends Record<string, any>>({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1f293d]/60">
+          <tbody className="divide-y divide-[border-bg-main]/60">
             {paginatedData.map((row, idx) => {
               const rowKey = keyExtractor(row);
               const isSelected = selectedRowKey === rowKey;
@@ -191,7 +191,7 @@ export function DataTable<T extends Record<string, any>>({
 
       {/* Pagination Footer */}
       {totalPages > 1 && (
-        <div className="px-4 py-3 border-t border-[#1f293d] bg-[#0d121f] flex items-center justify-between text-xs text-slate-400 font-mono">
+        <div className="px-4 py-3 border-t border-[border-bg-main] bg-[bg-bg-side] flex items-center justify-between text-xs text-slate-400 font-mono">
           <div>
             Showing <span className="text-white font-bold">{(currentPage - 1) * pageSize + 1}</span> to{' '}
             <span className="text-white font-bold">
@@ -226,4 +226,5 @@ export function DataTable<T extends Record<string, any>>({
     </div>
   );
 }
+
 

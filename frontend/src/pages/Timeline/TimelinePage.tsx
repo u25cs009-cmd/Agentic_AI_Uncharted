@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   History, 
   Clock, 
@@ -98,7 +98,7 @@ export const TimelinePage: React.FC = () => {
       </div>
 
       {/* Time-Travel Interactive Slider Panel */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 shadow-md glow-border-cyan">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-6 shadow-md glow-border-cyan">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center space-x-2">
             <ArrowLeftRight className="w-5 h-5 text-cyan-400" />
@@ -151,7 +151,7 @@ export const TimelinePage: React.FC = () => {
             {historicalState.map((m) => (
               <div
                 key={m._id || m.id}
-                className="bg-[#0a0d14] p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex flex-col justify-between"
+                className="bg-[bg-bg-main text-text-primary] p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-1">
@@ -172,7 +172,7 @@ export const TimelinePage: React.FC = () => {
       </div>
 
       {/* Chronological Append-Only Event Log */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 shadow-sm">
+      <div className="bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
@@ -193,12 +193,12 @@ export const TimelinePage: React.FC = () => {
           {events.map((evt) => (
             <div key={evt.id} className="relative group">
               {/* Dot Icon on line */}
-              <div className="absolute -left-[33px] top-0 w-6 h-6 rounded-full bg-[#111726] border border-slate-700 flex items-center justify-center">
+              <div className="absolute -left-[33px] top-0 w-6 h-6 rounded-full bg-[bg-bg-side border-bg-main] border border-slate-700 flex items-center justify-center">
                 {getEventIcon(evt.event_type)}
               </div>
 
               {/* Event Card */}
-              <div className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800/80 group-hover:border-slate-700 transition-all">
+              <div className="bg-[bg-bg-main text-text-primary] p-4 rounded-xl border border-slate-800/80 group-hover:border-slate-700 transition-all">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                   <div className="flex items-center space-x-2">
                     <Badge
@@ -240,4 +240,5 @@ export const TimelinePage: React.FC = () => {
     </div>
   );
 };
+
 

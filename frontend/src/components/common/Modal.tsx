@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+﻿import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -43,11 +43,11 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
       <div
-        className={`w-full ${maxWidthStyles[maxWidth]} bg-[#111726] border border-[#1f293d] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
+        className={`w-full ${maxWidthStyles[maxWidth]} bg-[bg-bg-side border-bg-main] border border-[border-bg-main] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1f293d] bg-[#0d121f]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[border-bg-main] bg-[bg-bg-side]">
           <h3 className="text-base font-bold text-white tracking-tight">{title}</h3>
           <button
             onClick={onClose}
@@ -63,4 +63,5 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   );
 };
+
 
