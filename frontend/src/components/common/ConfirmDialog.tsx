@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Modal } from './Modal';
 
@@ -62,4 +62,5 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     </Modal>
   );
 };
+
 

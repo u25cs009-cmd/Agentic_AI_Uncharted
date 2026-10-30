@@ -1,21 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { 
-  BellRing, 
-  Rocket, 
-  RotateCcw, 
-  Layers, 
-  User as UserIcon, 
-  CheckCircle,
-  LogOut,
-  Cpu,
-  LogIn,
-  ChevronDown,
-  MessageSquare,
-  Settings,
-  Shield,
-  Sparkles
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Rocket, RotateCcw, CheckCircle2, LogOut, Zap, ShieldCheck } from 'lucide-react';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,262 +8,124 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const [isAlerting, setIsAlerting] = useState(false);
+  const { user, logout } = useAuth();
+  const [isAlerting, setIsAlerting]   = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
-  const [actionNotice, setActionNotice] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [notice, setNotice]           = useState<string | null>(null);
 
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const connStatus = api.getConnectionStatus();
-
-  // Close dropdown menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const triggerSimulateAlert = async () => {
-    setIsAlerting(true);
-    try {
-      await api.simulateAlert();
-      setActionNotice("P1 Incident Alert injected! Evaluated via /api/ingest & triage pipeline.");
-      if (onRefresh) onRefresh();
-    } finally {
-      setIsAlerting(false);
-      setTimeout(() => setActionNotice(null), 4000);
-    }
+  const flash = (msg: string) => {
+    setNotice(msg);
+    setTimeout(() => setNotice(null), 4000);
   };
 
-  const triggerSimulateDeploy = async () => {
+  const handleAlert = async () => {
+    setIsAlerting(true);
+    try { await api.simulateAlert(); flash('Alert triggered — sent to /api/ingest.'); onRefresh?.(); }
+    finally { setIsAlerting(false); }
+  };
+
+  const handleDeploy = async () => {
     setIsDeploying(true);
     try {
       const res = await api.simulateDeploy();
-      setActionNotice(`Service deploy event v2.1.0 processed! Marked ${res.affectedCount} legacy DB fix memories stale.`);
-      if (onRefresh) onRefresh();
-    } finally {
-      setIsDeploying(false);
-      setTimeout(() => setActionNotice(null), 4000);
-    }
+      flash(`Deploy done — ${res.affectedCount} memories marked stale.`);
+      onRefresh?.();
+    } finally { setIsDeploying(false); }
   };
 
   const handleReset = () => {
-    if (confirm("Reset demo memory state to initial clean blueprint seed?")) {
-      api.resetDemoData();
-      if (onRefresh) onRefresh();
-      setActionNotice("Demo memory state restored to initial blueprint seed.");
-      setTimeout(() => setActionNotice(null), 3000);
-    }
+    if (!confirm('Reset demo to initial state?')) return;
+    api.resetDemoData(); onRefresh?.();
+    flash('Memory state restored to blueprint seed.');
   };
 
-  const handleLogout = () => {
-    logout();
-    setMenuOpen(false);
-    navigate('/login');
-  };
+  const isLive = api.getConnectionStatus().isLiveBackend;
 
   return (
-    <header className="h-16 glass-panel border-b border-white/5 px-4 sm:px-6 flex items-center justify-between z-30 sticky top-0 backdrop-blur-xl">
-      {/* Left: Workspace & Active Engine Mode */}
-      <div className="flex items-center space-x-3 sm:space-x-4">
-        <div className="flex items-center space-x-2 text-xs font-mono bg-[#0f172a]/80 px-3 py-1.5 rounded-xl border border-indigo-500/30 text-slate-300 shadow-sm">
-          <Layers className="w-3.5 h-3.5 text-indigo-400" />
-          <span className="hidden sm:inline">Workspace:</span>
-          <span className="text-white font-bold">{user?.workspace || 'ws-primary'}</span>
+    <header className="h-14 shrink-0 flex items-center gap-4 px-6 bg-claude-sidebar border-b border-claude-border">
+
+      {/* ── Left: context info ── */}
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        {/* Workspace */}
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-claude-accent shrink-0" />
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="text-claude-fg-3">Workspace</span>
+            <span className="text-claude-border">/</span>
+            <span className="text-claude-fg font-semibold">{user?.workspace || 'ws-primary'}</span>
+          </div>
         </div>
 
-        <div className="hidden md:flex items-center space-x-2 text-xs text-slate-400">
-          <Cpu className="w-4 h-4 text-cyan-400" />
-          <span className="text-slate-200 font-semibold font-mono">XYRO101</span>
-          <span
-            className={`text-[10px] font-mono px-2 py-0.5 rounded-full border flex items-center space-x-1 ${
-              connStatus.isLiveBackend
-                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 shadow-sm shadow-emerald-950'
-                : 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30 shadow-sm shadow-indigo-950'
-            }`}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                connStatus.isLiveBackend ? 'bg-emerald-400 animate-pulse' : 'bg-indigo-400'
-              }`}
-            />
-            <span>{connStatus.isLiveBackend ? 'Live Backend (Atlas)' : 'ANCHOR Engine (Governed)'}</span>
+        {/* Separator */}
+        <div className="h-5 w-px bg-claude-border" />
+
+        {/* Engine mode */}
+        <div className="flex items-center gap-2">
+          <Zap className="w-3.5 h-3.5 text-claude-fg-3" />
+          <span className="text-sm text-claude-fg-2 font-medium">XYRO101</span>
+          <span className={`tag text-[11px] ${isLive ? 'tag-success' : 'tag-info'}`}>
+            {isLive ? 'Live' : 'Simulation'}
           </span>
         </div>
+
+        {/* Toast notice */}
+        {notice && (
+          <div className="hidden lg:flex items-center gap-2 ml-2 px-3 py-1.5 rounded-lg bg-claude-surface border border-claude-border text-sm text-claude-fg-2 animate-fade-in">
+            <CheckCircle2 className="w-3.5 h-3.5 text-claude-success shrink-0" />
+            <span className="truncate max-w-xs">{notice}</span>
+          </div>
+        )}
       </div>
 
-      {/* Center Notice Toast */}
-      {actionNotice && (
-        <div className="hidden lg:flex items-center space-x-2 bg-gradient-to-r from-indigo-950/90 to-[#0e1628]/90 border border-indigo-500/40 px-3.5 py-1 rounded-full text-xs text-indigo-200 animate-fade-in shadow-xl">
-          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-          <span className="font-medium truncate max-w-md">{actionNotice}</span>
-        </div>
-      )}
-
-      {/* Right: Simulation Controls & User Auth Section */}
-      <div className="flex items-center space-x-2 sm:space-x-3">
+      {/* ── Right: actions + avatar ── */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Simulate Alert */}
         <button
-          type="button"
-          onClick={triggerSimulateAlert}
+          onClick={handleAlert}
           disabled={isAlerting}
-          className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-400/50 transition-all duration-200 shadow-sm hover:shadow-amber-950/50 disabled:opacity-50 active:scale-95"
-          title="Simulate incoming incident alert from n8n / monitoring (W1)"
+          className="btn-ghost flex items-center gap-2 disabled:opacity-40 cursor-pointer"
         >
-          <BellRing className={`w-3.5 h-3.5 ${isAlerting ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">{isAlerting ? 'Triggering...' : 'Simulate Alert (W1)'}</span>
-          <span className="sm:hidden">Alert</span>
+          <Bell className={`w-3.5 h-3.5 text-claude-warning ${isAlerting ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">{isAlerting ? 'Alerting…' : 'Simulate Alert'}</span>
         </button>
 
+        {/* Simulate Deploy */}
         <button
-          type="button"
-          onClick={triggerSimulateDeploy}
+          onClick={handleDeploy}
           disabled={isDeploying}
-          className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400/50 transition-all duration-200 shadow-sm hover:shadow-cyan-950/50 disabled:opacity-50 active:scale-95"
-          title="Simulate service deployment event marking outdated memories stale (W2)"
+          className="btn-ghost flex items-center gap-2 disabled:opacity-40 cursor-pointer"
         >
-          <Rocket className={`w-3.5 h-3.5 ${isDeploying ? 'animate-bounce' : ''}`} />
-          <span className="hidden sm:inline">{isDeploying ? 'Deploying...' : 'Simulate Deploy (W2)'}</span>
-          <span className="sm:hidden">Deploy</span>
+          <Rocket className={`w-3.5 h-3.5 text-claude-info ${isDeploying ? 'animate-bounce' : ''}`} />
+          <span className="hidden sm:inline">{isDeploying ? 'Deploying…' : 'Simulate Deploy'}</span>
         </button>
 
+        {/* Reset */}
         <button
-          type="button"
           onClick={handleReset}
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 border border-slate-700/50 transition-all active:scale-95"
-          title="Reset demo data to initial clean blueprint seed"
+          className="p-2 rounded-lg text-claude-fg-3 hover:text-claude-fg hover:bg-claude-elevated transition-all cursor-pointer"
+          title="Reset demo data"
         >
           <RotateCcw className="w-3.5 h-3.5" />
         </button>
 
-        <div className="h-5 w-px bg-slate-800 mx-0.5" />
+        <div className="h-6 w-px bg-claude-border mx-1" />
 
-        {/* AUTH BUTTON OR USER PROFILE MENU */}
-        {!isAuthenticated ? (
-          <Link
-            to="/login"
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white shadow-lg shadow-indigo-600/30 border border-indigo-400/30 transition-all duration-200 active:scale-95"
-          >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>Sign In</span>
-          </Link>
-        ) : (
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center space-x-2 bg-[#0f172a]/90 hover:bg-[#151f38] px-2.5 py-1.5 rounded-xl border border-white/10 hover:border-indigo-500/40 transition-all duration-150 active:scale-95"
-              aria-expanded={menuOpen}
-              aria-label="User profile menu"
-            >
-              {user?.profilePicture ? (
-                <img
-                  src={user.profilePicture}
-                  alt={user.name}
-                  className="w-6 h-6 rounded-lg object-cover border border-indigo-400/40"
-                />
-              ) : (
-                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-extrabold text-[11px] shadow-sm uppercase">
-                  {user?.name ? user.name[0] : 'U'}
-                </div>
-              )}
-              <span className="text-xs font-semibold text-slate-200 hidden md:inline truncate max-w-[110px]">
-                {user?.name || 'Operator'}
-              </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${menuOpen ? 'rotate-180 text-indigo-400' : ''}`} />
-            </button>
-
-            {/* Profile Dropdown Menu */}
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-[#111726]/95 backdrop-blur-2xl border border-[#22304d] rounded-2xl p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
-                {/* User Info Header */}
-                <div className="px-3 py-2.5 border-b border-slate-800/80 mb-1">
-                  <div className="flex items-center space-x-2.5">
-                    {user?.profilePicture ? (
-                      <img
-                        src={user.profilePicture}
-                        alt={user.name}
-                        className="w-9 h-9 rounded-xl object-cover border border-indigo-400/40"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
-                        {user?.name ? user.name[0] : 'U'}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-white truncate">{user?.name || 'Operator'}</p>
-                      <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2 mt-2 pt-2 border-t border-slate-800/40">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
-                      {user?.workspace || 'ws-primary'}
-                    </span>
-                    {user?.authProviders?.includes('google') ? (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center space-x-1">
-                        <span>Google</span>
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                        Local
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Navigation Items */}
-                <div className="space-y-0.5 text-xs">
-                  <Link
-                    to="/profile"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/70 transition-colors"
-                  >
-                    <UserIcon className="w-4 h-4 text-indigo-400" />
-                    <span>My Profile</span>
-                  </Link>
-
-                  <Link
-                    to="/chat?conversations=open"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/70 transition-colors"
-                  >
-                    <MessageSquare className="w-4 h-4 text-cyan-400" />
-                    <span>My Conversations</span>
-                  </Link>
-
-                  <Link
-                    to="/profile?tab=settings"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-800/70 transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-slate-400" />
-                    <span>Account Settings</span>
-                  </Link>
-                </div>
-
-                <div className="my-1 border-t border-slate-800/80" />
-
-                {/* Logout Button */}
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-xs font-semibold transition-colors"
-                >
-                  <LogOut className="w-4 h-4 text-rose-400" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
+        {/* User avatar */}
+        <div className="flex items-center gap-2.5 pl-1 cursor-pointer group">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-claude-accent to-claude-accent-light flex items-center justify-center text-white text-sm font-bold shadow-soft">
+            {user?.name?.[0]?.toUpperCase() ?? 'A'}
           </div>
-        )}
+          <span className="text-sm text-claude-fg-2 font-medium hidden md:inline group-hover:text-claude-fg transition-colors">
+            {user?.name || 'Ayush'}
+          </span>
+          <button
+            onClick={logout}
+            className="p-1 text-claude-fg-3 hover:text-claude-danger transition-colors cursor-pointer"
+            title="Sign out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </header>
   );

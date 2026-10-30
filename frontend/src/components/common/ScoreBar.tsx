@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface ScoreBarProps {
   label: string;
@@ -41,4 +41,5 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
     </div>
   );
 };
+
 

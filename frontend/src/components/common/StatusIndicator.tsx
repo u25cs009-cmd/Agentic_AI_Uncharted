@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 interface StatusIndicatorProps {
   status: 'active' | 'stale' | 'quarantined' | 'superseded' | 'expired' | 'healthy' | 'live';
@@ -37,4 +37,5 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     </div>
   );
 };
+
 

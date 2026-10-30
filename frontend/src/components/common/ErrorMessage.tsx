@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { AlertTriangle, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ErrorMessageProps {
@@ -82,4 +82,5 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
     </div>
   );
 };
+
 

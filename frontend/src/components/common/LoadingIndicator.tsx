@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface LoadingIndicatorProps {
@@ -17,4 +17,5 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
     </div>
   );
 };
+
 
