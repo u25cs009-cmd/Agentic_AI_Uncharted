@@ -1,103 +1,242 @@
-import React, { useState } from 'react';
-import { 
-  Network, 
-  Layers, 
-  GitBranch, 
-  RefreshCw, 
-  Zap, 
-  AlertCircle, 
-  ShieldCheck,
-  CheckCircle2
-} from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import {
+  ReactFlow,
+  Controls,
+  Background,
+  MiniMap,
+  Node,
+  Edge,
+  useNodesState,
+  useEdgesState,
+  MarkerType,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { Network, Zap, CheckCircle2, ShieldCheck, Database, Layers, Radio } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
-
-interface NodeItem {
-  id: string;
-  name: string;
-  type: 'service' | 'component' | 'memory' | 'deploy';
-  status: 'active' | 'stale' | 'affected' | 'healthy';
-  description: string;
-  x: number;
-  y: number;
-}
-
-interface EdgeItem {
-  from: string;
-  to: string;
-  label?: string;
-  dashed?: boolean;
-}
 
 export const EntityGraphPage: React.FC = () => {
   const [highlightDeployment, setHighlightDeployment] = useState(true);
-  const [selectedNode, setSelectedNode] = useState<NodeItem | null>(null);
+  const [selectedNodeInfo, setSelectedNodeInfo] = useState<any | null>(null);
 
-  const nodes: NodeItem[] = [
-    {
-      id: 'svc-checkout',
-      name: 'checkout-api (v2.1)',
-      type: 'service',
-      status: 'healthy',
-      description: 'Microservice handling customer checkout transactions and payment flows',
-      x: 100,
-      y: 160,
-    },
-    {
-      id: 'cmp-pool',
-      name: 'pg-pool / db-connection',
-      type: 'component',
-      status: highlightDeployment ? 'affected' : 'healthy',
-      description: 'Underlying connection pool dependency altered in deployment v2.1.0',
-      x: 360,
-      y: 160,
-    },
-    {
-      id: 'mem-fix-active',
-      name: 'mem-001: Pool Max Conn: 50',
-      type: 'memory',
-      status: 'active',
-      description: 'Human-approved fix verified to work with checkout-api v2.1.0 (Trust: 1.00)',
-      x: 640,
-      y: 90,
-    },
-    {
-      id: 'mem-fix-stale',
-      name: 'mem-004: pg_ctlcluster restart',
-      type: 'memory',
-      status: 'stale',
-      description: 'Legacy PostgreSQL fix invalidated when component pg-pool was refactored',
-      x: 640,
-      y: 240,
-    },
-    {
-      id: 'dep-event',
-      name: 'Deploy Event: v2.1.0 Release',
-      type: 'deploy',
-      status: 'active',
-      description: 'GitHub Deploy Webhook triggered via n8n (W2)',
-      x: 360,
-      y: 340,
-    },
-  ];
+  const initialNodes: Node[] = useMemo(
+    () => [
+      {
+        id: 'svc-checkout',
+        type: 'default',
+        position: { x: 50, y: 150 },
+        data: {
+          label: (
+            <div className="p-1 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase">SERVICE</span>
+                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded font-mono">HEALTHY</span>
+              </div>
+              <div className="text-xs font-bold text-white">checkout-api</div>
+              <div className="text-[10px] text-slate-400 font-mono">v2.1.0 • prod-us-east</div>
+            </div>
+          ),
+        },
+        style: {
+          background: '#0d1322',
+          border: '1px solid #4f46e5',
+          borderRadius: '12px',
+          width: 190,
+          color: '#fff',
+        },
+      },
+      {
+        id: 'cmp-pool',
+        type: 'default',
+        position: { x: 300, y: 150 },
+        data: {
+          label: (
+            <div className="p-1 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase">COMPONENT</span>
+                <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${highlightDeployment ? 'bg-amber-500/20 text-amber-300 animate-pulse' : 'bg-slate-700 text-slate-300'}`}>
+                  {highlightDeployment ? 'REFACTORED' : 'STABLE'}
+                </span>
+              </div>
+              <div className="text-xs font-bold text-white">pg-pool / db-conn</div>
+              <div className="text-[10px] text-slate-400 font-mono">Altered in Deploy v2.1.0</div>
+            </div>
+          ),
+        },
+        style: {
+          background: highlightDeployment ? '#1f1609' : '#0d1322',
+          border: highlightDeployment ? '1px solid #f59e0b' : '1px solid #06b6d4',
+          borderRadius: '12px',
+          width: 200,
+          color: '#fff',
+        },
+      },
+      {
+        id: 'mem-001',
+        type: 'default',
+        position: { x: 600, y: 60 },
+        data: {
+          label: (
+            <div className="p-1 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase">ACTIVE MEMORY</span>
+                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded font-mono">TRUST: 1.00</span>
+              </div>
+              <div className="text-xs font-bold text-white">mem-001: Pool Max: 50</div>
+              <div className="text-[10px] text-slate-300">Human-approved resolution</div>
+            </div>
+          ),
+        },
+        style: {
+          background: '#0a1a14',
+          border: '1px solid #10b981',
+          borderRadius: '12px',
+          width: 210,
+          color: '#fff',
+        },
+      },
+      {
+        id: 'mem-004',
+        type: 'default',
+        position: { x: 600, y: 240 },
+        data: {
+          label: (
+            <div className="p-1 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-amber-400 font-bold uppercase">STALE MEMORY</span>
+                <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded font-mono">INVALIDATED</span>
+              </div>
+              <div className="text-xs font-bold text-white">mem-004: pg_ctlcluster</div>
+              <div className="text-[10px] text-slate-400 italic">Obsolete Postgres fix</div>
+            </div>
+          ),
+        },
+        style: {
+          background: '#19110a',
+          border: '1px solid #f59e0b',
+          borderRadius: '12px',
+          width: 210,
+          color: '#fff',
+          opacity: 0.85,
+        },
+      },
+      {
+        id: 'dep-webhook',
+        type: 'default',
+        position: { x: 300, y: 340 },
+        data: {
+          label: (
+            <div className="p-1 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-purple-400 font-bold uppercase">EVENT (W2)</span>
+                <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1 py-0.2 rounded font-mono">GITHUB HOOK</span>
+              </div>
+              <div className="text-xs font-bold text-white">Deploy Event v2.1.0</div>
+              <div className="text-[10px] text-slate-400 font-mono">n8n Automated Workflow</div>
+            </div>
+          ),
+        },
+        style: {
+          background: '#140c24',
+          border: '1px solid #a855f7',
+          borderRadius: '12px',
+          width: 200,
+          color: '#fff',
+        },
+      },
+      {
+        id: 'ent-mongodb',
+        type: 'default',
+        position: { x: 50, y: 340 },
+        data: {
+          label: (
+            <div className="p-1 text-left">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase">INFRA ENTITY</span>
+                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 py-0.2 rounded font-mono">PRIMARY</span>
+              </div>
+              <div className="text-xs font-bold text-white">MongoDB Atlas</div>
+              <div className="text-[10px] text-slate-400 font-mono">Cluster shakti2-primary</div>
+            </div>
+          ),
+        },
+        style: {
+          background: '#091512',
+          border: '1px solid #059669',
+          borderRadius: '12px',
+          width: 190,
+          color: '#fff',
+        },
+      },
+    ],
+    [highlightDeployment]
+  );
 
-  const edges: EdgeItem[] = [
-    { from: 'svc-checkout', to: 'cmp-pool', label: 'depends_on' },
-    { from: 'cmp-pool', to: 'mem-fix-active', label: 'validated_by' },
-    { from: 'cmp-pool', to: 'mem-fix-stale', label: 'invalidated', dashed: true },
-    { from: 'dep-event', to: 'cmp-pool', label: 'altered_component' },
-  ];
+  const initialEdges: Edge[] = useMemo(
+    () => [
+      {
+        id: 'e1',
+        source: 'svc-checkout',
+        target: 'cmp-pool',
+        label: 'depends_on',
+        animated: true,
+        style: { stroke: '#818cf8', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#818cf8' },
+      },
+      {
+        id: 'e2',
+        source: 'cmp-pool',
+        target: 'mem-001',
+        label: 'governed_by',
+        style: { stroke: '#10b981', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#10b981' },
+      },
+      {
+        id: 'e3',
+        source: 'cmp-pool',
+        target: 'mem-004',
+        label: 'invalidated_fix',
+        style: { stroke: '#f59e0b', strokeWidth: 2, strokeDasharray: '4 4' },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#f59e0b' },
+      },
+      {
+        id: 'e4',
+        source: 'dep-webhook',
+        target: 'cmp-pool',
+        label: 'altered_components',
+        animated: true,
+        style: { stroke: '#c084fc', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#c084fc' },
+      },
+      {
+        id: 'e5',
+        source: 'svc-checkout',
+        target: 'ent-mongodb',
+        label: 'persists_to',
+        style: { stroke: '#34d399', strokeWidth: 1.5 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#34d399' },
+      },
+    ],
+    []
+  );
+
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+
+  const onNodeClick = (_: any, node: Node) => {
+    setSelectedNodeInfo(node);
+  };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <div className="flex items-center space-x-2">
             <h1 className="text-2xl font-bold tracking-tight text-white">Entity Graph</h1>
-            <Badge variant="purple">MongoDB $graphLookup</Badge>
+            <Badge variant="purple">React Flow & $graphLookup</Badge>
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Visual graph mapping dependencies between services, components, deployment events, and governing memories.
+            Interactive topological relationship graph mapping services, infrastructure dependencies, deployment events, and governing memories.
           </p>
         </div>
 
@@ -105,108 +244,84 @@ export const EntityGraphPage: React.FC = () => {
           onClick={() => setHighlightDeployment(!highlightDeployment)}
           className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
             highlightDeployment
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
               : 'bg-[#111726] text-slate-400 border-slate-700'
           }`}
         >
           <Zap className="w-3.5 h-3.5 text-amber-400" />
-          <span>{highlightDeployment ? 'Deployment Impact: ON' : 'Show Neutral'}</span>
+          <span>{highlightDeployment ? 'Deployment Invalidation: ON' : 'Neutral View'}</span>
         </button>
       </div>
 
-      {/* Graph Visualizer Canvas */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 relative overflow-hidden shadow-md min-h-[460px] flex flex-col justify-between">
-        {/* Background Grid Pattern */}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:16px_16px]" />
-
-        {/* Legend */}
-        <div className="relative z-10 flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400 bg-[#0a0d14]/90 p-3 rounded-xl border border-slate-800 self-start">
+      {/* React Flow Graph Visualizer Container */}
+      <div className="bg-[#111726] border border-[#1f293d] rounded-3xl overflow-hidden shadow-2xl relative h-[520px]">
+        {/* Floating Legend Overlay */}
+        <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3 bg-[#0a0d14]/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-800 text-xs font-mono text-slate-400">
           <div className="flex items-center space-x-1.5">
-            <div className="w-3 h-3 rounded-full bg-indigo-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
             <span>Service</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-3 h-3 rounded-full bg-cyan-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
             <span>Component</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
             <span>Active Memory</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-3 h-3 rounded-full bg-amber-500" />
-            <span>Stale / Invalidated</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+            <span>Stale Memory</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-3 h-3 rounded-full bg-purple-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-purple-500" />
             <span>Deploy Event</span>
           </div>
         </div>
 
-        {/* Graph Nodes Canvas */}
-        <div className="relative z-10 h-80 my-4 flex items-center justify-around flex-wrap gap-4">
-          {nodes.map((node) => {
-            const isSelected = selectedNode?.id === node.id;
-            return (
-              <div
-                key={node.id}
-                onClick={() => setSelectedNode(node)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all w-56 shadow-lg ${
-                  isSelected
-                    ? 'ring-2 ring-indigo-400 scale-105'
-                    : 'hover:scale-102'
-                } ${
-                  node.status === 'stale'
-                    ? 'bg-amber-950/30 border-amber-500/40'
-                    : node.status === 'affected'
-                    ? 'bg-amber-900/20 border-amber-400/60 animate-pulse'
-                    : node.type === 'service'
-                    ? 'bg-indigo-950/40 border-indigo-500/40'
-                    : node.type === 'deploy'
-                    ? 'bg-purple-950/40 border-purple-500/40'
-                    : 'bg-emerald-950/30 border-emerald-500/40'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-black/40 text-slate-300">
-                    {node.type}
-                  </span>
-                  <Badge
-                    variant={
-                      node.status === 'stale'
-                        ? 'warning'
-                        : node.status === 'affected'
-                        ? 'danger'
-                        : 'success'
-                    }
-                    size="sm"
-                  >
-                    {node.status}
-                  </Badge>
-                </div>
+        {/* Interactive React Flow Canvas */}
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodeClick={onNodeClick}
+          fitView
+          className="bg-[#0a0d14]"
+        >
+          <Background color="#1f293d" gap={18} size={1} />
+          <Controls className="bg-[#111726] border-slate-700 text-white fill-white stroke-white" />
+          <MiniMap
+            nodeColor={(n) => {
+              if (n.id.includes('svc')) return '#6366f1';
+              if (n.id.includes('cmp')) return '#06b6d4';
+              if (n.id.includes('001')) return '#10b981';
+              if (n.id.includes('004')) return '#f59e0b';
+              return '#a855f7';
+            }}
+            className="bg-[#0d121f] border border-slate-800 rounded-xl overflow-hidden"
+          />
+        </ReactFlow>
 
-                <div className="text-xs font-bold text-white mb-1">{node.name}</div>
-                <p className="text-[11px] text-slate-400 line-clamp-2">{node.description}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Selected Node Drawer / Info */}
-        {selectedNode && (
-          <div className="relative z-10 bg-[#0a0d14] p-4 rounded-xl border border-slate-700 text-xs text-slate-200 flex items-center justify-between">
+        {/* Node Detail Drawer Overlay */}
+        {selectedNodeInfo && (
+          <div className="absolute bottom-4 left-4 right-4 z-10 bg-[#0d121f]/95 backdrop-blur-md border border-slate-700 p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-fade-in">
             <div className="flex items-center space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-indigo-400" />
+              <CheckCircle2 className="w-5 h-5 text-indigo-400 flex-shrink-0" />
               <div>
-                <span className="font-bold font-mono text-indigo-300">{selectedNode.name}</span>
-                <p className="text-slate-400 text-[11px]">{selectedNode.description}</p>
+                <span className="font-bold font-mono text-white text-xs">
+                  Selected Entity: {selectedNodeInfo.id}
+                </span>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Click and drag nodes to explore the dependency graph topology or click anywhere to inspect relationships.
+                </p>
               </div>
             </div>
             <button
-              onClick={() => setSelectedNode(null)}
-              className="text-slate-500 hover:text-slate-300"
+              onClick={() => setSelectedNodeInfo(null)}
+              className="text-slate-400 hover:text-white px-2 py-1 text-xs"
             >
-              ✕
+              Close
             </button>
           </div>
         )}
@@ -214,4 +329,3 @@ export const EntityGraphPage: React.FC = () => {
     </div>
   );
 };
-

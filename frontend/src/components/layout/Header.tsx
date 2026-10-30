@@ -6,15 +6,18 @@ import {
   Layers, 
   User, 
   CheckCircle,
-  ShieldCheck
+  ShieldCheck,
+  LogOut
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 interface HeaderProps {
   onRefresh?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
+  const { user, logout } = useAuth();
   const [isAlerting, setIsAlerting] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
@@ -59,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
         <div className="flex items-center space-x-2 text-xs font-mono bg-[#111827] px-3 py-1.5 rounded-lg border border-[#1e293b] text-slate-300">
           <Layers className="w-3.5 h-3.5 text-indigo-400" />
           <span>Workspace:</span>
-          <span className="text-indigo-300 font-semibold">ws-primary</span>
+          <span className="text-indigo-300 font-semibold">{user?.workspace || 'ws-primary'}</span>
         </div>
 
         <div className="hidden md:flex items-center space-x-1.5 text-xs text-slate-400">
@@ -109,16 +112,22 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
 
         <div className="h-6 w-px bg-slate-800 mx-1" />
 
-        <div className="flex items-center space-x-2 bg-[#111827] px-2.5 py-1 rounded-lg border border-[#1e293b]">
-          <div className="w-6 h-6 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-xs">
-            Y
+        <div className="flex items-center space-x-2 bg-[#111726] px-2.5 py-1 rounded-lg border border-[#1e293b]">
+          <div className="w-6 h-6 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-300 font-bold text-xs uppercase">
+            {user?.name ? user.name[0] : 'Y'}
           </div>
           <span className="text-xs font-medium text-slate-200 hidden sm:inline">
-            Yashi Aadarsh
+            {user?.name || 'Yashi Aadarsh'}
           </span>
+          <button
+            onClick={logout}
+            className="text-slate-400 hover:text-rose-400 ml-1 p-0.5 rounded transition-colors"
+            title="Log Out"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </header>
   );
 };
-

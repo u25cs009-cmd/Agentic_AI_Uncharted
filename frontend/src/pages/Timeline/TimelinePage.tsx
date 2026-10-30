@@ -54,6 +54,13 @@ export const TimelinePage: React.FC = () => {
 
   useEffect(() => {
     loadEvents();
+    const unsubscribe = api.subscribeToEventStream((newEvent) => {
+      setEvents((prev) => {
+        if (prev.some((e) => e.id === newEvent.id)) return prev;
+        return [newEvent, ...prev];
+      });
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -167,9 +174,15 @@ export const TimelinePage: React.FC = () => {
       {/* Chronological Append-Only Event Log */}
       <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center space-x-2">
-            <Radio className="w-5 h-5 text-indigo-400 animate-pulse" />
-            <h2 className="text-base font-semibold text-white">Append-Only Event Stream (SSE Log)</h2>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <Radio className="w-5 h-5 text-cyan-400 animate-pulse" />
+              <h2 className="text-base font-semibold text-white">Append-Only Event Stream</h2>
+            </div>
+            <span className="text-[11px] font-mono bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full flex items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5 animate-ping" />
+              SSE Live Stream Active
+            </span>
           </div>
           <span className="text-xs font-mono text-slate-400">
             {events.length} Audited Events
