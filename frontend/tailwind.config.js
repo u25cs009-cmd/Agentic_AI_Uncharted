@@ -8,46 +8,62 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Claude-inspired warm dark palette
+        // Celestial Nebula & Aurora Theme Palette (Gemini + Copilot inspired)
+        nebula: {
+          bg: '#07090e',
+          surface: '#0d1321',
+          elevated: '#11192d',
+          border: 'rgba(56, 189, 248, 0.14)',
+          cyan: '#06b6d4',
+          indigo: '#6366f1',
+          violet: '#8b5cf6',
+          emerald: '#10b981',
+          rose: '#f43f5e',
+          amber: '#f59e0b',
+        },
+        // Mapped legacy tokens for seamless backward compatibility with vibrant tones
         claude: {
-          bg:        '#1a1a1a',   // Main background — warm near-black
-          sidebar:   '#1e1e1e',   // Sidebar — slightly lighter
-          surface:   '#262626',   // Cards / panels
-          elevated:  '#2f2f2f',   // Elevated surfaces / hover
-          border:    '#383838',   // Subtle border
-          'border-hi':'#4a4a4a', // Highlighted border
-          fg:        '#ececec',   // Primary text
-          'fg-2':    '#b4b4b4',   // Secondary text
-          'fg-3':    '#737373',   // Muted text
-          accent:    '#cc8b3c',   // Warm amber/sand — Claude's signature
-          'accent-light':'#e8a84e',
-          'accent-bg':  'rgba(204,139,60,0.12)',
-          'accent-border':'rgba(204,139,60,0.3)',
-          success:   '#4caf7d',
-          'success-bg':'rgba(76,175,125,0.12)',
-          danger:    '#e05c5c',
-          'danger-bg': 'rgba(224,92,92,0.12)',
-          info:      '#7b9feb',
-          'info-bg': 'rgba(123,159,235,0.12)',
-          warning:   '#d4a843',
-          'warning-bg':'rgba(212,168,67,0.12)',
+          bg: '#07090e',
+          sidebar: '#0a0e1a',
+          surface: '#0d1321',
+          elevated: '#11192d',
+          border: 'rgba(56, 189, 248, 0.14)',
+          'border-hi': 'rgba(56, 189, 248, 0.35)',
+          fg: '#f8fafc',
+          'fg-2': '#cbd5e1',
+          'fg-3': '#94a3b8',
+          accent: '#06b6d4',
+          'accent-light': '#38bdf8',
+          'accent-bg': 'rgba(6, 182, 212, 0.12)',
+          'accent-border': 'rgba(6, 182, 212, 0.35)',
+          success: '#10b981',
+          'success-bg': 'rgba(16, 185, 129, 0.12)',
+          danger: '#f43f5e',
+          'danger-bg': 'rgba(244, 63, 94, 0.12)',
+          info: '#6366f1',
+          'info-bg': 'rgba(99, 102, 241, 0.12)',
+          warning: '#f59e0b',
+          'warning-bg': 'rgba(245, 158, 11, 0.12)',
         }
       },
       fontFamily: {
-        sans: ['"Inter"', '"Söhne"', '"ui-sans-serif"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"ui-monospace"', 'SFMono-Regular', 'monospace'],
+        sans: ['"Inter"', '"Outfit"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"ui-monospace"', 'monospace'],
       },
       borderRadius: {
-        sm:  '6px',
+        sm: '6px',
         DEFAULT: '8px',
         lg: '12px',
         xl: '16px',
         '2xl': '20px',
+        '3xl': '24px',
       },
       boxShadow: {
-        'soft':   '0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)',
-        'card':   '0 4px 16px rgba(0,0,0,0.35)',
-        'accent': '0 0 0 2px rgba(204,139,60,0.4)',
+        'glow-cyan': '0 0 25px rgba(6, 182, 212, 0.25)',
+        'glow-indigo': '0 0 25px rgba(99, 102, 241, 0.25)',
+        'glow-emerald': '0 0 25px rgba(16, 185, 129, 0.25)',
+        'glow-rose': '0 0 25px rgba(244, 63, 94, 0.25)',
+        'card': '0 8px 32px 0 rgba(0, 0, 0, 0.45)',
       },
     },
   },

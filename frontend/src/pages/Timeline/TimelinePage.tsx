@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   History, 
   Clock, 
@@ -71,7 +71,7 @@ export const TimelinePage: React.FC = () => {
       case 'created':
         return <Sparkles className="w-3.5 h-3.5 text-[#60d49a]" />;
       case 'superseded':
-        return <RefreshCw className="w-3.5 h-3.5 text-[#cc8b3c]" />;
+        return <RefreshCw className="w-3.5 h-3.5 text-[#06b6d4]" />;
       case 'stale':
         return <Clock className="w-3.5 h-3.5 text-[#e8c060]" />;
       case 'quarantined':
@@ -88,36 +88,36 @@ export const TimelinePage: React.FC = () => {
       {/* Header & Title HUD */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.18)] border border-[rgba(204,139,60,0.35)] flex items-center justify-center text-[#cc8b3c] shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-[rgba(6,182,212,0.15)] border border-[rgba(6,182,212,0.35)] flex items-center justify-center text-[#06b6d4] shadow-sm">
             <History className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Timeline &amp; Time-Travel</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">Timeline &amp; Time-Travel</h1>
               <Badge variant="primary" size="sm">Temporal Invariant (C3)</Badge>
             </div>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">
+            <p className="text-xs text-[#94a3b8] mt-0.5">
               Inspect immutable append-only memory events and reconstruct exact historical knowledge states without hallucination.
             </p>
           </div>
         </div>
 
-        <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-[#b4b4b4]">
-          <Radio className="w-3.5 h-3.5 text-[#cc8b3c] animate-pulse" />
+        <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-[#94a3b8]">
+          <Radio className="w-3.5 h-3.5 text-[#06b6d4] animate-pulse" />
           <span>Bi-temporal Indexing: <span className="text-[#60d49a] font-bold">ONLINE</span></span>
         </div>
       </div>
 
       {/* Time-Travel Interactive Scrubber Deck */}
-      <div className="card p-6 rounded-2xl relative overflow-hidden border-[rgba(204,139,60,0.3)] shadow-xl">
+      <div className="card p-6 rounded-2xl relative overflow-hidden border-[rgba(6,182,212,0.3)] shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center space-x-2">
-            <ArrowLeftRight className="w-5 h-5 text-[#cc8b3c]" />
-            <h2 className="text-base font-semibold text-[#f0f0f0] tracking-tight">Chrono-Scrubber &amp; State Reconstruction</h2>
+            <ArrowLeftRight className="w-5 h-5 text-[#06b6d4]" />
+            <h2 className="text-base font-semibold text-[#ffffff] tracking-tight">Chrono-Scrubber &amp; State Reconstruction</h2>
           </div>
-          <span className="text-xs font-mono bg-[rgba(204,139,60,0.15)] text-[#f0aa55] border border-[rgba(204,139,60,0.3)] px-3 py-1 rounded-full flex items-center space-x-1.5">
-            <Clock className="w-3.5 h-3.5 text-[#cc8b3c]" />
-            <span>Target: <strong className="text-[#f0f0f0]">{timePoints[sliderIndex].label}</strong> ({timePoints[sliderIndex].sub})</span>
+          <span className="text-xs font-mono bg-[rgba(6,182,212,0.12)] text-[#38bdf8] border border-[rgba(6,182,212,0.3)] px-3 py-1 rounded-full flex items-center space-x-1.5">
+            <Clock className="w-3.5 h-3.5 text-[#06b6d4]" />
+            <span>Target: <strong className="text-[#ffffff]">{timePoints[sliderIndex].label}</strong> ({timePoints[sliderIndex].sub})</span>
           </span>
         </div>
 
@@ -131,17 +131,17 @@ export const TimelinePage: React.FC = () => {
                 onClick={() => setSliderIndex(idx)}
                 className={`p-3 rounded-xl border text-left transition-all duration-200 ${
                   isSelected
-                    ? 'bg-[#2a2a2a] border-[#cc8b3c] ring-1 ring-[#cc8b3c] shadow-md'
-                    : 'bg-[#1e1e1e] border-[#383838] hover:border-[#555]'
+                    ? 'bg-[#0f1a30] border-[#06b6d4] ring-1 ring-[#06b6d4] shadow-md'
+                    : 'bg-[#0b1222] border-[#1e293b] hover:border-[#475569]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className={`text-[10px] font-mono font-bold ${isSelected ? 'text-[#f0aa55]' : 'text-[#888]'}`}>
+                  <span className={`text-[10px] font-mono font-bold ${isSelected ? 'text-[#38bdf8]' : 'text-[#888]'}`}>
                     STEP 0{idx + 1}
                   </span>
-                  <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-[#cc8b3c]' : 'bg-[#484848]'}`} />
+                  <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-[#06b6d4]' : 'bg-[#334155]'}`} />
                 </div>
-                <div className="text-xs font-bold text-[#f0f0f0] truncate">{tp.label}</div>
+                <div className="text-xs font-bold text-[#ffffff] truncate">{tp.label}</div>
                 <div className="text-[10px] text-[#888] font-mono truncate">{tp.sub}</div>
               </button>
             );
@@ -157,18 +157,18 @@ export const TimelinePage: React.FC = () => {
             step="1"
             value={sliderIndex}
             onChange={(e) => setSliderIndex(parseInt(e.target.value))}
-            className="w-full accent-[#cc8b3c] cursor-pointer h-2 bg-[#252525] rounded-lg"
+            className="w-full accent-[#06b6d4] cursor-pointer h-2 bg-[#0f172a] rounded-lg"
           />
         </div>
 
         {/* Historical Snapshot Preview */}
-        <div className="mt-6 pt-5 border-t border-[#383838]">
+        <div className="mt-6 pt-5 border-t border-[#1e293b]">
           <div className="flex items-center justify-between mb-3 text-xs font-mono">
             <span className="text-[#888] flex items-center space-x-1.5">
-              <Layers className="w-3.5 h-3.5 text-[#cc8b3c]" />
+              <Layers className="w-3.5 h-3.5 text-[#06b6d4]" />
               <span>Active Facts at {new Date(timePoints[sliderIndex].date).toLocaleDateString()}:</span>
             </span>
-            <span className="text-[#f0aa55] font-bold">
+            <span className="text-[#38bdf8] font-bold">
               {historicalState.length} Active Records Reconstructed
             </span>
           </div>
@@ -182,19 +182,19 @@ export const TimelinePage: React.FC = () => {
               {historicalState.map((m) => (
                 <div
                   key={m._id || m.id}
-                  className="bg-[#1e1e1e] p-3.5 rounded-xl border border-[#383838] text-xs text-[#d0d0d0] flex flex-col justify-between hover:border-[#555] transition-colors"
+                  className="bg-[#0b1222] p-3.5 rounded-xl border border-[#1e293b] text-xs text-[#d0d0d0] flex flex-col justify-between hover:border-[#475569] transition-colors"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-[#cc8b3c] font-bold">{m._id || m.id}</span>
+                      <span className="font-mono text-[#06b6d4] font-bold">{m._id || m.id}</span>
                       <Badge variant={m.status === 'active' ? 'success' : 'neutral'} size="sm" glow={m.status === 'active'}>
                         {m.status.toUpperCase()}
                       </Badge>
                     </div>
-                    <p className="line-clamp-2 text-[#ececec] font-medium text-xs leading-relaxed">{m.content}</p>
+                    <p className="line-clamp-2 text-[#f8fafc] font-medium text-xs leading-relaxed">{m.content}</p>
                   </div>
                   <div className="text-[10px] font-mono text-[#888] mt-2.5 pt-2 border-t border-[#333] flex justify-between">
-                    <span>Key: <strong className="text-[#f0aa55]">{m.attribute_key}</strong></span>
+                    <span>Key: <strong className="text-[#38bdf8]">{m.attribute_key}</strong></span>
                     <span>Trust: <strong className="text-[#60d49a]">{m.trust.toFixed(2)}</strong></span>
                   </div>
                 </div>
@@ -209,8 +209,8 @@ export const TimelinePage: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
-              <Radio className="w-4 h-4 text-[#cc8b3c] animate-pulse" />
-              <h2 className="text-base font-semibold text-[#f0f0f0] tracking-tight">Immutable Audit Log</h2>
+              <Radio className="w-4 h-4 text-[#06b6d4] animate-pulse" />
+              <h2 className="text-base font-semibold text-[#ffffff] tracking-tight">Immutable Audit Log</h2>
             </div>
             <span className="text-[11px] font-mono bg-[rgba(76,175,125,0.15)] text-[#60d49a] border border-[rgba(76,175,125,0.35)] px-2.5 py-0.5 rounded-full flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#4caf7d]" />
@@ -222,16 +222,16 @@ export const TimelinePage: React.FC = () => {
           </span>
         </div>
 
-        <div className="relative border-l-2 border-[#383838] ml-4 pl-6 space-y-5">
+        <div className="relative border-l-2 border-[#1e293b] ml-4 pl-6 space-y-5">
           {events.map((evt) => (
             <div key={evt.id} className="relative group">
               {/* Dot Icon on timeline line */}
-              <div className="absolute -left-[35px] top-0.5 w-7 h-7 rounded-full bg-[#252525] border border-[#484848] flex items-center justify-center shadow-md">
+              <div className="absolute -left-[35px] top-0.5 w-7 h-7 rounded-full bg-[#0f172a] border border-[#334155] flex items-center justify-center shadow-md">
                 {getEventIcon(evt.event_type)}
               </div>
 
               {/* Event Card */}
-              <div className="card p-4 rounded-xl border-[#383838] group-hover:border-[#555] transition-all">
+              <div className="card p-4 rounded-xl border-[#1e293b] group-hover:border-[#475569] transition-all">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div className="flex items-center space-x-2">
                     <Badge
@@ -249,7 +249,7 @@ export const TimelinePage: React.FC = () => {
                     >
                       {evt.event_type.toUpperCase()}
                     </Badge>
-                    <span className="font-mono text-xs font-bold text-[#cc8b3c]">
+                    <span className="font-mono text-xs font-bold text-[#06b6d4]">
                       Target: {evt.memory_id}
                     </span>
                   </div>
@@ -259,12 +259,12 @@ export const TimelinePage: React.FC = () => {
                   </span>
                 </div>
 
-                <p className="text-xs text-[#ececec] mt-1 leading-relaxed font-sans">
+                <p className="text-xs text-[#f8fafc] mt-1 leading-relaxed font-sans">
                   {evt.reason}
                 </p>
 
-                <div className="mt-2.5 pt-2 border-t border-[#383838] text-[10px] font-mono text-[#888] flex items-center justify-between">
-                  <span>Actor: <strong className="text-[#ececec]">{evt.actor}</strong></span>
+                <div className="mt-2.5 pt-2 border-t border-[#1e293b] text-[10px] font-mono text-[#888] flex items-center justify-between">
+                  <span>Actor: <strong className="text-[#f8fafc]">{evt.actor}</strong></span>
                   <span className="text-[#666]">ID: {evt.id}</span>
                 </div>
               </div>

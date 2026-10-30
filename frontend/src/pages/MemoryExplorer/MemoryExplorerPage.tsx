@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Database, 
   Search, 
@@ -158,7 +158,7 @@ export const MemoryExplorerPage: React.FC = () => {
         header: 'ID',
         sortable: true,
         render: (row) => (
-          <span className="font-mono text-xs font-bold text-[#cc8b3c]">
+          <span className="font-mono text-xs font-bold text-[#06b6d4]">
             {row._id || row.id}
           </span>
         ),
@@ -177,7 +177,7 @@ export const MemoryExplorerPage: React.FC = () => {
         header: 'Attribute Key',
         sortable: true,
         render: (row) => (
-          <span className="font-mono text-xs text-[#b4b4b4]">
+          <span className="font-mono text-xs text-[#94a3b8]">
             {row.attribute_key}
           </span>
         ),
@@ -236,7 +236,7 @@ export const MemoryExplorerPage: React.FC = () => {
         sortable: true,
         align: 'center',
         render: (row) => (
-          <span className="font-mono text-[#cc8b3c]">
+          <span className="font-mono text-[#06b6d4]">
             {row.confidence.toFixed(2)}
           </span>
         ),
@@ -251,15 +251,15 @@ export const MemoryExplorerPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[rgba(204,139,60,0.18)] border border-[rgba(204,139,60,0.35)] flex items-center justify-center text-[#cc8b3c] shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-[rgba(6,182,212,0.15)] border border-[rgba(6,182,212,0.35)] flex items-center justify-center text-[#06b6d4] shadow-sm">
               <Database className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Memory Explorer</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">Memory Explorer</h1>
                 <Badge variant="primary" size="sm">XYRO101 Knowledge Base</Badge>
               </div>
-              <p className="text-xs text-[#b4b4b4] mt-0.5">
+              <p className="text-xs text-[#94a3b8] mt-0.5">
                 Inspect, calibrate, promote, and audit governed memory states across temporal tiers.
               </p>
             </div>
@@ -274,7 +274,7 @@ export const MemoryExplorerPage: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 font-medium transition-all ${
                 viewMode === 'cards'
                   ? 'btn-primary'
-                  : 'text-[#888] hover:text-[#ececec]'
+                  : 'text-[#888] hover:text-[#f8fafc]'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -285,7 +285,7 @@ export const MemoryExplorerPage: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 font-medium transition-all ${
                 viewMode === 'table'
                   ? 'btn-primary'
-                  : 'text-[#888] hover:text-[#ececec]'
+                  : 'text-[#888] hover:text-[#f8fafc]'
               }`}
             >
               <TableIcon className="w-3.5 h-3.5" />
@@ -297,21 +297,21 @@ export const MemoryExplorerPage: React.FC = () => {
 
       {/* Telemetry Stat Ribbons */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="card p-4 relative overflow-hidden group hover:border-[#555] transition-all">
+        <div className="card p-4 relative overflow-hidden group hover:border-[#475569] transition-all">
           <div className="text-[11px] font-mono text-[#888] uppercase tracking-wider flex items-center justify-between">
             <span>Total Memories</span>
-            <Database className="w-3.5 h-3.5 text-[#cc8b3c]" />
+            <Database className="w-3.5 h-3.5 text-[#06b6d4]" />
           </div>
-          <div className="text-2xl font-bold font-mono text-[#f0f0f0] mt-1">{stats.total}</div>
+          <div className="text-2xl font-bold font-mono text-[#ffffff] mt-1">{stats.total}</div>
           <div className="text-[10px] text-[#666] mt-0.5 font-mono">Governed MongoDB Collection</div>
         </div>
 
         <div className="card p-4 relative overflow-hidden group hover:border-[rgba(204,139,60,0.5)] transition-all">
-          <div className="text-[11px] font-mono text-[#f0aa55] uppercase tracking-wider flex items-center justify-between">
+          <div className="text-[11px] font-mono text-[#38bdf8] uppercase tracking-wider flex items-center justify-between">
             <span>Core Hot Facts</span>
-            <Flame className="w-3.5 h-3.5 text-[#cc8b3c]" />
+            <Flame className="w-3.5 h-3.5 text-[#06b6d4]" />
           </div>
-          <div className="text-2xl font-bold font-mono text-[#f0aa55] mt-1">{stats.hotCore}</div>
+          <div className="text-2xl font-bold font-mono text-[#38bdf8] mt-1">{stats.hotCore}</div>
           <div className="text-[10px] text-[rgba(204,139,60,0.8)] mt-0.5 font-mono">High-Priority Working Set</div>
         </div>
 
@@ -361,7 +361,7 @@ export const MemoryExplorerPage: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter by keyword, attribute key, or entity..."
-            className="w-full bg-[#1e1e1e] border border-[#484848] rounded-xl pl-9 pr-4 py-2 text-xs text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c] transition-colors"
+            className="w-full bg-[#0b1222] border border-[#334155] rounded-xl pl-9 pr-4 py-2 text-xs text-[#f8fafc] placeholder-[#888] focus:outline-none focus:border-[#06b6d4] transition-colors"
           />
         </div>
 
@@ -371,7 +371,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#1e1e1e] border border-[#484848] rounded-lg px-2.5 py-1.5 text-xs text-[#ececec] focus:outline-none focus:border-[#cc8b3c] transition-colors"
+            className="bg-[#0b1222] border border-[#334155] rounded-lg px-2.5 py-1.5 text-xs text-[#f8fafc] focus:outline-none focus:border-[#06b6d4] transition-colors"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
@@ -387,7 +387,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-[#1e1e1e] border border-[#484848] rounded-lg px-2.5 py-1.5 text-xs text-[#ececec] focus:outline-none focus:border-[#cc8b3c] transition-colors"
+            className="bg-[#0b1222] border border-[#334155] rounded-lg px-2.5 py-1.5 text-xs text-[#f8fafc] focus:outline-none focus:border-[#06b6d4] transition-colors"
           >
             <option value="all">All Types</option>
             <option value="semantic">Semantic</option>
@@ -402,7 +402,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value)}
-            className="bg-[#1e1e1e] border border-[#484848] rounded-lg px-2.5 py-1.5 text-xs text-[#ececec] focus:outline-none focus:border-[#cc8b3c] transition-colors"
+            className="bg-[#0b1222] border border-[#334155] rounded-lg px-2.5 py-1.5 text-xs text-[#f8fafc] focus:outline-none focus:border-[#06b6d4] transition-colors"
           >
             <option value="all">All Tiers</option>
             <option value="hot">Hot (Core)</option>
@@ -417,7 +417,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value)}
-            className="bg-[#1e1e1e] border border-[#484848] rounded-lg px-2.5 py-1.5 text-xs text-[#ececec] focus:outline-none focus:border-[#cc8b3c] transition-colors"
+            className="bg-[#0b1222] border border-[#334155] rounded-lg px-2.5 py-1.5 text-xs text-[#f8fafc] focus:outline-none focus:border-[#06b6d4] transition-colors"
           >
             <option value="all">All Sources</option>
             <option value="human_approved">Human Approved (1.00)</option>
@@ -433,7 +433,7 @@ export const MemoryExplorerPage: React.FC = () => {
           <button
             type="button"
             onClick={handleClearFilters}
-            className="flex items-center space-x-1.5 text-xs text-[#cc8b3c] hover:text-[#e8a84e] font-medium px-3 py-1.5 rounded-lg border border-[rgba(204,139,60,0.3)] bg-[rgba(204,139,60,0.12)] transition-colors"
+            className="flex items-center space-x-1.5 text-xs text-[#06b6d4] hover:text-[#22d3ee] font-medium px-3 py-1.5 rounded-lg border border-[rgba(6,182,212,0.3)] bg-[rgba(6,182,212,0.12)] transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
@@ -493,18 +493,18 @@ export const MemoryExplorerPage: React.FC = () => {
                       }}
                       className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 relative overflow-hidden ${
                         isSelected
-                          ? 'bg-[#2a2a2a] border-[#cc8b3c] shadow-lg ring-1 ring-[#cc8b3c]'
-                          : 'card hover:border-[#555]'
+                          ? 'bg-[#0f1a30] border-[#06b6d4] shadow-lg ring-1 ring-[#06b6d4]'
+                          : 'card hover:border-[#475569]'
                       }`}
                     >
                       {/* Left border accent line */}
                       <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                        isActive ? 'bg-[#4caf7d]' : isStale ? 'bg-[#d4a843]' : isQuarantined ? 'bg-[#e05c5c]' : 'bg-[#555]'
+                        isActive ? 'bg-[#4caf7d]' : isStale ? 'bg-[#38bdf8]' : isQuarantined ? 'bg-[#e05c5c]' : 'bg-[#475569]'
                       }`} />
 
                       <div className="flex items-center justify-between mb-2.5 pl-2">
                         <div className="flex items-center space-x-2">
-                          <span className="font-mono text-xs font-bold text-[#cc8b3c]">
+                          <span className="font-mono text-xs font-bold text-[#06b6d4]">
                             {m._id || m.id}
                           </span>
                           <Badge
@@ -537,7 +537,7 @@ export const MemoryExplorerPage: React.FC = () => {
                         <div className="flex items-center space-x-3 text-xs font-mono">
                           <div className="flex items-center space-x-1.5">
                             <span className="text-[10px] text-[#888]">TRUST</span>
-                            <div className="w-12 h-1.5 bg-[#1e1e1e] rounded-full overflow-hidden">
+                            <div className="w-12 h-1.5 bg-[#0b1222] rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-[#4caf7d]"
                                 style={{ width: `${Math.round(m.trust * 100)}%` }}
@@ -548,21 +548,21 @@ export const MemoryExplorerPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <p className="text-xs text-[#d8d8d8] font-medium leading-relaxed mb-3 pl-2 line-clamp-2">
+                      <p className="text-xs text-[#cbd5e1] font-medium leading-relaxed mb-3 pl-2 line-clamp-2">
                         {m.content}
                       </p>
 
-                      <div className="flex items-center justify-between text-xs text-[#888] pt-2.5 border-t border-[#383838] pl-2">
-                        <div className="flex items-center space-x-1.5 text-[#cc8b3c] font-mono text-[11px] truncate max-w-[220px]">
+                      <div className="flex items-center justify-between text-xs text-[#888] pt-2.5 border-t border-[#1e293b] pl-2">
+                        <div className="flex items-center space-x-1.5 text-[#06b6d4] font-mono text-[11px] truncate max-w-[220px]">
                           <Key className="w-3 h-3 text-[#666] shrink-0" />
                           <span className="truncate">{m.attribute_key}</span>
                         </div>
                         <div className="flex items-center space-x-1.5">
                           <span className="text-[10px] text-[#666] font-mono">
-                            src: <span className="text-[#b4b4b4]">{m.source.kind}</span>
+                            src: <span className="text-[#94a3b8]">{m.source.kind}</span>
                           </span>
                           {m.entities.slice(0, 2).map((e) => (
-                            <span key={e} className="bg-[#2a2a2a] border border-[#484848] px-1.5 py-0.5 rounded text-[10px] text-[#f0aa55] font-mono">
+                            <span key={e} className="bg-[#0f1a30] border border-[#334155] px-1.5 py-0.5 rounded text-[10px] text-[#38bdf8] font-mono">
                               {e}
                             </span>
                           ))}
@@ -579,10 +579,10 @@ export const MemoryExplorerPage: React.FC = () => {
         {/* Right Column: Inspector Drawer */}
         <div className="lg:col-span-1">
           {selectedMemory ? (
-            <div className="card p-5 sticky top-20 shadow-2xl space-y-4 animate-fade-in border-[#484848]">
-              <div className="flex items-center justify-between border-b border-[#383838] pb-3">
+            <div className="card p-5 sticky top-20 shadow-2xl space-y-4 animate-fade-in border-[#334155]">
+              <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
                 <div className="flex items-center space-x-2">
-                  <span className="font-mono text-xs font-bold text-[#cc8b3c]">
+                  <span className="font-mono text-xs font-bold text-[#06b6d4]">
                     {selectedMemory._id || selectedMemory.id}
                   </span>
                   <Badge
@@ -617,12 +617,12 @@ export const MemoryExplorerPage: React.FC = () => {
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
                       rows={3}
-                      className="w-full bg-[#1e1e1e] border border-[#cc8b3c] rounded-xl p-2.5 text-xs text-[#ececec] focus:outline-none focus:ring-1 focus:ring-[#cc8b3c]"
+                      className="w-full bg-[#0b1222] border border-[#06b6d4] rounded-xl p-2.5 text-xs text-[#f8fafc] focus:outline-none focus:ring-1 focus:ring-[#06b6d4]"
                     />
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => setIsEditing(false)}
-                        className="px-3 py-1 text-xs text-[#888] hover:text-[#ececec]"
+                        className="px-3 py-1 text-xs text-[#888] hover:text-[#f8fafc]"
                       >
                         Cancel
                       </button>
@@ -635,7 +635,7 @@ export const MemoryExplorerPage: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-[#d8d8d8] bg-[#1e1e1e] p-3.5 rounded-xl border border-[#383838] leading-relaxed font-sans">
+                  <p className="text-xs text-[#cbd5e1] bg-[#0b1222] p-3.5 rounded-xl border border-[#1e293b] leading-relaxed font-sans">
                     {selectedMemory.content}
                   </p>
                 )}
@@ -643,44 +643,44 @@ export const MemoryExplorerPage: React.FC = () => {
 
               {/* Detailed Metadata Grid */}
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Attribute Key:</span>
-                  <span className="font-mono text-[#cc8b3c] font-semibold">{selectedMemory.attribute_key}</span>
+                  <span className="font-mono text-[#06b6d4] font-semibold">{selectedMemory.attribute_key}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Memory Tier:</span>
-                  <span className="font-mono font-bold text-[#f0aa55] uppercase flex items-center space-x-1">
-                    {selectedMemory.tier === 'hot' && <Flame className="w-3 h-3 text-[#cc8b3c] inline" />}
+                  <span className="font-mono font-bold text-[#38bdf8] uppercase flex items-center space-x-1">
+                    {selectedMemory.tier === 'hot' && <Flame className="w-3 h-3 text-[#06b6d4] inline" />}
                     <span>{selectedMemory.tier}</span>
                   </span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Source:</span>
                   <span className="font-mono text-[#d0d0d0]">{selectedMemory.source.kind}</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Trust Score:</span>
                   <span className="font-mono font-bold text-[#60d49a]">
                     {selectedMemory.trust.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Confidence:</span>
-                  <span className="font-mono font-bold text-[#cc8b3c]">
+                  <span className="font-mono font-bold text-[#06b6d4]">
                     {selectedMemory.confidence.toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Dependencies:</span>
-                  <span className="font-mono text-[#b4b4b4]">
+                  <span className="font-mono text-[#94a3b8]">
                     {selectedMemory.depends_on.join(', ') || 'none'}
                   </span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Access Count:</span>
                   <span className="font-mono text-[#d0d0d0]">{selectedMemory.access_count} calls</span>
                 </div>
-                <div className="flex justify-between py-1.5 border-b border-[#383838]">
+                <div className="flex justify-between py-1.5 border-b border-[#1e293b]">
                   <span className="text-[#888]">Valid From:</span>
                   <span className="font-mono text-[#888] text-[11px]">
                     {new Date(selectedMemory.valid_from).toLocaleDateString()}
@@ -689,18 +689,18 @@ export const MemoryExplorerPage: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-[#383838] space-y-2">
+              <div className="pt-3 border-t border-[#1e293b] space-y-2">
                 {selectedMemory.tier !== 'hot' ? (
                   <button
                     onClick={() => handlePromoteToCore(selectedMemory)}
-                    className="w-full flex items-center justify-center space-x-1.5 bg-[rgba(204,139,60,0.18)] hover:bg-[rgba(204,139,60,0.28)] text-[#f0aa55] border border-[rgba(204,139,60,0.4)] rounded-xl py-2.5 text-xs font-semibold transition-all active:scale-98"
+                    className="w-full flex items-center justify-center space-x-1.5 bg-[rgba(6,182,212,0.15)] hover:bg-[rgba(204,139,60,0.28)] text-[#38bdf8] border border-[rgba(6,182,212,0.35)] rounded-xl py-2.5 text-xs font-semibold transition-all active:scale-98"
                   >
-                    <Star className="w-3.5 h-3.5 text-[#cc8b3c] fill-[#cc8b3c]" />
+                    <Star className="w-3.5 h-3.5 text-[#06b6d4] fill-[#06b6d4]" />
                     <span>Promote to Core (Hot Tier)</span>
                   </button>
                 ) : (
-                  <div className="w-full py-2 bg-[rgba(204,139,60,0.1)] border border-[rgba(204,139,60,0.3)] rounded-xl text-center text-xs font-mono text-[#f0aa55] flex items-center justify-center space-x-1.5">
-                    <Flame className="w-3.5 h-3.5 text-[#cc8b3c]" />
+                  <div className="w-full py-2 bg-[rgba(204,139,60,0.1)] border border-[rgba(6,182,212,0.3)] rounded-xl text-center text-xs font-mono text-[#38bdf8] flex items-center justify-center space-x-1.5">
+                    <Flame className="w-3.5 h-3.5 text-[#06b6d4]" />
                     <span>Active Core Memory (Hot Tier)</span>
                   </div>
                 )}
@@ -737,8 +737,8 @@ export const MemoryExplorerPage: React.FC = () => {
             </div>
           ) : (
             <div className="card p-8 text-center text-[#888] text-xs flex flex-col items-center justify-center space-y-2">
-              <Cpu className="w-8 h-8 text-[#555] mb-1" />
-              <p className="font-mono text-[#b4b4b4]">No Memory Selected</p>
+              <Cpu className="w-8 h-8 text-[#475569] mb-1" />
+              <p className="font-mono text-[#94a3b8]">No Memory Selected</p>
               <p className="text-[11px] text-[#666] max-w-xs">Click any memory row or card to inspect its calibration parameters, promotion triggers, and audit trail.</p>
             </div>
           )}

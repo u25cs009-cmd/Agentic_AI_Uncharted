@@ -5,13 +5,13 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: STORE
-        value: memory
+        value: mongodb
       - key: JWT_SECRET
         generateValue: true
       - key: PORT
@@ -23,10 +23,9 @@ services:
     runtime: static
     plan: free
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     staticPublishPath: dist
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
-

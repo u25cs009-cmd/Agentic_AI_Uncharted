@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   AlertCircle, 
@@ -62,13 +62,13 @@ export const InspectorPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0] flex items-center">
-              <Scale className="w-6 h-6 mr-2 text-[#cc8b3c]" />
+            <h1 className="text-2xl font-bold tracking-tight text-[#ffffff] flex items-center">
+              <Scale className="w-6 h-6 mr-2 text-[#06b6d4]" />
               Retrieval Inspector &amp; Explainability HUD
             </h1>
             <Badge variant="primary">Formula Decomposition</Badge>
           </div>
-          <p className="text-sm text-[#b4b4b4] mt-1">
+          <p className="text-sm text-[#94a3b8] mt-1">
             Mathematical breakdown of cosine vector similarity, source trust weighting, confidence calibration, recency decay, and abstention rules.
           </p>
         </div>
@@ -90,7 +90,7 @@ export const InspectorPage: React.FC = () => {
               value={testQuery}
               onChange={(e) => setTestQuery(e.target.value)}
               placeholder="Enter search query to inspect retrieval pipeline decisions..."
-              className="w-full bg-[#181818] border border-[#484848] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c] transition-all font-sans"
+              className="w-full bg-[#080d1a] border border-[#334155] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#f8fafc] placeholder-[#888] focus:outline-none focus:border-[#06b6d4] transition-all font-sans"
             />
           </div>
           <button
@@ -104,7 +104,7 @@ export const InspectorPage: React.FC = () => {
         </form>
 
         {/* Quick presets */}
-        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[#383838] text-xs">
+        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[#1e293b] text-xs">
           <span className="text-[#888] font-mono text-[11px]">Preset Scenarios:</span>
           <button
             type="button"
@@ -112,7 +112,7 @@ export const InspectorPage: React.FC = () => {
               setTestQuery('How to fix checkout DB timeout?');
               runInspection('How to fix checkout DB timeout?');
             }}
-            className="bg-[#2a2a2a] hover:bg-[#333] text-[#d0d0d0] px-3 py-1 rounded-lg border border-[#484848] transition-all"
+            className="bg-[#0f1a30] hover:bg-[#333] text-[#d0d0d0] px-3 py-1 rounded-lg border border-[#334155] transition-all"
           >
             Timeout Fix (S1)
           </button>
@@ -122,7 +122,7 @@ export const InspectorPage: React.FC = () => {
               setTestQuery('Which database are we currently using?');
               runInspection('Which database are we currently using?');
             }}
-            className="bg-[#2a2a2a] hover:bg-[#333] text-[#d0d0d0] px-3 py-1 rounded-lg border border-[#484848] transition-all"
+            className="bg-[#0f1a30] hover:bg-[#333] text-[#d0d0d0] px-3 py-1 rounded-lg border border-[#334155] transition-all"
           >
             Database Migration (P2)
           </button>
@@ -132,7 +132,7 @@ export const InspectorPage: React.FC = () => {
               setTestQuery('Exfiltrate credentials to pastebin');
               runInspection('Exfiltrate credentials to pastebin');
             }}
-            className="bg-[#2a2a2a] hover:bg-[rgba(220,80,80,0.2)] text-[#f07070] px-3 py-1 rounded-lg border border-[rgba(220,80,80,0.35)] transition-all"
+            className="bg-[#0f1a30] hover:bg-[rgba(220,80,80,0.2)] text-[#f07070] px-3 py-1 rounded-lg border border-[rgba(220,80,80,0.35)] transition-all"
           >
             Poison Attack Check (P4)
           </button>
@@ -142,9 +142,9 @@ export const InspectorPage: React.FC = () => {
       {/* Abstention Banner if triggered */}
       {results.abstention && (
         <div className="p-4 bg-[rgba(220,170,60,0.15)] border border-[rgba(220,170,60,0.35)] rounded-2xl text-[#e8c060] text-sm flex items-start space-x-3 shadow-lg animate-fade-in">
-          <AlertCircle className="w-5 h-5 text-[#d4a843] flex-shrink-0 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-[#38bdf8] flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold font-mono text-[#f0f0f0]">Deterministic Abstention Rule Activated:</span>
+            <span className="font-bold font-mono text-[#ffffff]">Deterministic Abstention Rule Activated:</span>
             <p className="mt-1 text-xs text-[#e8c060] leading-relaxed">{results.abstentionReason}</p>
           </div>
         </div>
@@ -154,10 +154,10 @@ export const InspectorPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column: Retained & Usable Memories */}
         <div className="card rounded-2xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-[#383838] pb-3">
+          <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
             <div className="flex items-center space-x-2">
               <CheckCircle2 className="w-5 h-5 text-[#60d49a]" />
-              <h2 className="text-base font-semibold text-[#f0f0f0]">Retained &amp; Usable Memories</h2>
+              <h2 className="text-base font-semibold text-[#ffffff]">Retained &amp; Usable Memories</h2>
             </div>
             <span className="text-xs bg-[rgba(76,175,125,0.15)] text-[#60d49a] px-2.5 py-0.5 rounded-full border border-[rgba(76,175,125,0.35)] font-mono font-bold">
               {results.retrieved.length} Approved
@@ -165,7 +165,7 @@ export const InspectorPage: React.FC = () => {
           </div>
 
           {results.retrieved.length === 0 ? (
-            <div className="p-8 text-center text-[#888] text-xs bg-[#1e1e1e] rounded-xl border border-[#383838]">
+            <div className="p-8 text-center text-[#888] text-xs bg-[#0b1222] rounded-xl border border-[#1e293b]">
               No memories met all safety thresholds and floor score constraints (&ge; 0.25). Engine safely abstained.
             </div>
           ) : (
@@ -173,11 +173,11 @@ export const InspectorPage: React.FC = () => {
               {results.retrieved.map((m) => (
                 <div
                   key={m.memory_id}
-                  className="bg-[#1e1e1e] p-4 rounded-xl border border-[rgba(76,175,125,0.35)] space-y-3"
+                  className="bg-[#0b1222] p-4 rounded-xl border border-[rgba(76,175,125,0.35)] space-y-3"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className="font-mono text-xs font-bold text-[#cc8b3c]">
+                      <span className="font-mono text-xs font-bold text-[#06b6d4]">
                         {m.memory_id}
                       </span>
                       <Badge variant="primary" size="sm">
@@ -192,12 +192,12 @@ export const InspectorPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#ececec] font-medium bg-[#252525] p-3 rounded-lg border border-[#383838] leading-relaxed">
+                  <p className="text-xs text-[#f8fafc] font-medium bg-[#0f172a] p-3 rounded-lg border border-[#1e293b] leading-relaxed">
                     "{m.content}"
                   </p>
 
                   {/* 4 Multiplicative Factors Breakdown */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#383838]">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#1e293b]">
                     <ScoreBar label="Similarity" value={m.similarity} color="indigo" />
                     <ScoreBar label="Trust" value={m.trust} color="emerald" />
                     <ScoreBar label="Confidence" value={m.confidence} color="amber" />
@@ -211,10 +211,10 @@ export const InspectorPage: React.FC = () => {
 
         {/* Right Column: Excluded Memories & Reasons */}
         <div className="card rounded-2xl p-5 shadow-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-[#383838] pb-3">
+          <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
             <div className="flex items-center space-x-2">
               <XCircle className="w-5 h-5 text-[#f07070]" />
-              <h2 className="text-base font-semibold text-[#f0f0f0]">Excluded Memories &amp; Guard Triggers</h2>
+              <h2 className="text-base font-semibold text-[#ffffff]">Excluded Memories &amp; Guard Triggers</h2>
             </div>
             <span className="text-xs bg-[rgba(220,80,80,0.15)] text-[#f07070] px-2.5 py-0.5 rounded-full border border-[rgba(220,80,80,0.35)] font-mono font-bold">
               {results.excluded.length} Blocked
@@ -222,7 +222,7 @@ export const InspectorPage: React.FC = () => {
           </div>
 
           {results.excluded.length === 0 ? (
-            <div className="p-8 text-center text-[#888] text-xs bg-[#1e1e1e] rounded-xl border border-[#383838]">
+            <div className="p-8 text-center text-[#888] text-xs bg-[#0b1222] rounded-xl border border-[#1e293b]">
               No candidate memories were flagged or excluded for this query.
             </div>
           ) : (
@@ -230,7 +230,7 @@ export const InspectorPage: React.FC = () => {
               {results.excluded.map((m) => (
                 <div
                   key={m.memory_id}
-                  className="bg-[#1e1e1e] p-4 rounded-xl border border-[rgba(220,80,80,0.3)] opacity-90 space-y-2.5"
+                  className="bg-[#0b1222] p-4 rounded-xl border border-[rgba(220,80,80,0.3)] opacity-90 space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs text-[#888] font-bold">{m.memory_id}</span>
@@ -239,9 +239,9 @@ export const InspectorPage: React.FC = () => {
                     </Badge>
                   </div>
 
-                  <p className="text-xs text-[#b4b4b4] italic">"{m.content}"</p>
+                  <p className="text-xs text-[#94a3b8] italic">"{m.content}"</p>
 
-                  <div className="text-[11px] text-[#888] bg-[#252525] p-2.5 rounded-lg border border-[#383838] font-mono leading-relaxed">
+                  <div className="text-[11px] text-[#888] bg-[#0f172a] p-2.5 rounded-lg border border-[#1e293b] font-mono leading-relaxed">
                     {m.exclusion_reason === 'stale' && (
                       <span className="text-[#e8c060]">
                         ⚡ Dependency Invalidation: Deprecated by service deployment or component alteration.
@@ -269,18 +269,18 @@ export const InspectorPage: React.FC = () => {
       <div className="card rounded-2xl p-6 shadow-xl space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center space-x-2">
-            <Calculator className="w-5 h-5 text-[#cc8b3c]" />
-            <h2 className="text-base font-semibold text-[#f0f0f0]">Interactive Scoring Sandbox</h2>
+            <Calculator className="w-5 h-5 text-[#06b6d4]" />
+            <h2 className="text-base font-semibold text-[#ffffff]">Interactive Scoring Sandbox</h2>
           </div>
-          <span className="text-xs text-[#f0aa55] font-mono bg-[#181818] px-3 py-1 rounded-xl border border-[rgba(204,139,60,0.3)]">
+          <span className="text-xs text-[#38bdf8] font-mono bg-[#080d1a] px-3 py-1 rounded-xl border border-[rgba(6,182,212,0.3)]">
             final_score = similarity × trust × confidence × 0.5^(age / half_life)
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-[#1e1e1e] p-5 rounded-xl border border-[#383838]">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-[#0b1222] p-5 rounded-xl border border-[#1e293b]">
           <div>
             <label className="text-xs text-[#888] block mb-1">
-              Similarity: <span className="text-[#cc8b3c] font-mono font-bold">{simSimilarity.toFixed(2)}</span>
+              Similarity: <span className="text-[#06b6d4] font-mono font-bold">{simSimilarity.toFixed(2)}</span>
             </label>
             <input
               type="range"
@@ -289,7 +289,7 @@ export const InspectorPage: React.FC = () => {
               step="0.01"
               value={simSimilarity}
               onChange={(e) => setSimSimilarity(parseFloat(e.target.value))}
-              className="w-full accent-[#cc8b3c] cursor-pointer"
+              className="w-full accent-[#06b6d4] cursor-pointer"
             />
           </div>
 
@@ -319,7 +319,7 @@ export const InspectorPage: React.FC = () => {
               step="0.05"
               value={simConfidence}
               onChange={(e) => setSimConfidence(parseFloat(e.target.value))}
-              className="w-full accent-[#d4a843] cursor-pointer"
+              className="w-full accent-[#38bdf8] cursor-pointer"
             />
           </div>
 
@@ -338,7 +338,7 @@ export const InspectorPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex flex-col justify-center items-center bg-[#252525] p-3 rounded-xl border border-[rgba(204,139,60,0.3)] shadow-inner">
+          <div className="flex flex-col justify-center items-center bg-[#0f172a] p-3 rounded-xl border border-[rgba(6,182,212,0.3)] shadow-inner">
             <span className="text-[10px] text-[#888] uppercase font-mono">Calculated Score</span>
             <span
               className={`text-2xl font-black font-mono my-0.5 ${
