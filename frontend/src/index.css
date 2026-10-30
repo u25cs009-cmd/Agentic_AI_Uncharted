@@ -2,14 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* VS Code font import */
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @layer base {
-  * {
+  *, *::before, *::after {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
   }
 
   html, body, #root {
@@ -18,119 +15,65 @@
   }
 
   body {
-    background-color: #1E1E1E;
-    color: #CCCCCC;
-    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background-color: #0C0C0C;
+    color: #E5E5E5;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* VS Code-style scrollbar */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #1E1E1E;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #424242;
-    border-radius: 0;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #686868;
-  }
+  /* Minimal scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #404040; }
 
-  /* Selection highlight like VS Code */
-  ::selection {
-    background: #264F78;
-    color: #CCCCCC;
-  }
+  ::selection { background: #10B98130; color: #E5E5E5; }
 }
 
 @layer components {
-  /* VS Code panel card */
-  .vsc-card {
-    @apply bg-vsc-sidebar border border-vsc-border rounded-none;
+  /* Reusable card */
+  .card {
+    @apply bg-app-surface border border-app-border rounded-lg;
+  }
+  .card-elevated {
+    @apply bg-app-elevated border border-app-border rounded-lg;
   }
 
-  /* VS Code button - primary */
-  .vsc-btn {
-    @apply bg-vsc-accent text-white text-xs px-3 py-1.5 rounded-sm
-           hover:bg-vsc-accent-hover transition-colors duration-100 font-ui;
+  /* Accent button */
+  .btn-accent {
+    @apply bg-app-accent text-black text-xs font-semibold px-3 py-1.5 rounded
+           hover:bg-app-accent-hi transition-colors duration-150;
+  }
+  /* Ghost button */
+  .btn-ghost {
+    @apply text-app-fg-muted text-xs px-3 py-1.5 rounded border border-app-border
+           hover:bg-app-elevated hover:text-app-fg hover:border-app-border-hi transition-colors duration-150;
+  }
+  /* Danger button */
+  .btn-danger {
+    @apply bg-app-danger-bg text-app-danger text-xs px-3 py-1.5 rounded border border-app-danger/30
+           hover:bg-app-danger/20 transition-colors duration-150;
   }
 
-  /* VS Code button - secondary / ghost */
-  .vsc-btn-ghost {
-    @apply bg-transparent border border-vsc-border text-vsc-fg text-xs px-3 py-1.5 rounded-sm
-           hover:bg-vsc-highlight transition-colors duration-100 font-ui;
+  /* Input field */
+  .input {
+    @apply bg-app-panel border border-app-border text-app-fg text-sm px-3 py-2 rounded
+           focus:outline-none focus:border-app-accent transition-colors placeholder-app-fg-faint;
   }
 
-  /* VS Code input */
-  .vsc-input {
-    @apply bg-vsc-editor border border-vsc-border text-vsc-fg text-sm px-2.5 py-1.5
-           focus:outline-none focus:border-vsc-accent font-ui placeholder-vsc-fg-dim;
+  /* Tag / badge */
+  .tag {
+    @apply text-[10px] font-mono font-medium px-2 py-0.5 rounded-sm;
   }
-
-  /* VS Code badge / pill */
-  .vsc-badge {
-    @apply text-xxs font-mono px-1.5 py-0.5 rounded-sm bg-vsc-actbar text-vsc-fg-dim border border-vsc-border;
-  }
-
-  /* VS Code list item active state */
-  .vsc-list-active {
-    @apply bg-vsc-selection text-vsc-fg-hi;
-  }
-
-  .vsc-list-hover {
-    @apply hover:bg-vsc-highlight;
-  }
+  .tag-accent  { @apply bg-app-accent-bg  text-app-accent  border border-app-accent/20;  }
+  .tag-danger  { @apply bg-app-danger-bg  text-app-danger  border border-app-danger/20;  }
+  .tag-warning { @apply bg-app-warning-bg text-app-warning border border-app-warning/20; }
+  .tag-info    { @apply bg-app-info-bg    text-app-info    border border-app-info/20;    }
+  .tag-muted   { @apply bg-app-elevated   text-app-fg-muted border border-app-border;   }
 }
 
-/* Status bar at the very bottom like VS Code */
-.vsc-statusbar {
-  background-color: #007ACC;
-  color: #FFFFFF;
-  font-size: 12px;
-  font-family: "Segoe UI", sans-serif;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-/* Tab strip styles */
-.vsc-tab {
-  height: 35px;
-  padding: 0 20px;
-  border-right: 1px solid #252526;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #CCCCCC;
-  background: #2D2D2D;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.vsc-tab.active {
-  background: #1E1E1E;
-  border-top: 1px solid #007ACC;
-  color: #FFFFFF;
-}
-
-/* Breadcrumb */
-.vsc-breadcrumb {
-  background: #1E1E1E;
-  border-bottom: 1px solid #454545;
-  padding: 4px 20px;
-  font-size: 12px;
-  color: #858585;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+/* Pulse glow for the status dot */
+.glow-green { box-shadow: 0 0 8px 0 #10B98160; }
