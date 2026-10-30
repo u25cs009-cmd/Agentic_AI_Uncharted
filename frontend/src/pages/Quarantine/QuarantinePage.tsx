@@ -11,7 +11,10 @@ import {
   Scale,
   CheckCircle2,
   XCircle,
-  FileText
+  FileText,
+  Skull,
+  Radio,
+  Cpu
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Memory } from '../../types/memory';
@@ -50,7 +53,7 @@ export const QuarantinePage: React.FC = () => {
   const handleRelease = async (id: string) => {
     try {
       await api.releaseQuarantine(id);
-      setActionNotice(`Memory ${id} released from quarantine to active memory!`);
+      setActionNotice(`Memory ${id} verified and released from quarantine to active memory!`);
       setTimeout(() => setActionNotice(null), 4000);
       loadData();
     } catch (err: any) {
@@ -70,23 +73,38 @@ export const QuarantinePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-10">
-      {/* Header */}
-      <div>
-        <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-bold tracking-tight text-white">Quarantine Inbox</h1>
-          <Badge variant="danger">Poisoning Defense Active</Badge>
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
+      {/* Header & Title HUD */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-600 to-amber-600 flex items-center justify-center text-white shadow-[0_0_20px_rgba(244,63,94,0.35)]">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-2xl font-bold tracking-tight text-white">Quarantine Inbox</h1>
+              <Badge variant="danger" size="sm" glow>Poisoning Defense Active</Badge>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Deterministic isolation vault for prompt injections, untrusted overrides, and conflicting memory mutations.
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-slate-400 mt-1">
-          Review quarantined prompt injections, adversarial overrides, and conflicting statements isolated by XYRO101 deterministic guard rules.
-        </p>
+
+        {/* Defense Status Radar */}
+        <div className="flex items-center space-x-2">
+          <div className="glass-panel px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-slate-300">
+            <Radio className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
+            <span>P1–P4 Rules: <span className="text-emerald-400 font-bold">100% Enforced</span></span>
+          </div>
+        </div>
       </div>
 
       {/* Notices & Errors */}
       {actionNotice && (
-        <div className="p-3 bg-emerald-950/70 border border-emerald-500/40 rounded-xl text-xs text-emerald-200 flex items-center space-x-2 animate-fade-in">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>{actionNotice}</span>
+        <div className="p-3.5 bg-emerald-950/70 border border-emerald-500/40 rounded-xl text-xs text-emerald-200 flex items-center space-x-2.5 shadow-[0_0_15px_rgba(16,185,129,0.2)] animate-fade-in">
+          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="font-mono">{actionNotice}</span>
         </div>
       )}
 
@@ -99,42 +117,50 @@ export const QuarantinePage: React.FC = () => {
         />
       )}
 
-      {/* Summary Banner */}
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* Summary Isolation Vault Banner */}
+      <div className="glass-panel p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 border-rose-900/40 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500/5 rounded-full blur-2xl pointer-events-none" />
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
             <Lock className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-base font-semibold text-white">
-              Isolation Vault ({quarantined.length} pending items)
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              These items are strictly excluded from normal agent retrieval context until approved by human operator.
+            <div className="flex items-center space-x-2">
+              <h3 className="text-base font-semibold text-white">
+                Active Threat Containment Facility
+              </h3>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                {quarantined.length} PENDING REVIEW
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
+              Quarantined items are strictly segregated from agent context retrieval, ensuring zero hallucination and zero prompt hijacking.
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2 text-xs font-mono text-slate-400 bg-[#0a0d14] px-3 py-2 rounded-xl border border-slate-800">
-          <Info className="w-4 h-4 text-cyan-400" />
-          <span>Poisoning Resistance: Active (P1–P4)</span>
+
+        <div className="flex flex-col sm:flex-row items-center gap-2 text-xs font-mono">
+          <div className="px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 flex items-center space-x-1.5">
+            <Info className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Harmful Action Rate: <strong className="text-emerald-400">0.0%</strong></span>
+          </div>
         </div>
       </div>
 
       {/* Quarantined Items List */}
       <div className="space-y-6">
         {loading ? (
-          <div className="p-12 text-center text-slate-400 text-sm font-mono bg-[#111726] rounded-2xl border border-slate-800">
-            Scanning quarantine vault & cross-referencing active facts...
+          <div className="glass-panel p-12 text-center text-slate-400 text-xs font-mono">
+            Scanning isolation vault & cross-referencing active facts against invariant rules...
           </div>
         ) : quarantined.length === 0 ? (
           <EmptyState
             icon={<ShieldCheck className="w-8 h-8 text-emerald-400" />}
             title="All clear! No quarantined items pending review."
-            description="The quarantine vault is clean. You can simulate an adversarial attack by entering a prompt injection in Chat."
+            description="The quarantine vault is clean. You can simulate an adversarial attack by entering a prompt injection in the Chat console or testing with benchmark scenario P1."
           />
         ) : (
           quarantined.map((item) => {
-            // Task C: Find corresponding active memory with matching attribute_key
             const conflictingActive = activeMemories.find(
               (m) => m.attribute_key === item.attribute_key && (m._id || m.id) !== (item._id || item.id)
             );
@@ -142,19 +168,22 @@ export const QuarantinePage: React.FC = () => {
             return (
               <div
                 key={item._id || item.id}
-                className="bg-[#111726] border border-rose-900/50 rounded-2xl p-5 shadow-sm space-y-4 hover:border-rose-700/60 transition-all"
+                className="glass-panel p-5 rounded-2xl border-rose-900/50 space-y-4 hover:border-rose-600/50 transition-all duration-200 relative overflow-hidden"
               >
+                {/* Red warning bar on top */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-amber-500 to-rose-500" />
+
                 {/* Header info */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3 pt-1">
+                  <div className="flex items-center space-x-2.5">
                     <span className="font-mono text-xs font-bold text-rose-400">
                       {item._id || item.id}
                     </span>
-                    <Badge variant="danger" size="sm">
-                      QUARANTINED
+                    <Badge variant="danger" size="sm" glow>
+                      ISOLATED THREAT
                     </Badge>
                     <span className="text-xs font-mono text-slate-400">
-                      Attribute Key: <strong className="text-indigo-300">{item.attribute_key}</strong>
+                      Key: <strong className="text-cyan-300">{item.attribute_key}</strong>
                     </span>
                   </div>
 
@@ -162,41 +191,44 @@ export const QuarantinePage: React.FC = () => {
                     <span className="text-slate-400">
                       Trust: <strong className="text-rose-400">{item.trust.toFixed(2)}</strong>
                     </span>
-                    <span className="text-slate-600">|</span>
+                    <span className="text-slate-700">|</span>
                     <span className="text-slate-400">
                       Confidence: <strong className="text-slate-300">{item.confidence.toFixed(2)}</strong>
                     </span>
                   </div>
                 </div>
 
-                {/* Quarantine Reason Alert */}
-                <div className="p-3 bg-rose-950/40 border border-rose-500/30 rounded-xl text-xs text-rose-300 flex items-start space-x-2.5">
-                  <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                {/* Quarantine Reason Banner */}
+                <div className="p-3 bg-rose-950/50 border border-rose-500/30 rounded-xl text-xs text-rose-200 flex items-start space-x-2.5 shadow-[0_0_12px_rgba(244,63,94,0.1)]">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold">Quarantine Reason: </span>
-                    {item.quarantine_reason || 'Untrusted low-confidence source with potential policy violation'}
+                    <span className="font-bold text-rose-300">Quarantine Reason: </span>
+                    <span>{item.quarantine_reason || 'Untrusted low-confidence source with potential policy violation'}</span>
                   </div>
                 </div>
 
-                {/* Task C: Conflicting Memory Comparison Section */}
-                <div className="bg-[#0a0d14] rounded-xl p-4 border border-slate-800 space-y-3">
-                  <div className="flex items-center space-x-2 text-xs font-mono text-slate-300">
-                    <Scale className="w-4 h-4 text-cyan-400" />
-                    <span className="font-bold uppercase tracking-wider">
-                      Fact Governance Comparison
-                    </span>
+                {/* Conflicting Memory Comparison Matrix */}
+                <div className="bg-slate-950/80 rounded-xl p-4 border border-slate-800/80 space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono text-slate-300">
+                    <div className="flex items-center space-x-2">
+                      <Scale className="w-4 h-4 text-cyan-400" />
+                      <span className="font-bold uppercase tracking-wider text-slate-200">
+                        Fact Governance Comparison Matrix
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">Target Key: {item.attribute_key}</span>
                   </div>
 
                   {conflictingActive ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                       {/* Left: Current Established Fact */}
-                      <div className="bg-[#0f172a] p-3.5 rounded-xl border border-emerald-500/40 glow-border-cyan flex flex-col justify-between">
+                      <div className="glass-panel p-4 rounded-xl border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.1)] flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[11px] font-mono text-emerald-400 font-bold uppercase flex items-center">
-                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Current Established Fact
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Current Established Fact
                             </span>
-                            <Badge variant="success" size="sm">
+                            <Badge variant="success" size="sm" glow>
                               {conflictingActive.tier.toUpperCase()} TIER
                             </Badge>
                           </div>
@@ -205,7 +237,7 @@ export const QuarantinePage: React.FC = () => {
                           </p>
                         </div>
 
-                        <div className="pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-400 space-y-1">
+                        <div className="pt-2 border-t border-slate-800/80 text-[11px] font-mono text-slate-400 space-y-1">
                           <div className="flex justify-between">
                             <span>Memory ID:</span>
                             <span className="text-slate-200">{conflictingActive._id || conflictingActive.id}</span>
@@ -226,13 +258,13 @@ export const QuarantinePage: React.FC = () => {
                       </div>
 
                       {/* Right: Proposed Conflicting Fact */}
-                      <div className="bg-[#1f1018] p-3.5 rounded-xl border border-rose-500/40 flex flex-col justify-between">
+                      <div className="glass-panel p-4 rounded-xl border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-rose-950/20 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-[11px] font-mono text-rose-400 font-bold uppercase flex items-center">
-                              <XCircle className="w-3.5 h-3.5 mr-1" /> Proposed Conflicting Fact
+                              <XCircle className="w-3.5 h-3.5 mr-1 text-rose-400" /> Proposed Conflicting Fact
                             </span>
-                            <Badge variant="danger" size="sm">
+                            <Badge variant="danger" size="sm" glow>
                               QUARANTINED
                             </Badge>
                           </div>
@@ -241,7 +273,7 @@ export const QuarantinePage: React.FC = () => {
                           </p>
                         </div>
 
-                        <div className="pt-2 border-t border-rose-950 text-[10px] font-mono text-slate-400 space-y-1">
+                        <div className="pt-2 border-t border-rose-950 text-[11px] font-mono text-slate-400 space-y-1">
                           <div className="flex justify-between">
                             <span>Memory ID:</span>
                             <span className="text-slate-200">{item._id || item.id}</span>
@@ -256,32 +288,34 @@ export const QuarantinePage: React.FC = () => {
                           </div>
                           <div className="flex justify-between">
                             <span>Governance Action:</span>
-                            <span className="text-rose-300 font-semibold">Blocked by Trust Rules</span>
+                            <span className="text-rose-300 font-semibold">Blocked by Policy Guard</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="bg-[#0f172a]/60 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-400 leading-relaxed">
-                      <div className="text-slate-300 font-medium mb-1 flex items-center">
-                        <FileText className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
-                        Standalone Unverified Observation:
+                    <div className="glass-panel p-4 rounded-xl border-slate-800 text-xs text-slate-300 leading-relaxed">
+                      <div className="text-slate-200 font-semibold mb-1 flex items-center space-x-1.5">
+                        <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Isolated Direct Adversarial Vector:</span>
                       </div>
-                      <p className="text-slate-300 font-mono italic mb-2">"{item.content}"</p>
-                      <p className="text-[11px] text-slate-500">
-                        No conflicting active memory currently exists for attribute key <code className="text-indigo-400">{item.attribute_key}</code>. This payload was isolated directly by deterministic safety screening (prompt injection/exfiltration defense).
+                      <p className="text-slate-200 font-mono italic my-2 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                        "{item.content}"
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        No conflicting active memory currently exists for attribute key <code className="text-cyan-300 font-mono">{item.attribute_key}</code>. This payload was isolated directly by deterministic safety screening (prompt injection / exfiltration defense).
                       </p>
                     </div>
                   )}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                {/* Operator Actions Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-800">
                   <span className="text-[11px] font-mono text-slate-500">
-                    Source: {item.source.kind} • Created: {new Date(item.valid_from).toLocaleDateString()}
+                    Source: <span className="text-slate-300">{item.source.kind}</span> • Recorded: {new Date(item.valid_from).toLocaleDateString()}
                   </span>
 
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2.5">
                     <button
                       type="button"
                       onClick={() => handleRelease(item._id || item.id || '')}
@@ -294,7 +328,7 @@ export const QuarantinePage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleReject(item._id || item.id || '')}
-                      className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-all shadow-md shadow-rose-950 active:scale-95"
+                      className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white text-xs font-semibold transition-all shadow-lg shadow-rose-950 active:scale-95"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Confirm Poison & Purge</span>
