@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LoadingIndicator } from './LoadingIndicator';
 import { EmptyState } from './EmptyState';
 
@@ -91,7 +91,7 @@ export function DataTable<T extends Record<string, any>>({
 
   if (isLoading) {
     return (
-      <div className="bg-[#111726] border border-[#1f293d] rounded-2xl p-6">
+      <div className="glass-panel p-8">
         <LoadingIndicator message={loadingMessage} />
       </div>
     );
@@ -107,12 +107,12 @@ export function DataTable<T extends Record<string, any>>({
   }
 
   return (
-    <div className={`bg-[#111726] border border-[#1f293d] rounded-2xl overflow-hidden shadow-sm flex flex-col ${className}`}>
+    <div className={`glass-panel overflow-hidden flex flex-col shadow-xl ${className}`}>
       {/* Scrollable Table Area */}
       <div className="overflow-x-auto flex-1">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-[#1f293d] bg-[#0d121f]/90 text-slate-400 font-mono uppercase tracking-wider text-[11px]">
+            <tr className="border-b border-slate-800/80 bg-slate-900/60 text-slate-400 font-mono uppercase tracking-wider text-[11px] backdrop-blur-md">
               {columns.map((col) => {
                 const isSorted = sortKey === col.key;
                 const alignClass =
@@ -126,7 +126,7 @@ export function DataTable<T extends Record<string, any>>({
                   <th
                     key={col.key}
                     onClick={() => handleSort(col.key, col.sortable)}
-                    className={`py-3.5 px-4 font-semibold select-none ${alignClass} ${
+                    className={`py-3 px-4 font-semibold select-none ${alignClass} ${
                       col.sortable ? 'cursor-pointer hover:text-white transition-colors' : ''
                     } ${col.className || ''}`}
                   >
@@ -151,8 +151,8 @@ export function DataTable<T extends Record<string, any>>({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1f293d]/60">
-            {paginatedData.map((row, idx) => {
+          <tbody className="divide-y divide-slate-800/50">
+            {paginatedData.map((row, index) => {
               const rowKey = keyExtractor(row);
               const isSelected = selectedRowKey === rowKey;
 
@@ -160,12 +160,12 @@ export function DataTable<T extends Record<string, any>>({
                 <tr
                   key={rowKey}
                   onClick={() => onRowClick && onRowClick(row)}
-                  className={`transition-colors ${
+                  className={`transition-all duration-150 ${
                     onRowClick ? 'cursor-pointer' : ''
                   } ${
                     isSelected
-                      ? 'bg-indigo-600/15 text-white font-medium'
-                      : 'hover:bg-slate-800/40 text-slate-200'
+                      ? 'bg-indigo-950/40 text-white border-l-2 border-l-indigo-400'
+                      : 'hover:bg-slate-800/30 text-slate-300'
                   }`}
                 >
                   {columns.map((col) => {
@@ -177,8 +177,11 @@ export function DataTable<T extends Record<string, any>>({
                         : 'text-left';
 
                     return (
-                      <td key={col.key} className={`py-3 px-4 ${alignClass} ${col.className || ''}`}>
-                        {col.render ? col.render(row, idx) : row[col.key]}
+                      <td
+                        key={`${rowKey}-${col.key}`}
+                        className={`py-3 px-4 text-xs ${alignClass} ${col.className || ''}`}
+                      >
+                        {col.render ? col.render(row, index) : row[col.key]}
                       </td>
                     );
                   })}
@@ -190,40 +193,39 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Pagination Footer */}
-      {totalPages > 1 && (
-        <div className="px-4 py-3 border-t border-[#1f293d] bg-[#0d121f] flex items-center justify-between text-xs text-slate-400 font-mono">
-          <div>
-            Showing <span className="text-white font-bold">{(currentPage - 1) * pageSize + 1}</span> to{' '}
-            <span className="text-white font-bold">
-              {Math.min(currentPage * pageSize, sortedData.length)}
-            </span>{' '}
-            of <span className="text-white font-bold">{sortedData.length}</span> entries
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              className="p-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-2 font-bold text-indigo-400">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              className="p-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+      <div className="border-t border-slate-800/80 bg-slate-900/40 px-4 py-3 flex items-center justify-between text-xs text-slate-400 font-mono">
+        <div>
+          Showing <span className="font-bold text-slate-200">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+          <span className="font-bold text-slate-200">
+            {Math.min(currentPage * pageSize, sortedData.length)}
+          </span>{' '}
+          of <span className="font-bold text-indigo-400">{sortedData.length}</span> records
         </div>
-      )}
+
+        <div className="flex items-center space-x-1.5">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/70 text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Previous page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs font-semibold">
+            {currentPage} / {totalPages}
+          </span>
+
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="p-1.5 rounded-lg border border-slate-800 bg-slate-900/70 text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            title="Next page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
-
