@@ -7,6 +7,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { LoadingIndicator } from './components/common/LoadingIndicator';
 import { LoginPage } from './pages/Auth/LoginPage';
 import { RegisterPage } from './pages/Auth/RegisterPage';
+import { ProfilePage } from './pages/Profile/ProfilePage';
 import { ChatPage } from './pages/Chat/ChatPage';
 import { InspectorPage } from './pages/Inspector/InspectorPage';
 import { MemoryExplorerPage } from './pages/MemoryExplorer/MemoryExplorerPage';
@@ -14,7 +15,7 @@ import { QuarantinePage } from './pages/Quarantine/QuarantinePage';
 import { TimelinePage } from './pages/Timeline/TimelinePage';
 import { SettingsPage } from './pages/Settings/SettingsPage';
 
-// Task F: Code splitting via dynamic imports for heavy visualization pages
+// Code splitting via dynamic imports for heavy visualization pages
 const EntityGraphPage = React.lazy(() => 
   import('./pages/EntityGraph/EntityGraphPage').then(m => ({ default: m.EntityGraphPage }))
 );
@@ -30,36 +31,44 @@ export const App: React.FC = () => {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Public Auth Routes */}
+            {/* Public Authentication Pages */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
-            {/* Protected Dashboard Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<AppLayout />}>
-                <Route index element={<ChatPage />} />
-                <Route path="inspector" element={<InspectorPage />} />
-                <Route path="explorer" element={<MemoryExplorerPage />} />
-                <Route path="quarantine" element={<QuarantinePage />} />
-                <Route path="timeline" element={<TimelinePage />} />
-                <Route 
-                  path="entity-graph" 
-                  element={
-                    <Suspense fallback={<LoadingIndicator message="Loading Entity Topology Graph..." className="h-96" />}>
-                      <EntityGraphPage />
-                    </Suspense>
-                  } 
-                />
-                <Route 
-                  path="benchmark" 
-                  element={
-                    <Suspense fallback={<LoadingIndicator message="Loading 15-Scenario Benchmark Matrix..." className="h-96" />}>
-                      <BenchmarkPage />
-                    </Suspense>
-                  } 
-                />
-                <Route path="settings" element={<SettingsPage />} />
-              </Route>
+            {/* Main Application Layout */}
+            <Route path="/" element={<AppLayout />}>
+              <Route index element={<ChatPage />} />
+              <Route path="inspector" element={<InspectorPage />} />
+              <Route path="explorer" element={<MemoryExplorerPage />} />
+              <Route path="quarantine" element={<QuarantinePage />} />
+              <Route path="timeline" element={<TimelinePage />} />
+              <Route 
+                path="entity-graph" 
+                element={
+                  <Suspense fallback={<LoadingIndicator message="Loading Entity Topology Graph..." className="h-96" />}>
+                    <EntityGraphPage />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="benchmark" 
+                element={
+                  <Suspense fallback={<LoadingIndicator message="Loading 15-Scenario Benchmark Matrix..." className="h-96" />}>
+                    <BenchmarkPage />
+                  </Suspense>
+                } 
+              />
+              <Route path="settings" element={<SettingsPage />} />
+
+              {/* Protected Profile Route */}
+              <Route 
+                path="profile" 
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                } 
+              />
             </Route>
 
             {/* Fallback */}

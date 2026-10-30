@@ -91,27 +91,288 @@ export const api = {
     };
   },
 
-  // Authentication
-  async login(email: string): Promise<{ token: string; user: { email: string; name: string } }> {
+  // Authentication & Profile Services
+  async login(email: string, password?: string): Promise<{ token: string; user: any }> {
     try {
-      const res = await safeFetch(`${BASE_URL}/api/auth/login`, {
+      const res = await fetch(`${BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, password }),
       });
-      if (res && res.ok) return await res.json();
-    } catch {
-      // Fallback
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to sign in. Please verify your credentials.');
+      }
+      localStorage.setItem('anchor_token', data.token);
+      localStorage.setItem('anchor_user', JSON.stringify(data.user));
+      return data;
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch')) {
+        throw err;
+      }
+      // Demo / simulation offline fallback
+      const token = `jwt_mock_${Date.now()}`;
+      const user = {
+        id: `usr-demo-${Date.now()}`,
+        email,
+        name: email.split('@')[0] || 'ANCHOR Operator',
+        workspace: 'ws-primary',
+        authProviders: ['local'],
+        createdAt: new Date().toISOString()
+      };
+      localStorage.setItem('anchor_token', token);
+      localStorage.setItem('anchor_user', JSON.stringify(user));
+      return { token, user };
     }
-    const token = `jwt_mock_${Date.now()}`;
-    const user = { email, name: email.split('@')[0] || 'Member 2 (Frontend)' };
-    localStorage.setItem('anchor_token', token);
-    localStorage.setItem('anchor_user', JSON.stringify(user));
-    return { token, user };
   },
 
-  async register(email: string): Promise<{ token: string; user: { email: string; name: string } }> {
-    return this.login(email);
+  async register(email: string, password?: string, name?: string): Promise<{ token: string; user: any }> {
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Registration failed.');
+      }
+      localStorage.setItem('anchor_token', data.token);
+      localStorage.setItem('anchor_user', JSON.stringify(data.user));
+      return data;
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch')) {
+        throw err;
+      }
+      const token = `jwt_mock_${Date.now()}`;
+      const user = {
+        id: `usr-reg-${Date.now()}`,
+        email,
+        name: name || email.split('@')[0] || 'New Operator',
+        workspace: 'ws-primary',
+        authProviders: ['local'],
+        createdAt: new Date().toISOString()
+      };
+      localStorage.setItem('anchor_token', token);
+      localStorage.setItem('anchor_user', JSON.stringify(user));
+      return { token, user };
+    }
+  },
+
+  async googleLogin(credential: string): Promise<{ token: string; user: any }> {
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential, idToken: credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Google authentication failed.');
+      }
+      localStorage.setItem('anchor_token', data.token);
+      localStorage.setItem('anchor_user', JSON.stringify(data.user));
+      return data;
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch')) {
+        throw err;
+      }
+      // Demo Google session fallback
+      const token = `jwt_mock_google_${Date.now()}`;
+      const user = {
+        id: `usr-google-${Date.now()}`,
+        email: 'alex.chen@anchor.ai',
+        name: 'Alex Chen',
+        profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        workspace: 'ws-primary',
+        authProviders: ['google'],
+        createdAt: new Date().toISOString()
+      };
+      localStorage.setItem('anchor_token', token);
+      localStorage.setItem('anchor_user', JSON.stringify(user));
+      return { token, user };
+    }
+  },
+
+  async me(): Promise<{ user: any }> {
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/me`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Session expired. Please sign in again.');
+      }
+      localStorage.setItem('anchor_user', JSON.stringify(data.user));
+      return data;
+    } catch (err: any) {
+      const local = localStorage.getItem('anchor_user');
+      if (local) {
+        return { user: JSON.parse(local) };
+      }
+      throw err;
+    }
+  },
+
+  async updateProfile(updates: { name?: string; profilePicture?: string }): Promise<{ user: any; message: string }> {
+    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(updates),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to update user profile.');
+    }
+    localStorage.setItem('anchor_user', JSON.stringify(data.user));
+    return data;
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${BASE_URL}/api/auth/change-password`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to change password.');
+    }
+    return data;
+  },
+
+  async forgotPassword(email: string): Promise<{ success: boolean; message: string; resetToken?: string }> {
+    const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to process password reset request.');
+    }
+    return data;
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to reset password.');
+    }
+    return data;
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${BASE_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+    } catch {
+      // Ignore network errors
+    }
+    localStorage.removeItem('anchor_token');
+    localStorage.removeItem('anchor_user');
+  },
+
+  // Conversation history methods
+  async getConversations(): Promise<any[]> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/conversations`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) {
+        const data = await res.json();
+        return data.conversations || [];
+      }
+    } catch {}
+    const local = localStorage.getItem('anchor_conversations');
+    return local ? JSON.parse(local) : [];
+  },
+
+  async getConversation(id: string): Promise<any> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/conversations/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) {
+        const data = await res.json();
+        return data.conversation;
+      }
+    } catch {}
+    const local = localStorage.getItem('anchor_conversations');
+    const convs = local ? JSON.parse(local) : [];
+    return convs.find((c: any) => c.id === id) || null;
+  },
+
+  async createConversation(title?: string, initialMessage?: any): Promise<any> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/conversations`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ title, initialMessage }),
+      });
+      if (res && res.ok) {
+        const data = await res.json();
+        return data.conversation;
+      }
+    } catch {}
+    const convId = `conv-${Date.now()}`;
+    const newConv = {
+      id: convId,
+      title: title || (initialMessage?.text ? initialMessage.text.slice(0, 40) + '...' : 'New Session'),
+      messages: initialMessage ? [initialMessage] : [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const local = localStorage.getItem('anchor_conversations');
+    const convs = local ? JSON.parse(local) : [];
+    convs.unshift(newConv);
+    localStorage.setItem('anchor_conversations', JSON.stringify(convs));
+    return newConv;
+  },
+
+  async appendConversationMessage(id: string, message: any): Promise<any> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/conversations/${id}/messages`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(message),
+      });
+      if (res && res.ok) {
+        return await res.json();
+      }
+    } catch {}
+    const local = localStorage.getItem('anchor_conversations');
+    const convs = local ? JSON.parse(local) : [];
+    const conv = convs.find((c: any) => c.id === id);
+    if (conv) {
+      conv.messages = conv.messages || [];
+      conv.messages.push(message);
+      conv.updatedAt = new Date().toISOString();
+      localStorage.setItem('anchor_conversations', JSON.stringify(convs));
+    }
+    return { conversation: conv, message };
+  },
+
+  async deleteConversation(id: string): Promise<boolean> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/conversations/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return true;
+    } catch {}
+    const local = localStorage.getItem('anchor_conversations');
+    const convs = local ? JSON.parse(local) : [];
+    const filtered = convs.filter((c: any) => c.id !== id);
+    localStorage.setItem('anchor_conversations', JSON.stringify(filtered));
+    return true;
   },
 
   // Memories
@@ -316,10 +577,8 @@ export const api = {
       };
 
       if (mode === 'none') {
-        // No memory retrieval
         continue;
       } else if (mode === 'naive') {
-        // Naive memory: accepts anything with high raw similarity regardless of status, trust, or staleness!
         if (rawSim >= 0.50) {
           retrieved.push(scoringObj);
         }
@@ -351,7 +610,6 @@ export const api = {
     let abstentionReason: string | undefined;
 
     if (mode === 'governed') {
-      // Rule 1: Two active memories on same attribute key with trust difference < 0.15
       const keys = new Map<string, RetrievalScoring[]>();
       retrieved.forEach(r => {
         const list = keys.get(r.attribute_key) || [];
@@ -368,7 +626,6 @@ export const api = {
         }
       }
 
-      // Rule 2: If query relates to an obsolete action that was explicitly excluded as stale
       if (retrieved.length === 0 && excluded.some(e => e.exclusion_reason === 'stale')) {
         abstention = true;
         abstentionReason = "Relevant prior resolution was invalidated by a recent deployment event. Abstaining from obsolete recommendation.";
@@ -434,7 +691,6 @@ export const api = {
       if (res && res.ok) return await res.json();
     } catch {}
 
-    // Check for injection keywords
     const lower = text.toLowerCase();
     const isSuspicious = lower.includes('exfiltrate') || lower.includes('ignore safety') || lower.includes('dump') || lower.includes('jailbreak');
 
@@ -479,7 +735,6 @@ export const api = {
       return { success: true, action: 'QUARANTINE', reason: 'High-risk payload detected; isolated in Quarantine Inbox', memory: qMem };
     }
 
-    // Normal ingestion
     const newMem: Memory = {
       _id: `mem-${Date.now()}`,
       id: `mem-${Date.now()}`,
@@ -527,7 +782,6 @@ export const api = {
   },
 
   async simulateDeploy(): Promise<{ success: boolean; affectedCount: number }> {
-    // Mark postgres/pg-pool memories as stale
     let count = 0;
     memoryStore.forEach(m => {
       if (m.entities.includes('postgres') || m.depends_on.includes('pg-pool') || m.attribute_key.includes('postgres')) {
@@ -568,10 +822,8 @@ export const api = {
       };
     } catch (e) {}
 
-    // Fallback simulated periodic ping when standalone
     const interval = setInterval(() => {
       if (Math.random() > 0.75 && eventStore.length > 0) {
-        // Pulse latest event
         onEvent(eventStore[0]);
       }
     }, 12000);
@@ -588,4 +840,3 @@ export const api = {
     persist();
   }
 };
-

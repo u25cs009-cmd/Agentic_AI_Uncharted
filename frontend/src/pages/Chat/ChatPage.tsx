@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { 
   Send, 
   Cpu, 
@@ -18,12 +19,16 @@ import {
   Flame,
   Radio,
   Copy,
-  Check
+  Check,
+  MessageSquare,
+  Plus,
+  Trash2,
+  X,
+  History
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { ChatModeResult } from '../../types/memory';
 import { Badge } from '../../components/common/Badge';
-import { Link } from 'react-router-dom';
 
 interface MessageItem {
   id: string;
@@ -39,16 +44,17 @@ interface MessageItem {
   };
 }
 
+const DEFAULT_GREETING: MessageItem = {
+  id: 'init-1',
+  sender: 'agent',
+  text: "Greetings. I am **XYRO101**, the Governed Agentic Memory Engine built on the **ANCHOR** architecture.\n\nUnlike traditional copilots that blindly retrieve raw embeddings, I evaluate source trust, temporal decay, environment fingerprints, and deterministic abstention rules before taking action.\n\nTry running a preset scenario or test my responses across all three operating modes:",
+  timestamp: 'Just now',
+  mode: 'governed'
+};
+
 export const ChatPage: React.FC = () => {
-  const [messages, setMessages] = useState<MessageItem[]>([
-    {
-      id: 'init-1',
-      sender: 'agent',
-      text: "Greetings. I am **XYRO101**, the Governed Agentic Memory Engine built on the **ANCHOR** architecture.\n\nUnlike traditional copilots that blindly retrieve raw embeddings, I evaluate source trust, temporal decay, environment fingerprints, and deterministic abstention rules before taking action.\n\nTry running a preset scenario or test my responses across all three operating modes:",
-      timestamp: 'Just now',
-      mode: 'governed'
-    }
-  ]);
+  const [searchParams] = useSearchParams();
+  const [messages, setMessages] = useState<MessageItem[]>([DEFAULT_GREETING]);
   const [input, setInput] = useState('');
   const [activeMode, setActiveMode] = useState<'none' | 'naive' | 'governed'>('governed');
   const [compareMode, setCompareMode] = useState(false);
@@ -56,6 +62,11 @@ export const ChatPage: React.FC = () => {
   const [sourceKind, setSourceKind] = useState<'user_stated' | 'system_event' | 'human_approved' | 'unverified'>('user_stated');
   const [ingestNotice, setIngestNotice] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Chat conversation history state
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [isConvSidebarOpen, setIsConvSidebarOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +77,55 @@ export const ChatPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  // Load user conversation summaries
+  const loadConversations = async () => {
+    try {
+      const list = await api.getConversations();
+      setConversations(list);
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadConversations();
+    if (searchParams.get('conversations') === 'open') {
+      setIsConvSidebarOpen(true);
+    }
+  }, [searchParams]);
+
+  // Reopen an existing conversation session
+  const handleSelectConversation = async (convId: string) => {
+    try {
+      setLoading(true);
+      const conv = await api.getConversation(convId);
+      if (conv && conv.messages && conv.messages.length > 0) {
+        setMessages(conv.messages);
+        setActiveConversationId(conv.id);
+      }
+    } catch (err) {
+      console.error('Failed to load conversation', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Start a new blank chat session
+  const handleNewChat = () => {
+    setActiveConversationId(null);
+    setMessages([DEFAULT_GREETING]);
+  };
+
+  // Delete a conversation
+  const handleDeleteConversation = async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Delete this conversation history permanently?')) {
+      await api.deleteConversation(convId);
+      if (activeConversationId === convId) {
+        handleNewChat();
+      }
+      await loadConversations();
+    }
+  };
 
   const presetQueries = [
     { label: "Which database are we using?", query: "Which database are we currently using in production?" },
@@ -87,7 +147,22 @@ export const ChatPage: React.FC = () => {
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
 
+    let convId = activeConversationId;
     try {
+      if (!convId) {
+        const created = await api.createConversation(
+          queryText.slice(0, 40) + (queryText.length > 40 ? '...' : ''),
+          userMsg
+        );
+        convId = created.id;
+        setActiveConversationId(convId);
+      } else {
+        await api.appendConversationMessage(convId, userMsg);
+      }
+    } catch {}
+
+    try {
+      let agentMsg: MessageItem;
       if (compareMode) {
         const [resNone, resNaive, resGov] = await Promise.all([
           api.chat(queryText, 'none'),
@@ -95,7 +170,7 @@ export const ChatPage: React.FC = () => {
           api.chat(queryText, 'governed'),
         ]);
 
-        const agentMsg: MessageItem = {
+        agentMsg = {
           id: `agt-${Date.now()}`,
           sender: 'agent',
           text: 'Comparative evaluation across all 3 memory operating modes:',
@@ -106,10 +181,9 @@ export const ChatPage: React.FC = () => {
             governed: resGov,
           }
         };
-        setMessages(prev => [...prev, agentMsg]);
       } else {
         const res = await api.chat(queryText, activeMode);
-        const agentMsg: MessageItem = {
+        agentMsg = {
           id: `agt-${Date.now()}`,
           sender: 'agent',
           text: res.answer,
@@ -117,7 +191,16 @@ export const ChatPage: React.FC = () => {
           mode: activeMode,
           result: res,
         };
-        setMessages(prev => [...prev, agentMsg]);
+      }
+
+      setMessages(prev => [...prev, agentMsg]);
+
+      // Save agent message to conversation
+      if (convId) {
+        try {
+          await api.appendConversationMessage(convId, agentMsg);
+          await loadConversations();
+        } catch {}
       }
     } catch (err) {
       console.error(err);
@@ -138,15 +221,16 @@ export const ChatPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await api.ingestObservation(observation, sourceKind);
-      setIngestNotice(`Observation Ingested: Decision [${res.action}] - ${res.reason}`);
+      setIngestNotice(`Ingestion Result [${res.action}]: ${res.reason}`);
       setTimeout(() => setIngestNotice(null), 5000);
-      
+
+      // Add feedback note into chat
       setMessages(prev => [
         ...prev,
         {
-          id: `ing-${Date.now()}`,
+          id: `sys-${Date.now()}`,
           sender: 'agent',
-          text: `📥 **Observation Evaluated by Ingestion Pipeline**\n\n• Source Tag: \`${sourceKind}\`\n• Engine Decision: **${res.action}**\n• Reason: ${res.reason}\n\n*Payload:* "${observation}"`,
+          text: `📥 [INGESTION PIPELINE]\nEvaluated candidate fact: "${observation}"\nAction: **${res.action}**\nReason: ${res.reason}`,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           mode: 'governed'
         }
@@ -213,8 +297,22 @@ export const ChatPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 3-Mode Comparison Toggle */}
+          {/* 3-Mode Comparison & History Toggle Buttons */}
           <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setIsConvSidebarOpen(!isConvSidebarOpen)}
+              className={`flex items-center space-x-1.5 text-xs px-3 py-2 rounded-xl border transition-all ${
+                isConvSidebarOpen
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-md font-semibold'
+                  : 'bg-[#0a0f1c]/80 text-slate-300 border-slate-700/60 hover:text-white'
+              }`}
+              title="Toggle chat sessions history"
+            >
+              <History className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Sessions ({conversations.length})</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setCompareMode(!compareMode)}
@@ -261,191 +359,231 @@ export const ChatPage: React.FC = () => {
         </div>
       )}
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto space-y-5 pr-2 pb-4 scroll-smooth">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex flex-col ${
-              msg.sender === 'user' ? 'items-end' : 'items-start'
-            }`}
-          >
-            {/* Header info */}
-            <div className="flex items-center space-x-2 mb-1 px-1">
-              <span className="text-xs font-semibold text-slate-400">
-                {msg.sender === 'user' ? 'You (DevOps Operator)' : 'XYRO101 Agent'}
-              </span>
-              <span className="text-[10px] text-slate-500 font-mono">{msg.timestamp}</span>
-              {msg.mode && (
-                <Badge
-                  variant={
-                    msg.mode === 'governed' ? 'primary' : msg.mode === 'naive' ? 'warning' : 'neutral'
-                  }
-                  size="sm"
-                >
-                  {msg.mode.toUpperCase()}
-                </Badge>
-              )}
+      {/* Main Chat Workspace + Conversation Sidebar Layout */}
+      <div className="flex-1 flex gap-4 overflow-hidden relative">
+        {/* Collapsible Conversation History Sidebar */}
+        {isConvSidebarOpen && (
+          <div className="w-72 bg-[#0e1424]/95 border border-white/10 rounded-2xl p-3 flex flex-col shadow-2xl backdrop-blur-xl z-20 animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-bold text-white">Saved Sessions</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsConvSidebarOpen(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800/80"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            {/* Content Box */}
-            {msg.comparison ? (
-              // Side-by-Side 3-Mode Comparison Cards
-              <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl glass-panel border border-purple-500/30 shadow-2xl">
-                {/* 1. None Mode Card */}
-                <div className="bg-[#090d18]/90 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-slate-800">
-                      <span className="text-xs font-mono font-bold text-slate-300">1. NONE MODE</span>
-                      <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">
-                        0 Recall
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line mb-4 font-sans">
-                      {msg.comparison.none.answer}
-                    </p>
-                  </div>
-                  <div className="pt-2.5 border-t border-slate-800 text-[10px] font-mono text-slate-500 flex justify-between">
-                    <span>Latency: {msg.comparison.none.latency_ms}ms</span>
-                    <span>Tokens: {msg.comparison.none.tokens_used}</span>
-                  </div>
+            <button
+              type="button"
+              onClick={handleNewChat}
+              className="w-full mb-3 py-2 px-3 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl text-xs font-semibold flex items-center justify-center space-x-2 shadow-md shadow-indigo-900/30 transition-all active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Chat Session</span>
+            </button>
+
+            {/* Conversation List */}
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+              {conversations.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-500">
+                  <p>No prior sessions found.</p>
+                  <p className="text-[10px] text-slate-600 mt-1">Start chatting to automatically record sessions.</p>
                 </div>
-
-                {/* 2. Naive Mode Card */}
-                <div className="bg-[#090d18]/90 p-4 rounded-xl border border-amber-500/40 shadow-lg shadow-amber-950/30 flex flex-col justify-between relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-                  <div>
-                    <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-amber-500/20">
-                      <span className="text-xs font-mono font-bold text-amber-300">2. NAIVE MODE</span>
-                      <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono font-bold">
-                        ⚠️ STALE RISK
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line mb-3 font-sans">
-                      {msg.comparison.naive.answer}
-                    </p>
-                    {msg.comparison.naive.retrieved_memories.length > 0 && (
-                      <div className="text-[11px] text-amber-300/90 font-mono mb-2 bg-amber-950/30 p-2 rounded-lg border border-amber-500/20">
-                        Retrieved: {msg.comparison.naive.retrieved_memories.map(m => m.memory_id).join(', ')}
-                      </div>
-                    )}
-                  </div>
-                  <div className="pt-2.5 border-t border-slate-800 text-[10px] font-mono text-slate-400 flex justify-between">
-                    <span>Latency: {msg.comparison.naive.latency_ms}ms</span>
-                    <span className="text-amber-400 font-bold">Vector Similarity Only</span>
-                  </div>
-                </div>
-
-                {/* 3. Governed Mode Card */}
-                <div className="bg-[#0b1020]/95 p-4 rounded-xl border border-indigo-500/50 glass-card-glow-indigo flex flex-col justify-between relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
-                  <div>
-                    <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-indigo-500/30">
-                      <span className="text-xs font-mono font-bold text-cyan-300 flex items-center">
-                        <ShieldCheck className="w-3.5 h-3.5 mr-1 text-cyan-400" /> 3. GOVERNED (ANCHOR)
-                      </span>
-                      <span className="text-[10px] bg-indigo-500/25 text-indigo-200 border border-indigo-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                        🛡️ SAFE ACTION
-                      </span>
-                    </div>
-
-                    {msg.comparison.governed.abstention && (
-                      <div className="p-2.5 mb-2.5 bg-amber-500/15 border border-amber-500/40 rounded-xl text-[11px] text-amber-200 flex items-start space-x-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <strong className="font-mono">Governed Abstention: </strong>
-                          {msg.comparison.governed.abstention_reason}
-                        </div>
-                      </div>
-                    )}
-
-                    <p className="text-xs text-slate-100 leading-relaxed whitespace-pre-line mb-3 font-medium">
-                      {msg.comparison.governed.answer}
-                    </p>
-
-                    {msg.comparison.governed.retrieved_memories.length > 0 && (
-                      <div className="text-[11px] text-indigo-300 font-mono mb-2 bg-[#090d18] p-2 rounded-lg border border-indigo-500/30">
-                        Verified Citations: {msg.comparison.governed.retrieved_memories.map(m => m.memory_id).join(', ')}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pt-2.5 border-t border-slate-800 text-[10px] font-mono text-slate-400 flex justify-between">
-                    <span className="text-emerald-400 font-semibold">100% Policy Adherence</span>
-                    <Link to="/inspector" className="text-cyan-400 hover:underline flex items-center">
-                      Inspect &rarr;
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              // Standard Chat Bubble
-              <div
-                className={`max-w-3xl rounded-2xl p-5 text-sm leading-relaxed whitespace-pre-line shadow-xl relative group ${
-                  msg.sender === 'user'
-                    ? 'bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-600/20'
-                    : 'glass-panel border-white/10 text-slate-100 rounded-tl-none'
-                }`}
-              >
-                {/* Abstention alert if present */}
-                {msg.result?.abstention && (
-                  <div className="mb-3.5 p-3 bg-amber-500/15 border border-amber-500/40 rounded-xl text-xs text-amber-200 flex items-start space-x-2.5 shadow-sm">
-                    <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold font-mono">Governed Abstention Engaged: </span>
-                      {msg.result.abstention_reason}
-                    </div>
-                  </div>
-                )}
-
-                <div>{msg.text}</div>
-
-                {/* Citations & Score Breakdown Link */}
-                {msg.result?.retrieved_memories && msg.result.retrieved_memories.length > 0 && (
-                  <div className="mt-4 pt-3 border-t border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center space-x-2 flex-wrap">
-                      <span className="text-slate-400 font-mono text-[11px]">Memories Used:</span>
-                      {msg.result.retrieved_memories.map((m) => (
-                        <span
-                          key={m.memory_id}
-                          className="bg-indigo-950/80 text-cyan-300 border border-indigo-500/40 px-2 py-0.5 rounded-md text-[11px] font-mono font-medium shadow-sm"
-                        >
-                          {m.memory_id} (Score: {m.final_score.toFixed(2)})
-                        </span>
-                      ))}
-                    </div>
-                    <Link
-                      to="/inspector"
-                      className="text-cyan-400 hover:text-cyan-300 flex items-center font-semibold font-mono text-xs"
+              ) : (
+                conversations.map((conv) => {
+                  const isActive = activeConversationId === conv.id;
+                  return (
+                    <div
+                      key={conv.id}
+                      onClick={() => handleSelectConversation(conv.id)}
+                      className={`group p-2.5 rounded-xl border text-left cursor-pointer transition-all flex items-start justify-between ${
+                        isActive
+                          ? 'bg-indigo-950/70 border-indigo-500/50 text-white shadow-sm'
+                          : 'bg-[#080d1a]/80 border-slate-800/80 hover:bg-[#12192e] text-slate-300'
+                      }`}
                     >
-                      Decompose Formula <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                    </Link>
-                  </div>
-                )}
+                      <div className="min-w-0 flex-1 pr-2">
+                        <p className="text-xs font-semibold truncate">{conv.title || 'Untitled Session'}</p>
+                        <p className="text-[10px] font-mono text-slate-500 mt-0.5">
+                          {conv.messageCount || 0} messages • {new Date(conv.updatedAt || conv.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
 
-                {/* Copy button */}
-                <button
-                  type="button"
-                  onClick={() => copyText(msg.text, msg.id)}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-slate-400 hover:text-white bg-slate-800/80 transition-all"
-                  title="Copy message"
-                >
-                  {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {loading && (
-          <div className="flex items-center space-x-2.5 text-cyan-400 text-xs py-3 px-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-            <span className="font-mono font-semibold">
-              XYRO101 Engine is evaluating vector graph & deterministic guard rules...
-            </span>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteConversation(conv.id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded transition-opacity"
+                        title="Delete conversation"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
+
+        {/* Messages Scroll Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto space-y-5 pr-2 pb-4 scroll-smooth">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex flex-col ${
+                  msg.sender === 'user' ? 'items-end' : 'items-start'
+                }`}
+              >
+                {/* Header info */}
+                <div className="flex items-center space-x-2 mb-1 px-1">
+                  <span className="text-xs font-semibold text-slate-400">
+                    {msg.sender === 'user' ? 'You (DevOps Operator)' : 'XYRO101 Agent'}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">{msg.timestamp}</span>
+                  {msg.mode && (
+                    <Badge
+                      variant={
+                        msg.mode === 'governed' ? 'primary' : msg.mode === 'naive' ? 'warning' : 'neutral'
+                      }
+                      size="sm"
+                    >
+                      {msg.mode.toUpperCase()}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Content Box */}
+                {msg.comparison ? (
+                  // Side-by-Side 3-Mode Comparison Cards
+                  <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl glass-panel border border-purple-500/30 shadow-2xl">
+                    {/* 1. None Mode Card */}
+                    <div className="bg-[#090d18]/90 p-4 rounded-xl border border-slate-800 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-slate-800">
+                          <span className="text-xs font-mono font-bold text-slate-300">1. NONE MODE</span>
+                          <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">
+                            0 memories
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
+                          {msg.comparison.none.answer}
+                        </p>
+                      </div>
+                      <div className="mt-4 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-500">
+                        Zero recall baseline
+                      </div>
+                    </div>
+
+                    {/* 2. Naive Vector Search Card */}
+                    <div className="bg-[#0f1422]/90 p-4 rounded-xl border border-amber-500/30 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-amber-500/20">
+                          <span className="text-xs font-mono font-bold text-amber-300 flex items-center">
+                            <AlertTriangle className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                            2. NAIVE RETRIEVAL
+                          </span>
+                          <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-mono">
+                            {msg.comparison.naive.retrieved_memories.length} matched
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">
+                          {msg.comparison.naive.answer}
+                        </p>
+                      </div>
+                      <div className="mt-4 pt-2 border-t border-amber-500/20 text-[10px] font-mono text-amber-400/80">
+                        ⚠️ Stale & poisoned data accepted!
+                      </div>
+                    </div>
+
+                    {/* 3. Governed ANCHOR Card */}
+                    <div className="bg-[#0a1224]/90 p-4 rounded-xl border border-cyan-500/40 flex flex-col justify-between ring-1 ring-cyan-500/30 shadow-lg shadow-cyan-950/50">
+                      <div>
+                        <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-cyan-500/30">
+                          <span className="text-xs font-mono font-bold text-cyan-300 flex items-center">
+                            <ShieldCheck className="w-3.5 h-3.5 mr-1 text-cyan-400" />
+                            3. GOVERNED ANCHOR
+                          </span>
+                          <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded font-mono">
+                            {msg.comparison.governed.retrieved_memories.length} safe
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed font-medium">
+                          {msg.comparison.governed.answer}
+                        </p>
+                      </div>
+                      <div className="mt-4 pt-2 border-t border-cyan-500/20 text-[10px] font-mono text-cyan-400 flex items-center justify-between">
+                        <span>🛡️ Governed & Verified</span>
+                        {msg.comparison.governed.abstention && (
+                          <span className="text-amber-400 font-bold">ABSTAINED</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Single Message Display
+                  <div
+                    className={`max-w-[85%] rounded-2xl p-4 text-sm relative group ${
+                      msg.sender === 'user'
+                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/25 rounded-tr-sm'
+                        : 'glass-panel border border-white/10 text-slate-200 rounded-tl-sm shadow-xl'
+                    }`}
+                  >
+                    <div>{msg.text}</div>
+
+                    {/* Citations & Score Breakdown Link */}
+                    {msg.result?.retrieved_memories && msg.result.retrieved_memories.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center space-x-2 flex-wrap">
+                          <span className="text-slate-400 font-mono text-[11px]">Memories Used:</span>
+                          {msg.result.retrieved_memories.map((m) => (
+                            <span
+                              key={m.memory_id}
+                              className="bg-indigo-950/80 text-cyan-300 border border-indigo-500/40 px-2 py-0.5 rounded-md text-[11px] font-mono font-medium shadow-sm"
+                            >
+                              {m.memory_id} (Score: {m.final_score.toFixed(2)})
+                            </span>
+                          ))}
+                        </div>
+                        <Link
+                          to="/inspector"
+                          className="text-cyan-400 hover:text-cyan-300 flex items-center font-semibold font-mono text-xs"
+                        >
+                          Decompose Formula <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Copy button */}
+                    <button
+                      type="button"
+                      onClick={() => copyText(msg.text, msg.id)}
+                      className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-slate-400 hover:text-white bg-slate-800/80 transition-all"
+                      title="Copy message"
+                    >
+                      {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {loading && (
+              <div className="flex items-center space-x-2.5 text-cyan-400 text-xs py-3 px-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                <span className="font-mono font-semibold">
+                  XYRO101 Engine is evaluating vector graph & deterministic guard rules...
+                </span>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </div>
       </div>
 
       {/* Futuristic Input Terminal */}
