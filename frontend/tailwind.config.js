@@ -8,48 +8,47 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Deep Charcoal + Emerald — custom dark theme
-        app: {
-          bg:        '#0C0C0C',   // page background — near-black
-          surface:   '#141414',   // sidebar, cards
-          elevated:  '#1C1C1C',   // elevated panels, dropdowns
-          panel:     '#111111',   // secondary panels
-          border:    '#2A2A2A',   // subtle borders
-          'border-hi': '#404040', // hover borders
-          fg:        '#E5E5E5',   // primary text
-          'fg-muted':'#737373',   // secondary / dimmed text
-          'fg-faint':'#404040',   // very dim labels
-          accent:    '#10B981',   // emerald green — primary accent
-          'accent-hi':'#34D399',  // lighter emerald on hover
-          'accent-bg':'#10B98115',// tinted bg for accent elements
-          danger:    '#EF4444',   // red
-          'danger-bg':'#EF444415',
-          warning:   '#F59E0B',   // amber
-          'warning-bg':'#F59E0B15',
-          info:      '#6366F1',   // indigo for informational
-          'info-bg': '#6366F115',
-          success:   '#22C55E',
-          'success-bg':'#22C55E15',
+        // Claude-inspired warm dark palette
+        claude: {
+          bg:        '#1a1a1a',   // Main background — warm near-black
+          sidebar:   '#1e1e1e',   // Sidebar — slightly lighter
+          surface:   '#262626',   // Cards / panels
+          elevated:  '#2f2f2f',   // Elevated surfaces / hover
+          border:    '#383838',   // Subtle border
+          'border-hi':'#4a4a4a', // Highlighted border
+          fg:        '#ececec',   // Primary text
+          'fg-2':    '#b4b4b4',   // Secondary text
+          'fg-3':    '#737373',   // Muted text
+          accent:    '#cc8b3c',   // Warm amber/sand — Claude's signature
+          'accent-light':'#e8a84e',
+          'accent-bg':  'rgba(204,139,60,0.12)',
+          'accent-border':'rgba(204,139,60,0.3)',
+          success:   '#4caf7d',
+          'success-bg':'rgba(76,175,125,0.12)',
+          danger:    '#e05c5c',
+          'danger-bg': 'rgba(224,92,92,0.12)',
+          info:      '#7b9feb',
+          'info-bg': 'rgba(123,159,235,0.12)',
+          warning:   '#d4a843',
+          'warning-bg':'rgba(212,168,67,0.12)',
         }
       },
       fontFamily: {
-        sans: ['"Inter"', '"Segoe UI"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"Fira Code"', 'Consolas', 'monospace'],
+        sans: ['"Inter"', '"Söhne"', '"ui-sans-serif"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"ui-monospace"', 'SFMono-Regular', 'monospace'],
       },
       borderRadius: {
-        DEFAULT: '6px',
-        sm: '4px',
-        lg: '8px',
-        xl: '12px',
+        sm:  '6px',
+        DEFAULT: '8px',
+        lg: '12px',
+        xl: '16px',
+        '2xl': '20px',
       },
-      animation: {
-        'fade-in': 'fadeIn 0.15s ease-out',
-        'slide-up': 'slideUp 0.2s ease-out',
+      boxShadow: {
+        'soft':   '0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)',
+        'card':   '0 4px 16px rgba(0,0,0,0.35)',
+        'accent': '0 0 0 2px rgba(204,139,60,0.4)',
       },
-      keyframes: {
-        fadeIn: { from: { opacity: '0' }, to: { opacity: '1' } },
-        slideUp: { from: { opacity: '0', transform: 'translateY(4px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
-      }
     },
   },
   plugins: [],

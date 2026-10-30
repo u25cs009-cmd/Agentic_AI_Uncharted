@@ -21,11 +21,11 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-app-bg text-app-fg overflow-hidden font-sans">
+    <div className="flex h-screen bg-claude-bg text-claude-fg overflow-hidden font-sans">
       <Sidebar quarantineCount={quarantineCount} />
-      <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header onRefresh={fetchQuarantineCount} />
-        <main className="flex-1 overflow-y-auto bg-app-bg p-6">
+        <main className="flex-1 overflow-y-auto bg-claude-bg px-8 py-7">
           <Outlet />
         </main>
       </div>
