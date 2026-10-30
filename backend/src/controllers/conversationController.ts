@@ -32,7 +32,7 @@ export async function getConversation(req: Request, res: Response, next: NextFun
     const userId = req.user?.id;
     if (!userId) throw new AppError(401, 'Unauthorized');
 
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const repo = await getRepository();
     const conversation = await repo.findConversationById(id, userId);
 
@@ -92,7 +92,7 @@ export async function appendMessage(req: Request, res: Response, next: NextFunct
     const userId = req.user?.id;
     if (!userId) throw new AppError(401, 'Unauthorized');
 
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { sender, text, mode, result, comparison } = req.body;
 
     if (!text && !result) {
@@ -142,7 +142,7 @@ export async function deleteConversation(req: Request, res: Response, next: Next
     const userId = req.user?.id;
     if (!userId) throw new AppError(401, 'Unauthorized');
 
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const repo = await getRepository();
     const success = await repo.deleteConversation(id, userId);
 

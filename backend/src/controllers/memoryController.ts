@@ -28,7 +28,7 @@ export async function getMemories(req: Request, res: Response, next: NextFunctio
 export async function getMemoryById(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const memory = await repo.getMemoryById(id, req.user?.id, req.user?.workspace);
     if (!memory) {
       throw new AppError(404, `Memory '${id}' not found`);
@@ -42,7 +42,7 @@ export async function getMemoryById(req: Request, res: Response, next: NextFunct
 export async function updateMemory(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const updates = req.body;
 
     const updated = await repo.updateMemory(id, updates, req.user?.id, req.user?.workspace);
@@ -69,7 +69,7 @@ export async function updateMemory(req: Request, res: Response, next: NextFuncti
 export async function deleteMemory(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     const existing = await repo.getMemoryById(id, req.user?.id, req.user?.workspace);
     if (!existing) {
@@ -115,7 +115,7 @@ export async function getEvents(req: Request, res: Response, next: NextFunction)
 export async function getMemoryEvents(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const events = await repo.getEventsForMemory(id, req.user?.id, req.user?.workspace);
     return res.json(events);
   } catch (err) {

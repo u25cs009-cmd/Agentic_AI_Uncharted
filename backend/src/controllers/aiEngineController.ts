@@ -4,6 +4,7 @@ import { maskPII } from '../utils/pii.js';
 import { Memory, RetrievalResult, ScoredMemory } from '../types/index.js';
 import { LLMService } from '../services/llm.js';
 import { CandidateFactExtractor, TRUST_LADDER } from '../engine/extractor.js';
+import { SourceKind } from '../engine/types.js';
 import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
 
 export async function chat(req: Request, res: Response, next: NextFunction) {
@@ -27,7 +28,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
 
     for (const mem of allMemories) {
       const contentTokens = `${mem.content} ${mem.attribute_key} ${mem.entities.join(' ')}`.toLowerCase().split(/\W+/);
-      const matches = queryTokens.filter(t => contentTokens.includes(t));
+      const matches = queryTokens.filter((t: string) => contentTokens.includes(t));
       const overlap = queryTokens.length > 0 ? matches.length / queryTokens.length : 0.1;
       const sim = Number(Math.min(0.98, Math.max(0.15, overlap > 0 ? 0.70 + (overlap * 0.25) : 0.20)).toFixed(3));
 
@@ -160,7 +161,7 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
 
     // 1. PII Masking (Implementation Plan Module 3)
     const scrubbedText = maskPII(text);
-    const sourceKind = source?.kind || 'user_stated';
+    const sourceKind: SourceKind = (source?.kind as SourceKind) || 'user_stated';
 
     // 2. Safety Screening (Guard Rule #1: Prompt Injection forces QUARANTINE)
     const lower = scrubbedText.toLowerCase();
@@ -233,7 +234,7 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
       status: 'active'
     });
 
-    const candidateTrust = TRUST_LADDER[sourceKind] ?? 0.80;
+    const candidateTrust = (TRUST_LADDER as Record<string, number>)[sourceKind] ?? 0.80;
 
     // Guard Rule #3: Deduplication - duplicate facts with identical key and value are IGNORED
     const isDuplicate = existingMemories.some(m => m.value.trim().toLowerCase() === candidate.value.trim().toLowerCase());
@@ -406,3 +407,4 @@ export async function agentTriage(req: Request, res: Response, next: NextFunctio
     next(err);
   }
 }
+

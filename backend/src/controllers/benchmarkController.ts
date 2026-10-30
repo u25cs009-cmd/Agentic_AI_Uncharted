@@ -187,8 +187,8 @@ export async function runBenchmark(req: Request, res: Response, next: NextFuncti
         evaluation: {
           none: {
             status: noneStatus,
-            score: noneStatus === 'correct' ? 1.0 : 0.0,
-            summary: noneStatus === 'harmful' ? 'Hallucinated or executed without context' : 'Generic response without memory'
+            score: (noneStatus as string) === 'correct' ? 1.0 : 0.0,
+            summary: (noneStatus as string) === 'harmful' ? 'Hallucinated or executed without context' : 'Generic response without memory'
           },
           naive: {
             status: naiveStatus,
@@ -296,3 +296,4 @@ export async function getBenchmarkResults(req: Request, res: Response, next: Nex
     next(err);
   }
 }
+

@@ -19,7 +19,7 @@ export async function getQuarantinedMemories(req: Request, res: Response, next: 
 export async function releaseQuarantine(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     const existing = await repo.getMemoryById(id, req.user?.id, req.user?.workspace);
     if (!existing) {
@@ -59,7 +59,7 @@ export async function releaseQuarantine(req: Request, res: Response, next: NextF
 export async function rejectQuarantine(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     const existing = await repo.getMemoryById(id, req.user?.id, req.user?.workspace);
     if (!existing) {
