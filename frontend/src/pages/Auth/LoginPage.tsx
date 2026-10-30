@@ -75,9 +75,7 @@ export const LoginPage: React.FC = () => {
     if (googleClientId && (window as any).google?.accounts?.id) {
       (window as any).google.accounts.id.prompt();
     } else {
-      // Immediate one-click Google OAuth demo flow for judges and evaluators
       try {
-        // Mock standard signed Google JWT token payload
         const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
         const payload = btoa(
           JSON.stringify({
@@ -162,28 +160,23 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
-      {/* Background Glow Orbs */}
-      <div className="absolute w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[140px] -top-40 -left-40 pointer-events-none" />
-      <div className="absolute w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[130px] -bottom-32 -right-32 pointer-events-none" />
-      <div className="absolute w-full h-full bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] opacity-25 pointer-events-none" />
-
-      <div className="w-full max-w-md bg-[#0f1422]/95 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl relative z-10 glow-border-indigo">
+    <div className="min-h-screen bg-[#1a1a1a] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+      <div className="w-full max-w-md bg-[#252525] border border-[#383838] rounded-2xl p-8 shadow-2xl relative z-10">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-indigo-500/25 border border-indigo-400/30">
-            <Cpu className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center mx-auto mb-4 shadow-lg text-[#cc8b3c]">
+            <Cpu className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">Welcome Back</h1>
-          <p className="text-xs text-slate-400 mt-1.5 font-medium">
+          <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Welcome Back</h1>
+          <p className="text-xs text-[#b4b4b4] mt-1.5 font-medium">
             Sign in to continue to your ANCHOR workspace.
           </p>
         </div>
 
         {/* Global Error Banner */}
         {error && (
-          <div className="mb-5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-start space-x-2 animate-shake">
-            <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+          <div className="mb-5 p-3 rounded-xl bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] text-xs text-[#f07070] flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#f07070]" />
             <span>{error}</span>
           </div>
         )}
@@ -193,9 +186,8 @@ export const LoginPage: React.FC = () => {
           type="button"
           onClick={handleGoogleClick}
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-[#141b2d] hover:bg-[#1a233b] border border-white/10 hover:border-indigo-400/40 rounded-xl text-xs font-semibold text-slate-200 transition-all flex items-center justify-center space-x-3 shadow-md hover:shadow-indigo-950/40 active:scale-95 disabled:opacity-50"
+          className="w-full py-2.5 px-4 bg-[#2e2e2e] hover:bg-[#383838] border border-[#484848] rounded-xl text-xs font-semibold text-[#ececec] transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-95 disabled:opacity-50"
         >
-          {/* Official Google Brand Colors SVG */}
           <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
@@ -218,19 +210,19 @@ export const LoginPage: React.FC = () => {
         </button>
 
         <div className="flex items-center my-4">
-          <div className="flex-1 border-t border-slate-800" />
-          <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-slate-500">
+          <div className="flex-1 border-t border-[#383838]" />
+          <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-[#888]">
             or sign in with email
           </span>
-          <div className="flex-1 border-t border-slate-800" />
+          <div className="flex-1 border-t border-[#383838]" />
         </div>
 
         {/* Credentials Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-mono text-slate-400 block mb-1">Email address</label>
+            <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Email address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Mail className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
               <input
                 type="email"
                 value={email}
@@ -239,9 +231,9 @@ export const LoginPage: React.FC = () => {
                   if (validationErrors.email) setValidationErrors(prev => ({ ...prev, email: undefined }));
                 }}
                 placeholder="name@company.com"
-                className={`w-full bg-[#070a12] border ${
-                  validationErrors.email ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors`}
+                className={`w-full bg-[#1e1e1e] border ${
+                  validationErrors.email ? 'border-rose-500' : 'border-[#484848]'
+                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#ececec] placeholder-[#888888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
               />
             </div>
             {validationErrors.email && (
@@ -251,7 +243,7 @@ export const LoginPage: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-mono text-slate-400">Password</label>
+              <label className="text-xs font-mono text-[#b4b4b4]">Password</label>
               <button
                 type="button"
                 onClick={() => {
@@ -259,13 +251,13 @@ export const LoginPage: React.FC = () => {
                   setForgotStatus(null);
                   setForgotModalOpen(true);
                 }}
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                className="text-[11px] text-[#cc8b3c] hover:text-[#e8a84e] transition-colors"
               >
                 Forgot Password?
               </button>
             </div>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -274,14 +266,14 @@ export const LoginPage: React.FC = () => {
                   if (validationErrors.password) setValidationErrors(prev => ({ ...prev, password: undefined }));
                 }}
                 placeholder="••••••••"
-                className={`w-full bg-[#070a12] border ${
-                  validationErrors.password ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors`}
+                className={`w-full bg-[#1e1e1e] border ${
+                  validationErrors.password ? 'border-rose-500' : 'border-[#484848]'
+                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-[#ececec] placeholder-[#888888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-200 transition-colors"
+                className="absolute right-3 top-3 text-[#888] hover:text-[#ececec] transition-colors"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -293,12 +285,12 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer select-none">
+            <label className="flex items-center space-x-2 text-xs text-[#b4b4b4] cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-0 focus:ring-offset-0"
+                className="rounded border-[#484848] bg-[#1e1e1e] text-[#cc8b3c] focus:ring-0 focus:ring-offset-0"
               />
               <span>Remember me</span>
             </label>
@@ -307,7 +299,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center space-x-2 shadow-lg shadow-indigo-600/30 border border-indigo-400/30 disabled:opacity-50 active:scale-95"
+            className="btn-primary w-full py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-95"
           >
             <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -315,15 +307,15 @@ export const LoginPage: React.FC = () => {
         </form>
 
         {/* Link to Register */}
-        <div className="mt-5 text-center text-xs text-slate-400">
+        <div className="mt-5 text-center text-xs text-[#b4b4b4]">
           <span>Don't have an account? </span>
-          <Link to="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
+          <Link to="/register" className="text-[#cc8b3c] hover:text-[#e8a84e] font-semibold underline underline-offset-2">
             Create an account
           </Link>
         </div>
 
         {/* Demo Fast Login */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80">
+        <div className="mt-6 pt-4 border-t border-[#383838]">
           <button
             type="button"
             onClick={async () => {
@@ -332,9 +324,9 @@ export const LoginPage: React.FC = () => {
               await login('demo@anchor.io', 'password123');
               navigate('/');
             }}
-            className="w-full py-2 bg-[#12192a] hover:bg-[#18233c] text-indigo-300 border border-indigo-500/30 rounded-xl text-[11px] font-mono transition-all flex items-center justify-center space-x-2"
+            className="w-full py-2 bg-[#2a2a2a] hover:bg-[#333] text-[#e8a84e] border border-[rgba(204,139,60,0.3)] rounded-xl text-[11px] font-mono transition-all flex items-center justify-center space-x-2"
           >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#cc8b3c]" />
             <span>Instant Demo Sign In (demo@anchor.io)</span>
           </button>
         </div>
@@ -343,16 +335,16 @@ export const LoginPage: React.FC = () => {
       {/* Forgot Password Modal */}
       {forgotModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-[#111726] border border-[#22304d] rounded-2xl p-6 shadow-2xl relative">
+          <div className="w-full max-w-sm bg-[#252525] border border-[#383838] rounded-2xl p-6 shadow-2xl relative">
             <button
               type="button"
               onClick={() => setForgotModalOpen(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-white"
+              className="absolute right-4 top-4 text-[#888] hover:text-[#ececec]"
             >
               <X className="w-4 h-4" />
             </button>
-            <h3 className="text-base font-bold text-white mb-1">Reset Your Password</h3>
-            <p className="text-xs text-slate-400 mb-4">
+            <h3 className="text-base font-bold text-[#f0f0f0] mb-1">Reset Your Password</h3>
+            <p className="text-xs text-[#b4b4b4] mb-4">
               Enter your email and we'll send you instructions to reset your password.
             </p>
 
@@ -360,14 +352,14 @@ export const LoginPage: React.FC = () => {
               <div
                 className={`mb-4 p-3 rounded-xl text-xs flex items-start space-x-2 ${
                   forgotStatus.type === 'success'
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
-                    : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+                    ? 'bg-[rgba(76,175,125,0.15)] border border-[rgba(76,175,125,0.35)] text-[#60d49a]'
+                    : 'bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] text-[#f07070]'
                 }`}
               >
                 {forgotStatus.type === 'success' ? (
-                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-4 h-4 text-[#60d49a] flex-shrink-0 mt-0.5" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 text-[#f07070] flex-shrink-0 mt-0.5" />
                 )}
                 <span>{forgotStatus.message}</span>
               </div>
@@ -375,21 +367,21 @@ export const LoginPage: React.FC = () => {
 
             <form onSubmit={handleForgotPassword} className="space-y-3">
               <div>
-                <label className="text-xs font-mono text-slate-400 block mb-1">Email address</label>
+                <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Email address</label>
                 <input
                   type="email"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   placeholder="name@company.com"
                   required
-                  className="w-full bg-[#070a12] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[#1e1e1e] border border-[#484848] rounded-xl px-3 py-2 text-xs text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={forgotLoading}
-                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold transition-colors disabled:opacity-50"
+                className="btn-primary w-full py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
               >
                 {forgotLoading ? 'Sending...' : 'Send Reset Link'}
               </button>

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Modal } from './Modal';
 
@@ -28,18 +28,18 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <div className="space-y-4">
         <div className="flex items-start space-x-3">
           {isDestructive && (
-            <div className="p-2 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-400 flex-shrink-0">
+            <div className="p-2 bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] rounded-xl text-[#f07070] flex-shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
           )}
-          <p className="text-sm text-slate-300 leading-relaxed">{message}</p>
+          <p className="text-sm text-[#b4b4b4] leading-relaxed">{message}</p>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-3 border-t border-slate-800">
+        <div className="flex justify-end space-x-3 pt-3 border-t border-[#383838]">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="btn-ghost"
           >
             {cancelText}
           </button>
@@ -49,11 +49,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               onConfirm();
               onClose();
             }}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
-              isDestructive
-                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950'
-                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-950'
-            }`}
+            className={isDestructive ? 'btn-danger font-semibold' : 'btn-primary font-semibold'}
           >
             {confirmText}
           </button>
@@ -62,5 +58,3 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     </Modal>
   );
 };
-
-
