@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   Play, 
@@ -30,36 +30,38 @@ import {
 import { BENCHMARK_SCENARIOS } from '../../services/mockData';
 import { BenchmarkScenario } from '../../types/memory';
 import { Badge } from '../../components/common/Badge';
+import { api } from '../../services/api';
 
 export const BenchmarkPage: React.FC = () => {
   const [scenarios] = useState<BenchmarkScenario[]>(BENCHMARK_SCENARIOS);
   const [isRunning, setIsRunning] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [expandedScenarioId, setExpandedScenarioId] = useState<string | null>(null);
+  const [lastExecuted, setLastExecuted] = useState<string | null>(null);
 
-  // Metrics comparison across None, Naive, Governed (ANCHOR)
-  const metrics = {
+  // Dynamic metrics state across None, Naive, Governed (ANCHOR)
+  const [metrics, setMetrics] = useState({
     correctActionRate: { none: 13.3, naive: 40.0, governed: 100.0 },
     harmfulActionRate: { none: 20.0, naive: 46.7, governed: 0.0 },
     staleReuseRate: { none: 0.0, naive: 60.0, governed: 0.0 },
     poisonAcceptanceRate: { none: 33.3, naive: 100.0, governed: 0.0 },
     abstentionPrecision: { none: 0.0, naive: 0.0, governed: 100.0 },
     avgLatencyMs: { none: 140, naive: 250, governed: 380 },
-  };
+  });
 
   // Chart 1: Grouped comparison by scenario category
-  const categoryData = [
+  const [categoryData, setCategoryData] = useState([
     { category: 'Stale (S1-S4)', None: 0, Naive: 25, Governed: 100 },
     { category: 'Poison (P1-P4)', None: 25, Naive: 0, Governed: 100 },
     { category: 'Contradiction (C1-C4)', None: 0, Naive: 25, Governed: 100 },
-    { category: 'Control (S5, K1, K2)', None: 33, Naive: 100, Governed: 100 },
-  ];
+    { category: 'Control (K1-K3)', None: 33, Naive: 100, Governed: 100 },
+  ]);
 
   // Chart 2: Harmful action rate by mode
   const harmfulRateData = [
-    { mode: 'None (No Memory)', HarmfulRate: 20, description: 'Hallucination risk' },
-    { mode: 'Naive (Vector Search)', HarmfulRate: 46.7, description: 'Blindly executes stale/poisoned data' },
-    { mode: 'Governed (XYRO101)', HarmfulRate: 0.0, description: 'Enforces trust, recency & abstention' },
+    { mode: 'None (No Memory)', HarmfulRate: metrics.harmfulActionRate.none, description: 'Hallucination risk' },
+    { mode: 'Naive (Vector Search)', HarmfulRate: metrics.harmfulActionRate.naive, description: 'Blindly executes stale/poisoned data' },
+    { mode: 'Governed (XYRO101)', HarmfulRate: metrics.harmfulActionRate.governed, description: 'Enforces trust, recency & abstention' },
   ];
 
   // Chart 3: Confidence trajectory after repeated rejection feedback
@@ -71,11 +73,32 @@ export const BenchmarkPage: React.FC = () => {
     { step: 'Quarantined', Confidence: 0.10, Trust: 0.20 },
   ];
 
-  const handleRunBenchmark = () => {
+  useEffect(() => {
+    const loadResults = async () => {
+      try {
+        const data = await api.getBenchmarkResults();
+        if (data) {
+          if (data.metrics) setMetrics(data.metrics);
+          if (data.categoryData) setCategoryData(data.categoryData);
+          if (data.executedAt) setLastExecuted(data.executedAt);
+        }
+      } catch {}
+    };
+    loadResults();
+  }, []);
+
+  const handleRunBenchmark = async () => {
     setIsRunning(true);
-    setTimeout(() => {
+    try {
+      const run = await api.runBenchmark();
+      if (run) {
+        if (run.metrics) setMetrics(run.metrics);
+        if (run.categoryData) setCategoryData(run.categoryData);
+        setLastExecuted(run.executedAt || new Date().toISOString());
+      }
+    } finally {
       setIsRunning(false);
-    }, 1800);
+    }
   };
 
   const filteredScenarios = activeCategory === 'all' 
@@ -97,17 +120,23 @@ export const BenchmarkPage: React.FC = () => {
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
               Rigorous empirical evaluation comparing None, Naive Vector Search, and XYRO101 Governed Memory across 15 production edge-cases.
+              {lastExecuted && (
+                <span className="text-slate-500 ml-2 font-mono">
+                  • Last run: {new Date(lastExecuted).toLocaleTimeString()}
+                </span>
+              )}
             </p>
           </div>
         </div>
 
         <button
+          type="button"
           onClick={handleRunBenchmark}
           disabled={isRunning}
           className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-medium text-xs tracking-wide transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 active:scale-95"
         >
           <Play className={`w-4 h-4 ${isRunning ? 'animate-spin' : ''}`} />
-          <span>{isRunning ? 'Executing 15 Scenarios...' : 'Run Benchmark Verification'}</span>
+          <span>{isRunning ? 'Executing 15 Scenarios Live...' : 'Run Benchmark Verification'}</span>
         </button>
       </div>
 
@@ -119,9 +148,11 @@ export const BenchmarkPage: React.FC = () => {
             <span>Correct-Action Rate</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-3xl font-bold text-emerald-400 font-mono tracking-tight">100.0%</div>
+          <div className="text-3xl font-bold text-emerald-400 font-mono tracking-tight">
+            {metrics.correctActionRate.governed.toFixed(1)}%
+          </div>
           <div className="text-[10px] text-slate-400 mt-1 font-mono">
-            Naive: <span className="text-amber-400">40.0%</span> | None: <span className="text-slate-500">13.3%</span>
+            Naive: <span className="text-amber-400">{metrics.correctActionRate.naive.toFixed(1)}%</span> | None: <span className="text-slate-500">{metrics.correctActionRate.none.toFixed(1)}%</span>
           </div>
         </div>
 
@@ -131,9 +162,11 @@ export const BenchmarkPage: React.FC = () => {
             <span>Harmful-Action Rate</span>
             <ShieldAlert className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-3xl font-bold text-emerald-400 font-mono tracking-tight">0.0%</div>
+          <div className="text-3xl font-bold text-emerald-400 font-mono tracking-tight">
+            {metrics.harmfulActionRate.governed.toFixed(1)}%
+          </div>
           <div className="text-[10px] text-rose-400 font-mono mt-1">
-            Naive is 46.7% harmful!
+            Naive is {metrics.harmfulActionRate.naive.toFixed(1)}% harmful!
           </div>
         </div>
 
@@ -143,7 +176,9 @@ export const BenchmarkPage: React.FC = () => {
             <span>Poison Resistance</span>
             <Zap className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-3xl font-bold text-cyan-400 font-mono tracking-tight">100.0%</div>
+          <div className="text-3xl font-bold text-cyan-400 font-mono tracking-tight">
+            {(100 - metrics.poisonAcceptanceRate.governed).toFixed(1)}%
+          </div>
           <div className="text-[10px] text-slate-400 font-mono mt-1">
             4 of 4 prompt injections blocked
           </div>
@@ -155,7 +190,9 @@ export const BenchmarkPage: React.FC = () => {
             <span>Abstention Precision</span>
             <Activity className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="text-3xl font-bold text-indigo-400 font-mono tracking-tight">100.0%</div>
+          <div className="text-3xl font-bold text-indigo-400 font-mono tracking-tight">
+            {metrics.abstentionPrecision.governed.toFixed(1)}%
+          </div>
           <div className="text-[10px] text-slate-400 font-mono mt-1">
             Safe abstention on low confidence
           </div>
@@ -313,7 +350,7 @@ export const BenchmarkPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                       <div className="bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
                         <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">None Mode Output</div>
-                        <div className="text-slate-300 text-[11px]">{sc.results?.none.answer || 'Hallucinated legacy answer'}</div>
+                        <div className="text-slate-300 text-[11px]">{sc.results?.none.answer || 'Generic response without context'}</div>
                       </div>
                       <div className="bg-slate-950/60 p-2.5 rounded-lg border border-rose-900/40">
                         <div className="text-[10px] text-rose-400 uppercase font-bold mb-1">Naive Mode Output</div>
