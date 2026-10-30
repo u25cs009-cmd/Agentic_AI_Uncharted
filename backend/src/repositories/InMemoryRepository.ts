@@ -6,6 +6,7 @@ import {
   EnvEvent,
   Entity,
   User,
+  Conversation,
   MemoryFilter,
   ScoredMemory
 } from '../types/index.js';
@@ -22,6 +23,7 @@ export class InMemoryRepository implements Repository {
   private envEvents: EnvEvent[] = [];
   private entities: Map<string, Entity> = new Map();
   private users: Map<string, User> = new Map();
+  private conversations: Map<string, Conversation> = new Map();
   private emitter = new EventEmitter();
 
   constructor() {
@@ -42,10 +44,41 @@ export class InMemoryRepository implements Repository {
       email: 'team@shakti2.io',
       name: 'Team Shakti-2 Lead',
       passwordHash: '$2a$10$wN1iN6aY2n648gQ4yC1P.u53fK76k8u30/4p9v/t/Vf54b4/j9QfK', // bcrypt hash for 'password123'
+      authProviders: ['local'],
       workspace: 'ws-primary',
-      created_at: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      isActive: true,
+      lastLoginAt: new Date().toISOString()
     };
     this.users.set(defaultUser.id, defaultUser);
+
+    // Seed sample conversation for the default user
+    const defaultConvo: Conversation = {
+      id: 'conv-sample-1',
+      userId: defaultUser.id,
+      title: 'Database & Architecture Overview',
+      messages: [
+        {
+          id: 'msg-1',
+          sender: 'user',
+          text: 'Which database are we currently using in production?',
+          timestamp: '10:00 AM',
+          mode: 'governed'
+        },
+        {
+          id: 'msg-2',
+          sender: 'agent',
+          text: 'The primary production database is MongoDB Atlas (cluster shakti2-primary), configured via Terraform Deploy.',
+          timestamp: '10:00 AM',
+          mode: 'governed'
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    this.conversations.set(defaultConvo.id, defaultConvo);
+
     logger.info({ memoryCount: this.memories.size, eventCount: this.events.length }, 'InMemoryRepository initialized');
   }
 
@@ -114,7 +147,6 @@ export class InMemoryRepository implements Repository {
       );
     }
 
-    // Sort newest first
     return result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   }
 
@@ -194,11 +226,10 @@ export class InMemoryRepository implements Repository {
     const scored: ScoredMemory[] = [];
 
     for (const mem of candidateMemories) {
-      let similarity = 0.5; // fallback
+      let similarity = 0.5;
       if (mem.embedding && mem.embedding.length > 0) {
         similarity = cosineSimilarity(embedding, mem.embedding);
       } else {
-        // Mock fallback if embeddings have not been computed yet
         similarity = mem.status === 'active' ? 0.85 : 0.40;
       }
 
@@ -290,8 +321,17 @@ export class InMemoryRepository implements Repository {
   // --- Users & Isolation ---
 
   async saveUser(user: User): Promise<User> {
-    this.users.set(user.id, { ...user });
-    return { ...user };
+    const now = new Date().toISOString();
+    const updated: User = {
+      ...user,
+      createdAt: user.createdAt || user.created_at || now,
+      created_at: user.created_at || user.createdAt || now,
+      updatedAt: now,
+      authProviders: user.authProviders || ['local'],
+      isActive: user.isActive !== undefined ? user.isActive : true
+    };
+    this.users.set(user.id, updated);
+    return { ...updated };
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
@@ -304,14 +344,68 @@ export class InMemoryRepository implements Repository {
     return found ? { ...found } : null;
   }
 
+  async findUserByGoogleId(googleId: string): Promise<User | null> {
+    const found = Array.from(this.users.values()).find(u => u.googleId === googleId);
+    return found ? { ...found } : null;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+    const existing = this.users.get(id);
+    if (!existing) return null;
+    const updated: User = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    this.users.set(id, updated);
+    return { ...updated };
+  }
+
   async deleteUserAccount(userId: string): Promise<boolean> {
-    // Delete all memories for this user
     for (const [id, mem] of this.memories.entries()) {
       if (mem.owner === userId) {
         this.memories.delete(id);
       }
     }
+    for (const [id, convo] of this.conversations.entries()) {
+      if (convo.userId === userId) {
+        this.conversations.delete(id);
+      }
+    }
     return this.users.delete(userId);
+  }
+
+  // --- Conversations & Chat History ---
+
+  async saveConversation(conversation: Conversation): Promise<Conversation> {
+    const now = new Date().toISOString();
+    const convId = conversation.id || conversation._id || `conv-${Date.now()}`;
+    const fullConvo: Conversation = {
+      ...conversation,
+      id: convId,
+      _id: convId,
+      createdAt: conversation.createdAt || now,
+      updatedAt: now
+    };
+    this.conversations.set(convId, fullConvo);
+    return { ...fullConvo };
+  }
+
+  async findConversationsByUser(userId: string): Promise<Conversation[]> {
+    const convos = Array.from(this.conversations.values()).filter(c => c.userId === userId);
+    return convos.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }
+
+  async findConversationById(id: string, userId: string): Promise<Conversation | null> {
+    const convo = this.conversations.get(id);
+    if (!convo || convo.userId !== userId) return null;
+    return { ...convo };
+  }
+
+  async deleteConversation(id: string, userId: string): Promise<boolean> {
+    const convo = this.conversations.get(id);
+    if (!convo || convo.userId !== userId) return false;
+    return this.conversations.delete(id);
   }
 
   // --- Live SSE ---
@@ -323,4 +417,3 @@ export class InMemoryRepository implements Repository {
     };
   }
 }
-

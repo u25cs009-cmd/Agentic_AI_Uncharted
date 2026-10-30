@@ -1,5 +1,24 @@
 import { Router } from 'express';
-import { register, login, exportData, deleteAccount } from '../controllers/authController.js';
+import {
+  register,
+  login,
+  googleLogin,
+  getMe,
+  logout,
+  updateProfile,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  exportData,
+  deleteAccount
+} from '../controllers/authController.js';
+import {
+  listConversations,
+  getConversation,
+  createConversation,
+  appendMessage,
+  deleteConversation
+} from '../controllers/conversationController.js';
 import {
   getMemories,
   getMemoryById,
@@ -17,7 +36,7 @@ import { handleDeployEvent, handleOutcomeFeedback } from '../controllers/eventCo
 import { timeTravel } from '../controllers/timeTravelController.js';
 import { sseStream } from '../controllers/streamController.js';
 import { chat, ingestObservation, retrieveMemories, agentTriage } from '../controllers/aiPlaceholderController.js';
-import { authenticateUser, requireInternalKey } from '../middleware/auth.js';
+import { authenticateUser, requireAuth, requireInternalKey } from '../middleware/auth.js';
 import { config } from '../config/index.js';
 
 export const apiRouter = Router();
@@ -36,13 +55,27 @@ apiRouter.get('/health', (req, res) => {
 // 2. Authentication & User Profile
 apiRouter.post('/auth/register', register);
 apiRouter.post('/auth/login', login);
+apiRouter.post('/auth/google', googleLogin);
+apiRouter.post('/auth/logout', logout);
+apiRouter.get('/auth/me', requireAuth, getMe);
+apiRouter.patch('/auth/profile', requireAuth, updateProfile);
+apiRouter.post('/auth/change-password', requireAuth, changePassword);
+apiRouter.post('/auth/forgot-password', forgotPassword);
+apiRouter.post('/auth/reset-password', resetPassword);
 apiRouter.get('/export', authenticateUser, exportData);
-apiRouter.delete('/account', authenticateUser, deleteAccount);
+apiRouter.delete('/account', requireAuth, deleteAccount);
 
-// 3. Real-Time Server-Sent Events (SSE)
+// 3. User Conversations & Chat Sessions
+apiRouter.get('/conversations', authenticateUser, listConversations);
+apiRouter.post('/conversations', authenticateUser, createConversation);
+apiRouter.get('/conversations/:id', authenticateUser, getConversation);
+apiRouter.post('/conversations/:id/messages', authenticateUser, appendMessage);
+apiRouter.delete('/conversations/:id', authenticateUser, deleteConversation);
+
+// 4. Real-Time Server-Sent Events (SSE)
 apiRouter.get('/stream', sseStream);
 
-// 4. Memory CRUD & Audit Trail
+// 5. Memory CRUD & Audit Trail
 apiRouter.get('/memories', authenticateUser, getMemories);
 apiRouter.get('/memories/events', authenticateUser, getEvents);
 apiRouter.get('/memories/:id', authenticateUser, getMemoryById);
@@ -50,21 +83,20 @@ apiRouter.patch('/memories/:id', authenticateUser, updateMemory);
 apiRouter.delete('/memories/:id', authenticateUser, deleteMemory);
 apiRouter.get('/memories/:id/events', authenticateUser, getMemoryEvents);
 
-// 5. Quarantine Management
+// 6. Quarantine Management
 apiRouter.get('/quarantine', authenticateUser, getQuarantinedMemories);
 apiRouter.post('/quarantine/:id/release', authenticateUser, releaseQuarantine);
 apiRouter.post('/quarantine/:id/reject', authenticateUser, rejectQuarantine);
 
-// 6. External Event Triggers (n8n & Deploy hooks)
+// 7. External Event Triggers (n8n & Deploy hooks)
 apiRouter.post('/events/deploy', requireInternalKey, handleDeployEvent);
 apiRouter.post('/outcomes', requireInternalKey, handleOutcomeFeedback);
 
-// 7. Temporal Time Travel
+// 8. Temporal Time Travel
 apiRouter.get('/timetravel', authenticateUser, timeTravel);
 
-// 8. AI Engine Interaction Routes
+// 9. AI Engine Interaction Routes
 apiRouter.post('/chat', authenticateUser, chat);
 apiRouter.post('/ingest', authenticateUser, ingestObservation);
 apiRouter.post('/retrieve', authenticateUser, retrieveMemories);
 apiRouter.post('/agent/triage', requireInternalKey, agentTriage);
-

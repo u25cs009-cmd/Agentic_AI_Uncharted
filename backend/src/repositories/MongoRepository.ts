@@ -7,6 +7,7 @@ import {
   EnvEvent,
   Entity,
   User,
+  Conversation,
   MemoryFilter,
   ScoredMemory
 } from '../types/index.js';
@@ -29,6 +30,7 @@ export class MongoRepository implements Repository {
   private envEventsCol!: Collection<EnvEvent>;
   private entitiesCol!: Collection<Entity>;
   private usersCol!: Collection<User>;
+  private conversationsCol!: Collection<Conversation>;
 
   constructor(private uri: string, private dbName: string) {
     this.client = new MongoClient(this.uri);
@@ -47,12 +49,14 @@ export class MongoRepository implements Repository {
       this.envEventsCol = this.db.collection<EnvEvent>('env_events');
       this.entitiesCol = this.db.collection<Entity>('entities');
       this.usersCol = this.db.collection<User>('users');
+      this.conversationsCol = this.db.collection<Conversation>('conversations');
 
       // Create compound & attribute indexes
       await this.memoriesCol.createIndex({ owner: 1, workspace: 1, status: 1 });
       await this.memoriesCol.createIndex({ attribute_key: 1 });
       await this.memoriesCol.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
       await this.eventsCol.createIndex({ memory_id: 1, timestamp: -1 });
+      await this.conversationsCol.createIndex({ userId: 1, updatedAt: -1 });
 
       logger.info('MongoDB Atlas indexes verified successfully.');
       this.initChangeStreamOrPolling();
@@ -307,9 +311,52 @@ export class MongoRepository implements Repository {
     return await this.usersCol.findOne({ id });
   }
 
+  async findUserByGoogleId(googleId: string): Promise<User | null> {
+    return await this.usersCol.findOne({ googleId });
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+    const cleanUpdates = { ...updates, updatedAt: new Date().toISOString() };
+    delete (cleanUpdates as any).id;
+    delete (cleanUpdates as any)._id;
+
+    await this.usersCol.updateOne({ id }, { $set: cleanUpdates });
+    return await this.findUserById(id);
+  }
+
   async deleteUserAccount(userId: string): Promise<boolean> {
     await this.memoriesCol.deleteMany({ owner: userId });
+    await this.conversationsCol.deleteMany({ userId });
     const res = await this.usersCol.deleteOne({ id: userId });
+    return res.deletedCount > 0;
+  }
+
+  // --- Conversations & Chat History ---
+
+  async saveConversation(conversation: Conversation): Promise<Conversation> {
+    const convId = conversation.id || conversation._id || `conv-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const now = new Date().toISOString();
+    const doc: Conversation = {
+      ...conversation,
+      id: convId,
+      _id: convId,
+      createdAt: conversation.createdAt || now,
+      updatedAt: now
+    };
+    await this.conversationsCol.updateOne({ id: convId }, { $set: doc }, { upsert: true });
+    return doc;
+  }
+
+  async findConversationsByUser(userId: string): Promise<Conversation[]> {
+    return await this.conversationsCol.find({ userId }).sort({ updatedAt: -1 }).toArray();
+  }
+
+  async findConversationById(id: string, userId: string): Promise<Conversation | null> {
+    return await this.conversationsCol.findOne({ id, userId });
+  }
+
+  async deleteConversation(id: string, userId: string): Promise<boolean> {
+    const res = await this.conversationsCol.deleteOne({ id, userId });
     return res.deletedCount > 0;
   }
 
@@ -322,4 +369,3 @@ export class MongoRepository implements Repository {
     };
   }
 }
-

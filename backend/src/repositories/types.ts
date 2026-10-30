@@ -5,6 +5,7 @@ import {
   EnvEvent,
   Entity,
   User,
+  Conversation,
   MemoryFilter,
   ScoredMemory
 } from '../types/index.js';
@@ -46,9 +47,16 @@ export interface Repository {
   saveUser(user: User): Promise<User>;
   findUserByEmail(email: string): Promise<User | null>;
   findUserById(id: string): Promise<User | null>;
+  findUserByGoogleId(googleId: string): Promise<User | null>;
+  updateUser(id: string, updates: Partial<User>): Promise<User | null>;
   deleteUserAccount(userId: string): Promise<boolean>;
+
+  // Conversations & Chat History
+  saveConversation(conversation: Conversation): Promise<Conversation>;
+  findConversationsByUser(userId: string): Promise<Conversation[]>;
+  findConversationById(id: string, userId: string): Promise<Conversation | null>;
+  deleteConversation(id: string, userId: string): Promise<boolean>;
 
   // Live SSE listener
   subscribeEvents(listener: (event: MemoryEvent) => void): () => void;
 }
-

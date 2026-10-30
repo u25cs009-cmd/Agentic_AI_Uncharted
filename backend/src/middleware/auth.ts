@@ -51,6 +51,26 @@ export function authenticateUser(req: Request, res: Response, next: NextFunction
   }
 }
 
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Authentication required. No token provided.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret) as any;
+    req.user = {
+      id: decoded.id || decoded.userId,
+      email: decoded.email,
+      workspace: decoded.workspace || 'ws-primary'
+    };
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid or expired authentication token' });
+  }
+}
+
 export function requireInternalKey(req: Request, res: Response, next: NextFunction) {
   const internalKey = req.headers['x-internal-key'];
   if (!internalKey || internalKey !== config.internalApiKey) {
@@ -58,8 +78,7 @@ export function requireInternalKey(req: Request, res: Response, next: NextFuncti
     if (config.nodeEnv === 'development' && !internalKey) {
       return next();
     }
-    return res.status(403).json({ error: 'Unauthorized: Invalid or missing x-internal-key' });
+    return res.status(403).json({ error: 'Forbidden: Missing or invalid x-internal-key header' });
   }
   next();
 }
-
