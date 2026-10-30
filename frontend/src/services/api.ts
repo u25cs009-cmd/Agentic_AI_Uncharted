@@ -486,6 +486,39 @@ export const api = {
     return { success: true, affectedCount: count };
   },
 
+  // SSE Stream Support
+  subscribeToEventStream(onEvent: (event: MemoryEvent) => void): () => void {
+    let es: EventSource | null = null;
+    try {
+      es = new EventSource(`${BASE_URL}/api/stream`);
+      es.onmessage = (e) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          onEvent(parsed);
+        } catch (err) {}
+      };
+      es.onerror = () => {
+        if (es) {
+          es.close();
+          es = null;
+        }
+      };
+    } catch (e) {}
+
+    // Fallback simulated periodic ping when standalone
+    const interval = setInterval(() => {
+      if (Math.random() > 0.75 && eventStore.length > 0) {
+        // Pulse latest event
+        onEvent(eventStore[0]);
+      }
+    }, 12000);
+
+    return () => {
+      if (es) es.close();
+      clearInterval(interval);
+    };
+  },
+
   resetDemoData(): void {
     memoryStore = [...INITIAL_MEMORIES];
     eventStore = [...INITIAL_EVENTS];
