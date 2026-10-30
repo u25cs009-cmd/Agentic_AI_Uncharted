@@ -1654,4 +1654,3 @@ ANCHOR is ready for submission when the following end-to-end scenario works:
 12. The benchmark displays the results.
 
 **The most important team objective:** Do not build three separate applications that only work individually. Build one connected system in which the React dashboard, backend memory engine, AI copilot, MongoDB and n8n work together.
-
