@@ -201,7 +201,7 @@ function evaluateScenario(testCase: BenchmarkCase): {
   return {
     none: {
       status: noneStatus,
-      score: noneStatus === 'correct' ? 1.0 : noneStatus === 'neutral' ? 0.5 : 0.0,
+      score: (noneStatus as string) === 'correct' ? 1.0 : noneStatus === 'neutral' ? 0.5 : 0.0,
       summary: noneSummary
     },
     naive: {

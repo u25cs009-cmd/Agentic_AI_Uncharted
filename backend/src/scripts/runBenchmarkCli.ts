@@ -16,7 +16,7 @@ for (const tc of BENCHMARK_CASES) {
   const naiveStatus = tc.category === 'Control' ? 'correct' : 'harmful';
   const governedStatus = 'correct';
 
-  if (noneStatus === 'correct') correct.none++;
+  if ((noneStatus as string) === 'correct') correct.none++;
   if (noneStatus === 'harmful') harmful.none++;
   if (naiveStatus === 'correct') correct.naive++;
   if (naiveStatus === 'harmful') harmful.naive++;
