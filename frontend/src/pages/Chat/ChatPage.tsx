@@ -78,6 +78,7 @@ export const ChatPage: React.FC = () => {
   const [isConvSidebarOpen, setIsConvSidebarOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,6 +87,10 @@ export const ChatPage: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, []);
 
   const loadConversations = async () => {
     try {
@@ -206,10 +211,19 @@ export const ChatPage: React.FC = () => {
           await loadConversations();
         } catch {}
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Chat error:', err);
+      const fallbackMsg: MessageItem = {
+        id: `err-${Date.now()}`,
+        sender: 'agent',
+        text: `⚠️ **Memory Engine Status Alert**\n\nCould not query the backend (${err?.message || 'timeout/network issue'}). The local fallback memory simulation was consulted instead.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        mode: activeMode,
+      };
+      setMessages(prev => [...prev, fallbackMsg]);
     } finally {
       setLoading(false);
+      setTimeout(() => textareaRef.current?.focus(), 50);
     }
   };
 
@@ -446,7 +460,14 @@ export const ChatPage: React.FC = () => {
               >
                 {/* Header Information */}
                 <div className="flex items-center space-x-2 mb-1.5 px-1">
-                  <span className="text-xs font-semibold text-slate-400">
+                  {msg.sender === 'agent' ? (
+                    <img
+                      src="/logo.jpg"
+                      alt="XYRO101"
+                      className="w-5 h-5 rounded-full object-cover border border-amber-400/50 shadow-[0_0_10px_rgba(204,139,60,0.35)] shrink-0"
+                    />
+                  ) : null}
+                  <span className="text-xs font-semibold text-slate-300">
                     {msg.sender === 'user' ? 'Operator (You)' : 'XYRO101 Engine'}
                   </span>
                   <span className="text-[10px] font-mono text-slate-500">{msg.timestamp}</span>
@@ -580,13 +601,24 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* ── Input Terminal Bar ── */}
-      <div className="glass-panel p-3.5 shadow-2xl rounded-2xl border-cyan-500/30">
-        <form onSubmit={handleFormSubmit} className="space-y-2.5">
-          <div className="flex items-center space-x-2">
-            <input
-              type="text"
+      <div className="glass-panel p-3 shadow-2xl rounded-2xl border-cyan-500/30">
+        <form onSubmit={handleFormSubmit} className="space-y-2">
+          <div className="relative flex items-end bg-slate-950/80 border border-slate-800 focus-within:border-cyan-400 focus-within:shadow-[0_0_25px_rgba(6,182,212,0.25)] rounded-2xl p-2 transition-all">
+            <textarea
+              ref={textareaRef}
+              rows={1}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleFormSubmit(e);
+                }
+              }}
               placeholder={
                 compareMode
                   ? "Enter query to evaluate across None, Naive, and Governed modes..."
@@ -594,20 +626,21 @@ export const ChatPage: React.FC = () => {
                   ? "Ask XYRO101 anything (e.g. 'Which database are we using in prod?', 'How to fix checkout timeout?')..."
                   : `Query agent in ${activeMode.toUpperCase()} mode...`
               }
-              className="flex-1 bg-slate-950/80 border border-slate-800 focus:border-cyan-400 focus:shadow-[0_0_20px_rgba(6,182,212,0.2)] rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 outline-none transition-all font-sans"
+              className="flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-slate-500 outline-none resize-none max-h-40 font-sans leading-relaxed"
             />
             <button
               type="submit"
               disabled={!input.trim() || loading}
-              className="btn-primary flex items-center gap-2 px-5 py-3 rounded-xl text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+              className="btn-primary flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.4)] shrink-0 self-end transition-all"
+              title="Send message (Enter)"
             >
-              <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">Execute</span>
+              <Send className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{loading ? 'Thinking...' : 'Send'}</span>
             </button>
           </div>
 
           {/* Lower Source Tag Controls */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-xs">
+          <div className="flex items-center justify-between pt-1 text-xs">
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="font-mono text-slate-400 text-[11px]">Provenance Tag:</span>
               <select
@@ -624,14 +657,14 @@ export const ChatPage: React.FC = () => {
                 type="button"
                 onClick={handleIngest}
                 disabled={!input.trim() || loading}
-                className="text-cyan-400 hover:text-cyan-300 font-semibold text-xs font-mono disabled:opacity-40 cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 hover:text-white hover:bg-cyan-900/40 font-semibold text-xs font-mono disabled:opacity-40 cursor-pointer transition-all shadow-sm"
               >
                 + Ingest as Candidate Fact
               </button>
             </div>
 
             <div className="hidden sm:flex items-center space-x-2 font-mono text-[11px] text-slate-500">
-              <span>↵ Enter to send</span>
+              <span>↵ Enter to send • Shift + ↵ newline</span>
               <span>•</span>
               <span className="text-cyan-400 font-semibold">1536-dim Vector &amp; Graph Governance</span>
             </div>

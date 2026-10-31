@@ -26,13 +26,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ quarantineCount = 0 }) => {
       {/* ── Logo / Brand ─────────────────────────── */}
       <div className="px-5 py-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-tr from-cyan-500 to-indigo-600 shadow-[0_0_22px_rgba(6,182,212,0.45)] border border-cyan-400/30">
-            <Brain className="w-5 h-5 text-white" />
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="XYRO101 Logo"
+            className="w-10 h-10 rounded-full object-cover shrink-0 shadow-[0_0_20px_rgba(204,139,60,0.35)] border border-amber-400/40"
+          />
           <div>
             <div className="text-base font-bold text-white tracking-tight leading-none flex items-center gap-1.5">
               <span>XYRO101</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/30 font-semibold">AI</span>
+              <span className="text-[10px] font-mono px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30 font-semibold">AI</span>
             </div>
             <div className="text-xs text-slate-400 mt-1">ANCHOR Memory Engine</div>
           </div>

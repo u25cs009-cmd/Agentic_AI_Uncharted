@@ -154,9 +154,11 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md glass-panel border border-cyan-500/25 rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] relative z-10 bg-slate-950/80 backdrop-blur-2xl">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-[0_0_25px_rgba(6,182,212,0.4)] text-white border border-cyan-400/40">
-            <Cpu className="w-7 h-7" />
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="XYRO101 Logo"
+            className="w-16 h-16 rounded-full object-cover mx-auto mb-4 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
+          />
           <h1 className="text-2xl font-bold tracking-tight text-white">Welcome Back</h1>
           <p className="text-xs text-slate-400 mt-1.5 font-medium">
             Sign in to continue to your ANCHOR workspace.
