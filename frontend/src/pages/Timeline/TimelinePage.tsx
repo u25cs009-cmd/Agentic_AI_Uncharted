@@ -279,7 +279,7 @@ export const TimelinePage: React.FC = () => {
                   </div>
                   <div className="text-[10px] font-mono text-slate-400 mt-2.5 pt-2 border-t border-slate-900 flex justify-between">
                     <span>Key: <strong className="text-cyan-300">{m.attribute_key}</strong></span>
-                    <span>Trust: <strong className="text-emerald-400">{m.trust.toFixed(2)}</strong></span>
+                    <span>Trust: <strong className="text-emerald-400">{(typeof m.trust === 'number' ? m.trust.toFixed(2) : '1.00')}</strong></span>
                   </div>
                 </div>
               ))}
