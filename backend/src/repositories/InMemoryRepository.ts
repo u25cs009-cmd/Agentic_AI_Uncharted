@@ -220,6 +220,80 @@ export class InMemoryRepository implements Repository {
     return filterScopedInMemoryEvents(this.events, ctx, memoryId);
   }
 
+  // --- Transactions (Step 5) ---
+
+  async ingestTransactional(memory: Memory, event: MemoryEvent): Promise<{ memory: Memory; event: MemoryEvent }> {
+    const memoriesSnapshot = new Map(this.memories);
+    const eventsSnapshot = [...this.events];
+
+    try {
+      const savedMem = await this.saveMemory(memory);
+      await this.appendEvent(event);
+      return { memory: savedMem, event };
+    } catch (err) {
+      this.memories = memoriesSnapshot;
+      this.events = eventsSnapshot;
+      throw err;
+    }
+  }
+
+  async supersedeTransactional(
+    oldMemoryId: string,
+    newMemory: Memory,
+    oldEvent: MemoryEvent,
+    newEvent: MemoryEvent,
+    owner?: string,
+    workspace?: string
+  ): Promise<{ newMemory: Memory }> {
+    const memoriesSnapshot = new Map(this.memories);
+    const eventsSnapshot = [...this.events];
+
+    try {
+      const now = new Date().toISOString();
+      await this.updateMemory(oldMemoryId, {
+        status: 'superseded',
+        valid_to: now,
+        superseded_by: newMemory._id || newMemory.id
+      }, owner, workspace);
+      await this.appendEvent(oldEvent);
+
+      const savedNewMem = await this.saveMemory(newMemory);
+      await this.appendEvent(newEvent);
+      return { newMemory: savedNewMem };
+    } catch (err) {
+      this.memories = memoriesSnapshot;
+      this.events = eventsSnapshot;
+      throw err;
+    }
+  }
+
+  async cascadeDeleteTransactional(
+    targetMemoryId: string,
+    tombstoneEvents: MemoryEvent[],
+    owner?: string,
+    workspace?: string
+  ): Promise<{ deletedCount: number }> {
+    const memoriesSnapshot = new Map(this.memories);
+    const eventsSnapshot = [...this.events];
+
+    try {
+      let count = 0;
+      const deletedMain = await this.deleteMemory(targetMemoryId, owner, workspace);
+      if (deletedMain) count++;
+      const derivedCount = await this.deleteDerivedMemories(targetMemoryId, owner, workspace);
+      count += derivedCount;
+
+      for (const evt of tombstoneEvents) {
+        await this.appendEvent(evt);
+      }
+      return { deletedCount: count };
+    } catch (err) {
+      this.memories = memoriesSnapshot;
+      this.events = eventsSnapshot;
+      throw err;
+    }
+  }
+
   // --- Search (Vector & Keyword) ---
 
   async searchVector(embedding: number[], topK: number = 20, filter?: MemoryFilter): Promise<ScoredMemory[]> {

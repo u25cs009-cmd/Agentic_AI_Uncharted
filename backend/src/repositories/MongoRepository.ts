@@ -291,6 +291,149 @@ export class MongoRepository implements Repository {
     return await this.eventsCol.find(query).sort({ timestamp: -1 }).toArray();
   }
 
+  // --- Normalization Helpers & Transactions (Step 5) ---
+
+  private normalizeMemory(memory: Memory): Memory {
+    const memId = memory._id || memory.id || `mem-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const ws = memory.workspaceId || memory.workspace || 'ws-primary';
+    const own = memory.ownerId || memory.owner || 'usr-shakti2';
+    const vis = memory.visibility || 'workspace';
+    return {
+      ...memory,
+      _id: memId,
+      id: memId,
+      owner: own,
+      ownerId: own,
+      workspace: ws,
+      workspaceId: ws,
+      visibility: vis,
+      embeddingModel: memory.embeddingModel || 'all-MiniLM-L6-v2-local',
+      dimension: memory.dimension || (memory.embedding ? memory.embedding.length : 384),
+      created_at: memory.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  private normalizeEvent(event: MemoryEvent): MemoryEvent {
+    const ws = event.workspaceId || event.workspace || 'ws-primary';
+    const own = event.ownerId || event.owner || 'usr-shakti2';
+    const vis = event.visibility || 'workspace';
+    return {
+      ...event,
+      id: event.id || `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      workspaceId: ws,
+      workspace: ws,
+      ownerId: own,
+      owner: own,
+      visibility: vis,
+      timestamp: event.timestamp || new Date().toISOString()
+    };
+  }
+
+  async ingestTransactional(memory: Memory, event: MemoryEvent): Promise<{ memory: Memory; event: MemoryEvent }> {
+    const session = this.client.startSession();
+    try {
+      let savedMemory = memory;
+      let savedEvent = event;
+      await session.withTransaction(async () => {
+        const memDoc = this.normalizeMemory(memory);
+        await this.memoriesCol.updateOne({ _id: memDoc._id }, { $set: memDoc }, { upsert: true, session });
+        const evtDoc = this.normalizeEvent(event);
+        await this.eventsCol.insertOne(evtDoc as any, { session });
+        this.emitter.emit('memory_event', evtDoc);
+        savedMemory = memDoc;
+        savedEvent = evtDoc;
+      });
+      return { memory: savedMemory, event: savedEvent };
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async supersedeTransactional(
+    oldMemoryId: string,
+    newMemory: Memory,
+    oldEvent: MemoryEvent,
+    newEvent: MemoryEvent,
+    owner?: string,
+    workspace?: string
+  ): Promise<{ newMemory: Memory }> {
+    const session = this.client.startSession();
+    try {
+      let savedNewMemory = newMemory;
+      await session.withTransaction(async () => {
+        const now = new Date().toISOString();
+        const ctx: ScopedAccessContext = { userId: owner || '', workspaceId: workspace || 'ws-primary' };
+        const scopedFilter = buildScopedMongoMemoryFilter(ctx);
+
+        // 1. Retire old memory
+        await this.memoriesCol.updateOne(
+          { $and: [{ $or: [{ _id: oldMemoryId }, { id: oldMemoryId }] }, scopedFilter] },
+          { $set: { status: 'superseded', valid_to: now, superseded_by: newMemory._id || newMemory.id, updated_at: now } },
+          { session }
+        );
+
+        // 2. Append superseded event for old memory
+        const oldEvtDoc = this.normalizeEvent(oldEvent);
+        await this.eventsCol.insertOne(oldEvtDoc as any, { session });
+        this.emitter.emit('memory_event', oldEvtDoc);
+
+        // 3. Save new memory
+        const newMemDoc = this.normalizeMemory(newMemory);
+        await this.memoriesCol.updateOne({ _id: newMemDoc._id }, { $set: newMemDoc }, { upsert: true, session });
+        savedNewMemory = newMemDoc;
+
+        // 4. Append creation event for new memory
+        const newEvtDoc = this.normalizeEvent(newEvent);
+        await this.eventsCol.insertOne(newEvtDoc as any, { session });
+        this.emitter.emit('memory_event', newEvtDoc);
+      });
+      return { newMemory: savedNewMemory };
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async cascadeDeleteTransactional(
+    targetMemoryId: string,
+    tombstoneEvents: MemoryEvent[],
+    owner?: string,
+    workspace?: string
+  ): Promise<{ deletedCount: number }> {
+    const session = this.client.startSession();
+    try {
+      let totalDeleted = 0;
+      await session.withTransaction(async () => {
+        const ctx: ScopedAccessContext = { userId: owner || '', workspaceId: workspace || 'ws-primary' };
+        const scopedFilter = buildScopedMongoMemoryFilter(ctx);
+
+        // Delete parent memory
+        const pRes = await this.memoriesCol.deleteOne(
+          { $and: [{ $or: [{ _id: targetMemoryId }, { id: targetMemoryId }] }, scopedFilter] },
+          { session }
+        );
+        totalDeleted += pRes.deletedCount;
+
+        // Delete derived memories
+        const dRes = await this.memoriesCol.deleteMany(
+          { $and: [{ derived_from: targetMemoryId }, scopedFilter] },
+          { session }
+        );
+        totalDeleted += dRes.deletedCount;
+
+        // Insert tombstone events
+        for (const evt of tombstoneEvents) {
+          const evtDoc = this.normalizeEvent(evt);
+          await this.eventsCol.insertOne(evtDoc as any, { session });
+          this.emitter.emit('memory_event', evtDoc);
+        }
+      });
+      return { deletedCount: totalDeleted };
+    } finally {
+      await session.endSession();
+    }
+  }
+
   // --- Native Atlas Retrieval & RRF Fusion (Step 3b) ---
 
   async searchAtlasHybrid(

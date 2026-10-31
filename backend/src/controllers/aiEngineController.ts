@@ -375,8 +375,7 @@ Decide: ADD, UPDATE, SUPERSEDE, IGNORE, QUARANTINE, or CONFLICT. Assess risk (sa
         created_at: new Date().toISOString()
       };
 
-      await repo.saveMemory(qMem);
-      await repo.appendEvent({
+      await repo.ingestTransactional(qMem, {
         id: `evt-${Date.now()}`,
         memory_id: qMem._id,
         workspaceId: workspace,
@@ -443,8 +442,7 @@ Decide: ADD, UPDATE, SUPERSEDE, IGNORE, QUARANTINE, or CONFLICT. Assess risk (sa
         created_at: new Date().toISOString()
       };
 
-      await repo.saveMemory(qMem);
-      await repo.appendEvent({
+      await repo.ingestTransactional(qMem, {
         id: `evt-${Date.now()}`,
         memory_id: qMem._id,
         workspaceId: workspace,
@@ -464,33 +462,11 @@ Decide: ADD, UPDATE, SUPERSEDE, IGNORE, QUARANTINE, or CONFLICT. Assess risk (sa
       });
     }
 
-    // Guard Rule #4: Valid Superseding
+    // Guard Rule #4: Valid Superseding & Atomic Transactional Writes (Step 5)
     const now = new Date().toISOString();
     const newMemId = `mem-${Date.now()}`;
 
-    if (existingMemories.length > 0) {
-      for (const oldMem of existingMemories) {
-        await repo.updateMemory(oldMem._id, {
-          status: 'superseded',
-          valid_to: now,
-          superseded_by: newMemId
-        }, owner, workspace);
-
-        await repo.appendEvent({
-          id: `evt-sup-${Date.now()}`,
-          memory_id: oldMem._id,
-          workspaceId: workspace,
-          ownerId: owner,
-          visibility: memoryVisibility,
-          event_type: 'superseded',
-          reason: `Superseded by higher/equal trust fact: ${newMemId}`,
-          actor: 'GovernanceEngine',
-          timestamp: now
-        });
-      }
-    }
-
-    // 7. Save New Memory
+    // Construct New Memory
     const newMem: Memory = {
       _id: newMemId,
       id: newMemId,
@@ -524,18 +500,47 @@ Decide: ADD, UPDATE, SUPERSEDE, IGNORE, QUARANTINE, or CONFLICT. Assess risk (sa
       created_at: now
     };
 
-    await repo.saveMemory(newMem);
-    await repo.appendEvent({
-      id: `evt-add-${Date.now()}`,
-      memory_id: newMemId,
-      workspaceId: workspace,
-      ownerId: owner,
-      visibility: memoryVisibility,
-      event_type: 'created',
-      reason: existingMemories.length > 0 ? 'Superseded previous fact with verified update' : 'Extracted new candidate fact',
-      actor: 'IngestionPipeline',
-      timestamp: now
-    });
+    if (existingMemories.length > 0) {
+      const oldMem = existingMemories[0];
+      const oldEvent = {
+        id: `evt-sup-${Date.now()}`,
+        memory_id: oldMem._id || oldMem.id,
+        workspaceId: workspace,
+        ownerId: owner,
+        visibility: memoryVisibility,
+        event_type: 'superseded' as const,
+        reason: `Superseded by higher/equal trust fact: ${newMemId}`,
+        actor: 'GovernanceEngine',
+        timestamp: now
+      };
+      const newEvent = {
+        id: `evt-add-${Date.now()}`,
+        memory_id: newMemId,
+        workspaceId: workspace,
+        ownerId: owner,
+        visibility: memoryVisibility,
+        event_type: 'created' as const,
+        reason: 'Superseded previous fact with verified update',
+        actor: 'IngestionPipeline',
+        timestamp: now
+      };
+
+      await repo.supersedeTransactional(oldMem._id || oldMem.id, newMem, oldEvent, newEvent, owner, workspace);
+    } else {
+      const newEvent = {
+        id: `evt-add-${Date.now()}`,
+        memory_id: newMemId,
+        workspaceId: workspace,
+        ownerId: owner,
+        visibility: memoryVisibility,
+        event_type: 'created' as const,
+        reason: 'Extracted new candidate fact',
+        actor: 'IngestionPipeline',
+        timestamp: now
+      };
+
+      await repo.ingestTransactional(newMem, newEvent);
+    }
 
     return res.status(201).json({
       success: true,

@@ -28,6 +28,23 @@ export interface Repository {
   getEvents(limit?: number, owner?: string, workspace?: string): Promise<MemoryEvent[]>;
   getEventsForMemory(memoryId: string, owner?: string, workspace?: string): Promise<MemoryEvent[]>;
 
+  // Transactions (Step 5)
+  ingestTransactional(memory: Memory, event: MemoryEvent): Promise<{ memory: Memory; event: MemoryEvent }>;
+  supersedeTransactional(
+    oldMemoryId: string,
+    newMemory: Memory,
+    oldEvent: MemoryEvent,
+    newEvent: MemoryEvent,
+    owner?: string,
+    workspace?: string
+  ): Promise<{ newMemory: Memory }>;
+  cascadeDeleteTransactional(
+    targetMemoryId: string,
+    tombstoneEvents: MemoryEvent[],
+    owner?: string,
+    workspace?: string
+  ): Promise<{ deletedCount: number }>;
+
   // Search
   searchVector(embedding: number[], topK: number, filter?: MemoryFilter): Promise<ScoredMemory[]>;
   searchKeyword(query: string, topK: number, filter?: MemoryFilter): Promise<ScoredMemory[]>;
