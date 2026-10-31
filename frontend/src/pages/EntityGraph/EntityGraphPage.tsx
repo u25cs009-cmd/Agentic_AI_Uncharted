@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -56,20 +56,20 @@ export const EntityGraphPage: React.FC = () => {
           label: (
             <div className="p-1.5 text-left">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-mono text-[#cc8b3c] font-bold uppercase tracking-wider">SERVICE</span>
+                <span className="text-[10px] font-mono text-[#06b6d4] font-bold uppercase tracking-wider">SERVICE</span>
                 <span className="text-[9px] bg-[rgba(76,175,125,0.25)] text-[#60d49a] px-1.5 py-0.2 rounded font-mono font-bold">HEALTHY</span>
               </div>
-              <div className="text-xs font-bold text-[#f0f0f0] tracking-wide">checkout-api</div>
-              <div className="text-[10px] text-[#b4b4b4] font-mono">v2.1.0 • prod-us-east</div>
+              <div className="text-xs font-bold text-[#ffffff] tracking-wide">checkout-api</div>
+              <div className="text-[10px] text-[#94a3b8] font-mono">v2.1.0 • prod-us-east</div>
             </div>
           ),
         },
         style: {
-          background: '#252525',
-          border: '1px solid #cc8b3c',
+          background: '#0f172a',
+          border: '1px solid #06b6d4',
           borderRadius: '14px',
           width: 200,
-          color: '#ececec',
+          color: '#f8fafc',
         },
       },
       {
@@ -84,22 +84,22 @@ export const EntityGraphPage: React.FC = () => {
           label: (
             <div className="p-1.5 text-left">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] font-mono text-[#d4a843] font-bold uppercase tracking-wider">COMPONENT</span>
-                <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold ${highlightDeployment ? 'bg-[rgba(220,170,60,0.25)] text-[#e8c060]' : 'bg-[#333] text-[#b4b4b4]'}`}>
+                <span className="text-[10px] font-mono text-[#38bdf8] font-bold uppercase tracking-wider">COMPONENT</span>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold ${highlightDeployment ? 'bg-[rgba(220,170,60,0.25)] text-[#e8c060]' : 'bg-[#333] text-[#94a3b8]'}`}>
                   {highlightDeployment ? 'MUTATED' : 'STABLE'}
                 </span>
               </div>
-              <div className="text-xs font-bold text-[#f0f0f0] tracking-wide">pg-pool / db-conn</div>
-              <div className="text-[10px] text-[#b4b4b4] font-mono">Altered in Deploy v2.1.0</div>
+              <div className="text-xs font-bold text-[#ffffff] tracking-wide">pg-pool / db-conn</div>
+              <div className="text-[10px] text-[#94a3b8] font-mono">Altered in Deploy v2.1.0</div>
             </div>
           ),
         },
         style: {
-          background: highlightDeployment ? '#2a2218' : '#252525',
-          border: highlightDeployment ? '1px solid #d4a843' : '1px solid #cc8b3c',
+          background: highlightDeployment ? '#0e1f38' : '#0f172a',
+          border: highlightDeployment ? '1px solid #38bdf8' : '1px solid #06b6d4',
           borderRadius: '14px',
           width: 210,
-          color: '#ececec',
+          color: '#f8fafc',
         },
       },
       {
@@ -117,8 +117,8 @@ export const EntityGraphPage: React.FC = () => {
                 <span className="text-[10px] font-mono text-purple-400 font-bold uppercase tracking-wider">EVENT (W2)</span>
                 <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.2 rounded font-mono font-bold">GITHUB HOOK</span>
               </div>
-              <div className="text-xs font-bold text-[#f0f0f0] tracking-wide">Deploy Event v2.1.0</div>
-              <div className="text-[10px] text-[#b4b4b4]">Triggered Invalidation (W2)</div>
+              <div className="text-xs font-bold text-[#ffffff] tracking-wide">Deploy Event v2.1.0</div>
+              <div className="text-[10px] text-[#94a3b8]">Triggered Invalidation (W2)</div>
             </div>
           ),
         },
@@ -127,7 +127,7 @@ export const EntityGraphPage: React.FC = () => {
           border: '1px dashed #a855f7',
           borderRadius: '14px',
           width: 210,
-          color: '#ececec',
+          color: '#f8fafc',
         },
       },
       {
@@ -145,8 +145,8 @@ export const EntityGraphPage: React.FC = () => {
                 <span className="text-[10px] font-mono text-[#60d49a] font-bold uppercase tracking-wider">INFRASTRUCTURE</span>
                 <span className="text-[9px] bg-[rgba(76,175,125,0.25)] text-[#60d49a] px-1.5 py-0.2 rounded font-mono font-bold">PRIMARY</span>
               </div>
-              <div className="text-xs font-bold text-[#f0f0f0] tracking-wide">MongoDB Atlas</div>
-              <div className="text-[10px] text-[#b4b4b4] font-mono">Cluster shakti2-primary</div>
+              <div className="text-xs font-bold text-[#ffffff] tracking-wide">MongoDB Atlas</div>
+              <div className="text-[10px] text-[#94a3b8] font-mono">Cluster shakti2-primary</div>
             </div>
           ),
         },
@@ -155,7 +155,7 @@ export const EntityGraphPage: React.FC = () => {
           border: '1px solid #4caf7d',
           borderRadius: '14px',
           width: 200,
-          color: '#ececec',
+          color: '#f8fafc',
         },
       },
     ];
@@ -167,8 +167,8 @@ export const EntityGraphPage: React.FC = () => {
         target: 'cmp-pool',
         label: 'depends_on',
         animated: true,
-        style: { stroke: '#cc8b3c', strokeWidth: 2 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#cc8b3c' },
+        style: { stroke: '#06b6d4', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#06b6d4' },
       },
       {
         id: 'e4',
@@ -216,9 +216,9 @@ export const EntityGraphPage: React.FC = () => {
       let badgeBg = 'bg-[rgba(76,175,125,0.25)] text-[#60d49a]';
 
       if (isStale) {
-        borderColor = '#d4a843';
-        bgColor = '#2a2218';
-        statusColor = 'text-[#d4a843]';
+        borderColor = '#38bdf8';
+        bgColor = '#0e1f38';
+        statusColor = 'text-[#38bdf8]';
         badgeBg = 'bg-[rgba(220,170,60,0.2)] text-[#e8c060]';
       } else if (isQuarantined) {
         borderColor = '#e05c5c';
@@ -247,10 +247,10 @@ export const EntityGraphPage: React.FC = () => {
                   TRUST: {typeof mem.trust === 'number' ? mem.trust.toFixed(2) : '1.00'}
                 </span>
               </div>
-              <div className="text-xs font-bold text-[#f0f0f0] tracking-wide truncate max-w-[190px]">
+              <div className="text-xs font-bold text-[#ffffff] tracking-wide truncate max-w-[190px]">
                 {memId}: {mem.content.substring(0, 32)}...
               </div>
-              <div className="text-[10px] text-[#b4b4b4] flex items-center justify-between mt-0.5">
+              <div className="text-[10px] text-[#94a3b8] flex items-center justify-between mt-0.5">
                 <span className="capitalize">{mem.type}</span>
                 <span className="font-mono text-[#888]">{memKey}</span>
               </div>
@@ -262,7 +262,7 @@ export const EntityGraphPage: React.FC = () => {
           border: `1px solid ${borderColor}`,
           borderRadius: '14px',
           width: 220,
-          color: '#ececec',
+          color: '#f8fafc',
           opacity: isStale ? 0.8 : 1,
         },
       });
@@ -307,21 +307,21 @@ export const EntityGraphPage: React.FC = () => {
       {/* Header & HUD */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
+          <div className="w-10 h-10 rounded-xl bg-[rgba(6,182,212,0.12)] border border-[rgba(6,182,212,0.3)] flex items-center justify-center text-[#06b6d4]">
             <Network className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Knowledge &amp; Dependency Graph</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">Knowledge &amp; Dependency Graph</h1>
               <Badge variant="primary" size="sm">Module 7</Badge>
               {loading && (
-                <span className="text-xs text-[#b4b4b4] flex items-center space-x-1 animate-pulse">
-                  <RefreshCw className="w-3 h-3 animate-spin text-[#cc8b3c]" />
+                <span className="text-xs text-[#94a3b8] flex items-center space-x-1 animate-pulse">
+                  <RefreshCw className="w-3 h-3 animate-spin text-[#06b6d4]" />
                   <span>Syncing...</span>
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">
+            <p className="text-xs text-[#94a3b8] mt-0.5">
               Live topological dependency mapping: links microservices, code components, deployment webhooks, and live governed memories.
             </p>
           </div>
@@ -333,7 +333,7 @@ export const EntityGraphPage: React.FC = () => {
             className="btn-ghost flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-semibold"
             title="Refresh from MongoDB"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#cc8b3c] ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-[#06b6d4] ${loading ? 'animate-spin' : ''}`} />
             <span>Sync Live Graph</span>
           </button>
 
@@ -341,26 +341,26 @@ export const EntityGraphPage: React.FC = () => {
             onClick={() => setHighlightDeployment(!highlightDeployment)}
             className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all border ${
               highlightDeployment
-                ? 'bg-[rgba(204,139,60,0.2)] text-[#f0aa55] border-[rgba(204,139,60,0.4)]'
-                : 'card text-[#b4b4b4] hover:text-[#ececec]'
+                ? 'bg-[rgba(204,139,60,0.2)] text-[#38bdf8] border-[rgba(6,182,212,0.35)]'
+                : 'card text-[#94a3b8] hover:text-[#f8fafc]'
             }`}
           >
-            <Zap className={`w-4 h-4 ${highlightDeployment ? 'text-[#f0aa55]' : 'text-[#888]'}`} />
+            <Zap className={`w-4 h-4 ${highlightDeployment ? 'text-[#38bdf8]' : 'text-[#888]'}`} />
             <span>{highlightDeployment ? 'Highlight Invalidation (W2)' : 'Show Neutral Graph'}</span>
           </button>
         </div>
       </div>
 
       {/* React Flow Graph Visualizer Canvas */}
-      <div className="card rounded-2xl overflow-hidden shadow-2xl relative h-[560px] border-[#383838]">
+      <div className="card rounded-2xl overflow-hidden shadow-2xl relative h-[560px] border-[#1e293b]">
         {/* Floating Legend Overlay */}
-        <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3 bg-[#252525]/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-[#383838] text-xs font-mono text-[#ececec] shadow-xl">
+        <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3 bg-[#0f172a]/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-[#1e293b] text-xs font-mono text-[#f8fafc] shadow-xl">
           <div className="flex items-center space-x-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#cc8b3c]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#06b6d4]" />
             <span>Service</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#d4a843]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#38bdf8]" />
             <span>Component</span>
           </div>
           <div className="flex items-center space-x-1.5">
@@ -389,39 +389,39 @@ export const EntityGraphPage: React.FC = () => {
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           fitView
-          className="bg-[#1a1a1a]"
+          className="bg-[#070b14]"
         >
-          <Background color="#383838" gap={20} size={1} />
-          <Controls className="bg-[#252525] border-[#383838] text-[#ececec] fill-[#ececec] stroke-[#ececec] shadow-xl rounded-xl" />
+          <Background color="#1e293b" gap={20} size={1} />
+          <Controls className="bg-[#0f172a] border-[#1e293b] text-[#f8fafc] fill-[#f8fafc] stroke-[#f8fafc] shadow-xl rounded-xl" />
           <MiniMap
             nodeColor={(n) => {
-              if (n.id.includes('svc')) return '#cc8b3c';
-              if (n.id.includes('cmp')) return '#d4a843';
+              if (n.id.includes('svc')) return '#06b6d4';
+              if (n.id.includes('cmp')) return '#38bdf8';
               if (n.id.includes('ent')) return '#4caf7d';
               if (n.data?.status === 'ACTIVE') return '#60d49a';
-              if (n.data?.status === 'STALE' || n.data?.status === 'INVALIDATED') return '#d4a843';
+              if (n.data?.status === 'STALE' || n.data?.status === 'INVALIDATED') return '#38bdf8';
               if (n.data?.status === 'QUARANTINED') return '#e05c5c';
               return '#a855f7';
             }}
-            className="bg-[#252525] border border-[#383838] rounded-xl overflow-hidden shadow-2xl"
+            className="bg-[#0f172a] border border-[#1e293b] rounded-xl overflow-hidden shadow-2xl"
           />
         </ReactFlow>
 
         {/* Node Detail Drawer Overlay */}
         {selectedNodeInfo && (
-          <div className="absolute bottom-4 left-4 right-4 z-10 card border-[rgba(204,139,60,0.4)] p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-fade-in bg-[#252525]/95 backdrop-blur-md">
+          <div className="absolute bottom-4 left-4 right-4 z-10 card border-[rgba(6,182,212,0.35)] p-4 rounded-2xl flex items-center justify-between shadow-2xl animate-fade-in bg-[#0f172a]/95 backdrop-blur-md">
             <div className="flex items-start space-x-3 max-w-3xl">
-              <CheckCircle2 className="w-5 h-5 text-[#cc8b3c] shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-[#06b6d4] shrink-0 mt-0.5" />
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-bold font-mono text-[#f0aa55] text-xs">
+                  <span className="font-bold font-mono text-[#38bdf8] text-xs">
                     {selectedNodeInfo.data?.title || selectedNodeInfo.id}
                   </span>
-                  <span className="text-[10px] bg-[#333] text-[#b4b4b4] px-2 py-0.5 rounded font-mono">
+                  <span className="text-[10px] bg-[#333] text-[#94a3b8] px-2 py-0.5 rounded font-mono">
                     {selectedNodeInfo.data?.kind || 'ENTITY'}
                   </span>
                   {selectedNodeInfo.data?.status && (
-                    <span className="text-[10px] bg-[rgba(204,139,60,0.2)] text-[#f0aa55] px-2 py-0.5 rounded font-mono font-bold">
+                    <span className="text-[10px] bg-[rgba(204,139,60,0.2)] text-[#38bdf8] px-2 py-0.5 rounded font-mono font-bold">
                       {selectedNodeInfo.data.status}
                     </span>
                   )}
@@ -431,14 +431,14 @@ export const EntityGraphPage: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-[#b4b4b4] mt-1 leading-relaxed">
+                <p className="text-[11px] text-[#94a3b8] mt-1 leading-relaxed">
                   {selectedNodeInfo.data?.details || 'Topological entity mapped in memory graph. Invariant and governance checks active.'}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setSelectedNodeInfo(null)}
-              className="text-[#888] hover:text-[#ececec] p-1 rounded-lg hover:bg-[#333] transition-colors shrink-0 ml-3"
+              className="text-[#888] hover:text-[#f8fafc] p-1 rounded-lg hover:bg-[#333] transition-colors shrink-0 ml-3"
             >
               <X className="w-4 h-4" />
             </button>

@@ -1,0 +1,687 @@
+{
+  "name": "WF3 \u2014 Memory Update and Deletion",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "memory-manage",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf3-node-01",
+      "name": "Command Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        340
+      ],
+      "webhookId": "anchor-memory-manage-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.body.user_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ ($json.body.instruction_text || '').trim().length }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf3-node-02",
+      "name": "Validate Command Payload",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        320,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Both 'user_id' and 'instruction_text' (min 3 chars) are required.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "wf3-node-02b",
+      "name": "Respond 400 Bad Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        540,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Memory Instruction Parser for ANCHOR.\nAnalyze the user's command to modify or delete stored memories.\n\nUser Instruction:\n\"\"\"\n{{ $json.body.instruction_text }}\n\"\"\"\n\nTasks:\n1. Classify operation: UPDATE (modify details), DELETE (remove a specific item/date/fact), or FORGET (wipe knowledge about a concept).\n2. Extract the target topic, keywords, and identifying details.\n3. Summarize the requested changes.\n4. If the instruction is vague (e.g. 'forget that thing'), mark is_ambiguous: true.\n\nReturn JSON ONLY:\n{\n  \"operation\": \"UPDATE | DELETE | FORGET\",\n  \"target_topic\": \"string\",\n  \"search_keywords\": [\"string\"],\n  \"identifying_details\": \"string\",\n  \"requested_changes\": \"string\",\n  \"is_ambiguous\": false,\n  \"confidence\": 0.95\n}"
+      },
+      "id": "wf3-node-03",
+      "name": "Classify Command & Extract Target",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        540,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "wf3-node-03b",
+      "name": "OpenAI Model - Command Classifier",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        540
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openAiApiCredential",
+          "name": "OpenAI Account (Configure in n8n Credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/similarity-search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Workflow-ID",
+              "value": "WF3-MANAGEMENT"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"user_id\": \"{{ $('Validate Command Payload').first().json.body.user_id }}\",\n  \"topic\": \"{{ $json.target_topic || 'Memory Search' }}\",\n  \"query_text\": \"{{ ($json.search_keywords || []).join(' ') + ' ' + ($json.identifying_details || '') }}\",\n  \"top_k\": 4,\n  \"similarity_threshold\": 0.60,\n  \"status_filter\": [\"ACTIVE\"]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf3-node-04",
+      "name": "Search Target Memory in Backend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF3 Node 5: Evaluate Ambiguity & Target Match\nconst rawClass = $('Classify Command & Extract Target').first().json.text || '';\nlet parsedCmd = {};\ntry {\n  const cleaned = rawClass.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim();\n  parsedCmd = JSON.parse(cleaned);\n} catch (e) {\n  parsedCmd = { operation: 'UPDATE', is_ambiguous: true };\n}\n\nconst candidates = $input.item.json.results || $input.item.json.memories || [];\nconst operation = (parsedCmd.operation || 'UPDATE').toUpperCase();\n\n// Case 1: No candidates found\nif (candidates.length === 0) {\n  return {\n    json: {\n      match_status: \"NOT_FOUND\",\n      operation: operation,\n      message: \"No matching active memories found for the given instruction.\"\n    }\n  };\n}\n\n// Case 2: Ambiguous instruction or multiple high-confidence ties\nconst top1 = candidates[0];\nconst top2 = candidates[1];\nconst isAmbiguousTie = candidates.length > 1 && top2.similarity_score > 0.72 && (top1.similarity_score - top2.similarity_score) < 0.08;\n\nif (parsedCmd.is_ambiguous || isAmbiguousTie) {\n  return {\n    json: {\n      match_status: \"AMBIGUOUS\",\n      operation: operation,\n      options: candidates.slice(0, 3).map(c => ({\n        memory_id: c.memory_id,\n        topic: c.topic,\n        snippet: c.content || c.description || (c.facts && c.facts[0]) || \"\"\n      }))\n    }\n  };\n}\n\n// Case 3: Exact target matched\nreturn {\n  json: {\n    match_status: (operation === 'DELETE' || operation === 'FORGET') ? \"EXACT_DELETE\" : \"EXACT_UPDATE\",\n    operation: operation,\n    target_memory: top1,\n    requested_changes: parsedCmd.requested_changes || \"\"\n  }\n};"
+      },
+      "id": "wf3-node-05",
+      "name": "Evaluate Ambiguity & Match",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "r-ambiguous",
+                    "leftValue": "={{ $json.match_status }}",
+                    "rightValue": "AMBIGUOUS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "r-notfound",
+                    "leftValue": "={{ $json.match_status }}",
+                    "rightValue": "NOT_FOUND",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "r-update",
+                    "leftValue": "={{ $json.match_status }}",
+                    "rightValue": "EXACT_UPDATE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "r-delete",
+                    "leftValue": "={{ $json.match_status }}",
+                    "rightValue": "EXACT_DELETE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        }
+      },
+      "id": "wf3-node-06",
+      "name": "Match Status Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1200,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF3 Node 7a: Clarification Response\nreturn {\n  json: {\n    success: true,\n    action_required: \"CLARIFICATION\",\n    message: \"Multiple memories match your request. Please specify which memory you would like to modify:\",\n    candidate_options: $input.item.json.options\n  }\n};"
+      },
+      "id": "wf3-node-07a",
+      "name": "Build Clarification Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF3 Node 7b: Not Found Response\nreturn {\n  json: {\n    success: true,\n    action_required: \"NONE\",\n    modified: false,\n    message: \"No matching active memory was found. No changes were made.\"\n  }\n};"
+      },
+      "id": "wf3-node-07b",
+      "name": "Build Not Found Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Selective Patch Synthesizer for ANCHOR.\nGenerate the minimal JSON diff to update the target memory based on the user's instruction.\n\nExisting Memory Record:\n{{ JSON.stringify($json.target_memory) }}\n\nRequested Modification:\n\"\"\"\n{{ $json.requested_changes }}\n\"\"\"\n\nRules:\n1. PRESERVE ALL UNRELATED FIELDS AND FACTS. Do not erase facts that the user did not ask to change.\n2. Output updated 'description', 'facts', and 'dates' arrays.\n3. Return JSON ONLY:\n{\n  \"description\": \"string\",\n  \"facts\": [\"string\"],\n  \"dates\": [{\"event\": \"string\", \"date\": \"ISO8601 string\"}],\n  \"diff_summary\": \"1-sentence summary of the update\"\n}"
+      },
+      "id": "wf3-node-08a",
+      "name": "Synthesize Field Patch",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1440,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "wf3-node-08b",
+      "name": "OpenAI Model - Patch Generator",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        620
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "openAiApiCredential",
+          "name": "OpenAI Account (Configure in n8n Credentials)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/{{ $('Evaluate Ambiguity & Match').first().json.target_memory.memory_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"user_id\": \"{{ $('Validate Command Payload').first().json.body.user_id }}\",\n  \"fields_to_update\": {{ $json.text || $json.response }},\n  \"audit_reason\": \"User natural language modification via WF3.\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf3-node-09a",
+      "name": "Execute Backend Patch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "DELETE",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/{{ $json.target_memory.memory_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"user_id\": \"{{ $('Validate Command Payload').first().json.body.user_id }}\",\n  \"reason\": \"User explicit delete/forget command via WF3.\",\n  \"purge_vectors\": true\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf3-node-09b",
+      "name": "Execute Soft-Delete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        740
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/audit/logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"workflow\": \"WF3-MANAGEMENT\",\n  \"user_id\": \"{{ $('Validate Command Payload').first().json.body.user_id }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"details\": {{ JSON.stringify($json) }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf3-node-10",
+      "name": "Record Operation Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF3 Node 11: Format Success Response\nconst isDelete = $('Match Status Switch').first().json.match_status === 'EXACT_DELETE';\nconst targetMem = $('Evaluate Ambiguity & Match').first().json.target_memory || {};\n\nreturn {\n  json: {\n    success: true,\n    action_required: \"NONE\",\n    operation: isDelete ? \"DELETE\" : \"UPDATE\",\n    memory_id: targetMem.memory_id,\n    topic: targetMem.topic,\n    message: isDelete\n      ? \"Memory successfully deleted and evicted from active retrieval.\"\n      : \"Memory successfully updated and re-indexed.\",\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf3-node-11",
+      "name": "Format Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2140,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "wf3-node-12",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2360,
+        340
+      ]
+    }
+  ],
+  "connections": {
+    "Command Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Command Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Command Payload": {
+      "main": [
+        [
+          {
+            "node": "Classify Command & Extract Target",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 Bad Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Command Classifier": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Classify Command & Extract Target",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Command & Extract Target": {
+      "main": [
+        [
+          {
+            "node": "Search Target Memory in Backend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Target Memory in Backend": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Ambiguity & Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Ambiguity & Match": {
+      "main": [
+        [
+          {
+            "node": "Match Status Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Status Switch": {
+      "main": [
+        [
+          {
+            "node": "Build Clarification Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Not Found Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Synthesize Field Patch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Soft-Delete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Clarification Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Not Found Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Model - Patch Generator": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Synthesize Field Patch",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Synthesize Field Patch": {
+      "main": [
+        [
+          {
+            "node": "Execute Backend Patch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Backend Patch": {
+      "main": [
+        [
+          {
+            "node": "Record Operation Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Soft-Delete": {
+      "main": [
+        [
+          {
+            "node": "Record Operation Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Operation Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Success Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "anchor-automation-instance"
+  },
+  "tags": [
+    {
+      "name": "ANCHOR"
+    },
+    {
+      "name": "Memory Update"
+    },
+    {
+      "name": "Memory Deletion"
+    }
+  ]
+}

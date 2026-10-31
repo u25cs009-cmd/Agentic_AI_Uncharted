@@ -58,41 +58,29 @@ export const LoginPage: React.FC = () => {
   }, []);
 
   const handleGoogleCredentialResponse = async (response: any) => {
-    if (response?.credential) {
-      try {
-        setError(null);
-        await loginWithGoogle(response.credential);
-        navigate('/');
-      } catch (err: any) {
-        setError(err?.message || 'Google authentication failed. Please try again.');
-      }
+    if (!response?.credential) {
+      setError('Google Sign-In failed to retrieve credential token.');
+      return;
+    }
+    setError(null);
+    try {
+      await loginWithGoogle(response.credential);
+      navigate('/');
+    } catch (err: any) {
+      setError(err?.message || 'Google authentication failed.');
     }
   };
 
-  const handleGoogleClick = async () => {
-    setError(null);
+  const handleGoogleClick = () => {
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (googleClientId && (window as any).google?.accounts?.id) {
+    if (!googleClientId) {
+      setError('Google OAuth Client ID is not configured (VITE_GOOGLE_CLIENT_ID). You can use email/password authentication or instant demo sign-in.');
+      return;
+    }
+    if ((window as any).google?.accounts?.id) {
       (window as any).google.accounts.id.prompt();
     } else {
-      try {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(
-          JSON.stringify({
-            sub: 'google_oauth_10928374650192837465',
-            email: 'alex.chen@anchor.ai',
-            name: 'Alex Chen',
-            picture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-            iss: 'https://accounts.google.com',
-            aud: 'anchor-client-id'
-          })
-        );
-        const mockCredential = `${header}.${payload}.signature_anchor_google`;
-        await loginWithGoogle(mockCredential);
-        navigate('/');
-      } catch (err: any) {
-        setError(err?.message || 'Google Sign-In failed.');
-      }
+      setError('Google Identity Services script is still loading. Please try again.');
     }
   };
 
@@ -106,8 +94,6 @@ export const LoginPage: React.FC = () => {
 
     if (!password) {
       errors.password = 'Password is required';
-    } else if (password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
     }
 
     setValidationErrors(errors);
@@ -160,23 +146,29 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
-      <div className="w-full max-w-md bg-[#252525] border border-[#383838] rounded-2xl p-8 shadow-2xl relative z-10">
+    <div className="min-h-screen bg-[#07090e] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+      {/* Ambient Celestial Aurora Glows */}
+      <div className="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] rounded-full bg-indigo-600/15 blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-500/15 blur-[150px] pointer-events-none" />
+
+      <div className="w-full max-w-md glass-panel border border-cyan-500/25 rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] relative z-10 bg-slate-950/80 backdrop-blur-2xl">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center mx-auto mb-4 shadow-lg text-[#cc8b3c]">
-            <Cpu className="w-7 h-7" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Welcome Back</h1>
-          <p className="text-xs text-[#b4b4b4] mt-1.5 font-medium">
+          <img
+            src="/logo.jpg"
+            alt="XYRO101 Logo"
+            className="w-16 h-16 rounded-full object-cover mx-auto mb-4 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
+          />
+          <h1 className="text-2xl font-bold tracking-tight text-white">Welcome Back</h1>
+          <p className="text-xs text-slate-400 mt-1.5 font-medium">
             Sign in to continue to your ANCHOR workspace.
           </p>
         </div>
 
         {/* Global Error Banner */}
         {error && (
-          <div className="mb-5 p-3 rounded-xl bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] text-xs text-[#f07070] flex items-start space-x-2">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-[#f07070]" />
+          <div className="mb-5 p-3 rounded-xl bg-rose-500/15 border border-rose-500/35 text-xs text-rose-300 flex items-start space-x-2 shadow-[0_0_15px_rgba(244,63,94,0.15)] animate-fade-in">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
             <span>{error}</span>
           </div>
         )}
@@ -186,7 +178,7 @@ export const LoginPage: React.FC = () => {
           type="button"
           onClick={handleGoogleClick}
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-[#2e2e2e] hover:bg-[#383838] border border-[#484848] rounded-xl text-xs font-semibold text-[#ececec] transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-95 disabled:opacity-50"
+          className="w-full py-2.5 px-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-white transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-98 disabled:opacity-50 cursor-pointer"
         >
           <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
@@ -210,19 +202,19 @@ export const LoginPage: React.FC = () => {
         </button>
 
         <div className="flex items-center my-4">
-          <div className="flex-1 border-t border-[#383838]" />
-          <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-[#888]">
+          <div className="flex-1 border-t border-slate-800" />
+          <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-slate-500">
             or sign in with email
           </span>
-          <div className="flex-1 border-t border-[#383838]" />
+          <div className="flex-1 border-t border-slate-800" />
         </div>
 
         {/* Credentials Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Email address</label>
+            <label className="text-xs font-mono text-slate-300 block mb-1">Email address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
+              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
                 type="email"
                 value={email}
@@ -231,9 +223,9 @@ export const LoginPage: React.FC = () => {
                   if (validationErrors.email) setValidationErrors(prev => ({ ...prev, email: undefined }));
                 }}
                 placeholder="name@company.com"
-                className={`w-full bg-[#1e1e1e] border ${
-                  validationErrors.email ? 'border-rose-500' : 'border-[#484848]'
-                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#ececec] placeholder-[#888888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
+                className={`w-full bg-slate-950/80 border ${
+                  validationErrors.email ? 'border-rose-500' : 'border-slate-800'
+                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
               />
             </div>
             {validationErrors.email && (
@@ -243,7 +235,7 @@ export const LoginPage: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-mono text-[#b4b4b4]">Password</label>
+              <label className="text-xs font-mono text-slate-300">Password</label>
               <button
                 type="button"
                 onClick={() => {
@@ -251,13 +243,13 @@ export const LoginPage: React.FC = () => {
                   setForgotStatus(null);
                   setForgotModalOpen(true);
                 }}
-                className="text-[11px] text-[#cc8b3c] hover:text-[#e8a84e] transition-colors"
+                className="text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
               >
                 Forgot Password?
               </button>
             </div>
             <div className="relative">
-              <Lock className="w-4 h-4 text-[#888] absolute left-3.5 top-3" />
+              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -266,14 +258,14 @@ export const LoginPage: React.FC = () => {
                   if (validationErrors.password) setValidationErrors(prev => ({ ...prev, password: undefined }));
                 }}
                 placeholder="••••••••"
-                className={`w-full bg-[#1e1e1e] border ${
-                  validationErrors.password ? 'border-rose-500' : 'border-[#484848]'
-                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-[#ececec] placeholder-[#888888] focus:outline-none focus:border-[#cc8b3c] transition-colors`}
+                className={`w-full bg-slate-950/80 border ${
+                  validationErrors.password ? 'border-rose-500' : 'border-slate-800'
+                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-[#888] hover:text-[#ececec] transition-colors"
+                className="absolute right-3 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -285,12 +277,12 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center space-x-2 text-xs text-[#b4b4b4] cursor-pointer select-none">
+            <label className="flex items-center space-x-2 text-xs text-slate-400 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[#484848] bg-[#1e1e1e] text-[#cc8b3c] focus:ring-0 focus:ring-offset-0"
+                className="rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
               />
               <span>Remember me</span>
             </label>
@@ -299,7 +291,7 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary w-full py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-95"
+            className="btn-primary w-full py-3 rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center space-x-2 disabled:opacity-50 active:scale-98 shadow-[0_0_20px_rgba(6,182,212,0.4)] cursor-pointer"
           >
             <span>{isLoading ? 'Signing In...' : 'Sign In'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -307,15 +299,15 @@ export const LoginPage: React.FC = () => {
         </form>
 
         {/* Link to Register */}
-        <div className="mt-5 text-center text-xs text-[#b4b4b4]">
+        <div className="mt-5 text-center text-xs text-slate-400">
           <span>Don't have an account? </span>
-          <Link to="/register" className="text-[#cc8b3c] hover:text-[#e8a84e] font-semibold underline underline-offset-2">
+          <Link to="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
             Create an account
           </Link>
         </div>
 
         {/* Demo Fast Login */}
-        <div className="mt-6 pt-4 border-t border-[#383838]">
+        <div className="mt-6 pt-4 border-t border-slate-800">
           <button
             type="button"
             onClick={async () => {
@@ -324,9 +316,9 @@ export const LoginPage: React.FC = () => {
               await login('demo@anchor.io', 'password123');
               navigate('/');
             }}
-            className="w-full py-2 bg-[#2a2a2a] hover:bg-[#333] text-[#e8a84e] border border-[rgba(204,139,60,0.3)] rounded-xl text-[11px] font-mono transition-all flex items-center justify-center space-x-2"
+            className="w-full py-2 bg-cyan-950/20 hover:bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 rounded-xl text-[11px] font-mono transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#cc8b3c]" />
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
             <span>Instant Demo Sign In (demo@anchor.io)</span>
           </button>
         </div>
@@ -334,17 +326,17 @@ export const LoginPage: React.FC = () => {
 
       {/* Forgot Password Modal */}
       {forgotModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-[#252525] border border-[#383838] rounded-2xl p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-sm glass-panel border border-cyan-500/30 rounded-2xl p-6 shadow-2xl relative bg-slate-950/95">
             <button
               type="button"
               onClick={() => setForgotModalOpen(false)}
-              className="absolute right-4 top-4 text-[#888] hover:text-[#ececec]"
+              className="absolute right-4 top-4 text-slate-400 hover:text-white p-1 rounded-lg"
             >
               <X className="w-4 h-4" />
             </button>
-            <h3 className="text-base font-bold text-[#f0f0f0] mb-1">Reset Your Password</h3>
-            <p className="text-xs text-[#b4b4b4] mb-4">
+            <h3 className="text-base font-bold text-white mb-1">Reset Your Password</h3>
+            <p className="text-xs text-slate-400 mb-4">
               Enter your email and we'll send you instructions to reset your password.
             </p>
 
@@ -352,14 +344,14 @@ export const LoginPage: React.FC = () => {
               <div
                 className={`mb-4 p-3 rounded-xl text-xs flex items-start space-x-2 ${
                   forgotStatus.type === 'success'
-                    ? 'bg-[rgba(76,175,125,0.15)] border border-[rgba(76,175,125,0.35)] text-[#60d49a]'
-                    : 'bg-[rgba(220,80,80,0.15)] border border-[rgba(220,80,80,0.35)] text-[#f07070]'
+                    ? 'bg-emerald-500/15 border border-emerald-500/35 text-emerald-300'
+                    : 'bg-rose-500/15 border border-rose-500/35 text-rose-300'
                 }`}
               >
                 {forgotStatus.type === 'success' ? (
-                  <CheckCircle className="w-4 h-4 text-[#60d49a] flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-[#f07070] flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
                 )}
                 <span>{forgotStatus.message}</span>
               </div>
@@ -367,21 +359,21 @@ export const LoginPage: React.FC = () => {
 
             <form onSubmit={handleForgotPassword} className="space-y-3">
               <div>
-                <label className="text-xs font-mono text-[#b4b4b4] block mb-1">Email address</label>
+                <label className="text-xs font-mono text-slate-300 block mb-1">Email address</label>
                 <input
                   type="email"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   placeholder="name@company.com"
                   required
-                  className="w-full bg-[#1e1e1e] border border-[#484848] rounded-xl px-3 py-2 text-xs text-[#ececec] placeholder-[#888] focus:outline-none focus:border-[#cc8b3c]"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={forgotLoading}
-                className="btn-primary w-full py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
+                className="btn-primary w-full py-2.5 rounded-xl text-xs font-semibold disabled:opacity-50"
               >
                 {forgotLoading ? 'Sending...' : 'Send Reset Link'}
               </button>

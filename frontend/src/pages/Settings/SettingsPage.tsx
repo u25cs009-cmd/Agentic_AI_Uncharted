@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   Download, 
   Trash2, 
@@ -61,22 +61,22 @@ export const SettingsPage: React.FC = () => {
       {/* Header & Title HUD */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
+          <div className="w-10 h-10 rounded-xl bg-[rgba(6,182,212,0.12)] border border-[rgba(6,182,212,0.3)] flex items-center justify-center text-[#06b6d4]">
             <Sliders className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Engine Settings &amp; Governance</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">Engine Settings &amp; Governance</h1>
               <Badge variant="warning" size="sm">Evaluation Ready</Badge>
             </div>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">
+            <p className="text-xs text-[#94a3b8] mt-0.5">
               Configure temporal half-life decay, simulate webhook events for evaluators, and execute privacy compliance operations.
             </p>
           </div>
         </div>
 
-        <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-[#b4b4b4]">
-          <Radio className="w-3.5 h-3.5 text-[#cc8b3c] animate-pulse" />
+        <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-[#94a3b8]">
+          <Radio className="w-3.5 h-3.5 text-[#06b6d4] animate-pulse" />
           <span>Simulation Engine: <span className="text-[#60d49a] font-bold">READY</span></span>
         </div>
       </div>
@@ -89,12 +89,12 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {/* Simulator Panel for Judges (Module 12) */}
-      <div className="card p-6 rounded-2xl relative overflow-hidden shadow-xl border-[rgba(204,139,60,0.3)]">
+      <div className="card p-6 rounded-2xl relative overflow-hidden shadow-xl border-[rgba(6,182,212,0.3)]">
         <div className="flex items-center space-x-2.5 mb-2">
-          <Cpu className="w-5 h-5 text-[#cc8b3c]" />
-          <h2 className="text-base font-semibold text-[#f0f0f0] tracking-tight">Interactive Demonstration Deck (Module 12)</h2>
+          <Cpu className="w-5 h-5 text-[#06b6d4]" />
+          <h2 className="text-base font-semibold text-[#ffffff] tracking-tight">Interactive Demonstration Deck (Module 12)</h2>
         </div>
-        <p className="text-xs text-[#b4b4b4] mb-6 leading-relaxed">
+        <p className="text-xs text-[#94a3b8] mb-6 leading-relaxed">
           Simulate external webhook events and scheduled lifecycle tasks (n8n workflows W1, W2 &amp; W4) live with one click.
         </p>
 
@@ -107,11 +107,11 @@ export const SettingsPage: React.FC = () => {
                   <div className="w-7 h-7 rounded-lg bg-[rgba(220,170,60,0.15)] border border-[rgba(220,170,60,0.3)] flex items-center justify-center text-[#e8c060]">
                     <BellRing className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-semibold text-[#f0f0f0]">Simulate Incident Alert</span>
+                  <span className="text-sm font-semibold text-[#ffffff]">Simulate Incident Alert</span>
                 </div>
                 <Badge variant="warning" size="sm">W1 Pipeline</Badge>
               </div>
-              <p className="text-xs text-[#b4b4b4] leading-relaxed mb-5">
+              <p className="text-xs text-[#94a3b8] leading-relaxed mb-5">
                 Simulates a P1 SRE incident: <em>'checkout-api DB pool saturation'</em>. Triggers ingestion normalization and agent triage fix proposal.
               </p>
             </div>
@@ -128,18 +128,18 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* GitHub Deploy Trigger */}
-          <div className="card p-5 rounded-xl border-[rgba(204,139,60,0.3)] flex flex-col justify-between group hover:border-[rgba(204,139,60,0.5)] transition-all">
+          <div className="card p-5 rounded-xl border-[rgba(6,182,212,0.3)] flex flex-col justify-between group hover:border-[rgba(204,139,60,0.5)] transition-all">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 rounded-lg bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
+                  <div className="w-7 h-7 rounded-lg bg-[rgba(6,182,212,0.12)] border border-[rgba(6,182,212,0.3)] flex items-center justify-center text-[#06b6d4]">
                     <Rocket className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-semibold text-[#f0f0f0]">Simulate GitHub Deploy</span>
+                  <span className="text-sm font-semibold text-[#ffffff]">Simulate GitHub Deploy</span>
                 </div>
                 <Badge variant="primary" size="sm">W2 Pipeline</Badge>
               </div>
-              <p className="text-xs text-[#b4b4b4] leading-relaxed mb-5">
+              <p className="text-xs text-[#94a3b8] leading-relaxed mb-5">
                 Simulates a deployment webhook for release v2.1.0. Automatically identifies affected components and invalidates obsolete fixes.
               </p>
             </div>
@@ -149,7 +149,7 @@ export const SettingsPage: React.FC = () => {
                 setNotice(`Simulate Deploy triggered! Marked ${res.affectedCount} legacy DB memories stale.`);
                 setTimeout(() => setNotice(null), 4000);
               }}
-              className="w-full py-2.5 bg-[rgba(204,139,60,0.18)] hover:bg-[rgba(204,139,60,0.28)] text-[#f0aa55] border border-[rgba(204,139,60,0.35)] rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-98"
+              className="w-full py-2.5 bg-[rgba(6,182,212,0.15)] hover:bg-[rgba(204,139,60,0.28)] text-[#38bdf8] border border-[rgba(6,182,212,0.35)] rounded-xl text-xs font-semibold tracking-wide transition-all shadow-sm active:scale-98"
             >
               Trigger Deployment Event (W2)
             </button>
@@ -163,11 +163,11 @@ export const SettingsPage: React.FC = () => {
                   <div className="w-7 h-7 rounded-lg bg-[rgba(168,85,247,0.15)] border border-[rgba(168,85,247,0.3)] flex items-center justify-center text-purple-400">
                     <Archive className="w-4 h-4" />
                   </div>
-                  <span className="text-sm font-semibold text-[#f0f0f0]">Consolidate Lifecycle</span>
+                  <span className="text-sm font-semibold text-[#ffffff]">Consolidate Lifecycle</span>
                 </div>
                 <Badge variant="purple" size="sm">W4 Pipeline</Badge>
               </div>
-              <p className="text-xs text-[#b4b4b4] leading-relaxed mb-5">
+              <p className="text-xs text-[#94a3b8] leading-relaxed mb-5">
                 Executes scheduled temporal maintenance: demotes hot to cold storage, expires aged memories past TTL, and archives stale items.
               </p>
             </div>
@@ -188,18 +188,18 @@ export const SettingsPage: React.FC = () => {
       {/* Temporal Half-Life Settings */}
       <div className="card p-6 rounded-2xl shadow-xl space-y-5">
         <div className="flex items-center space-x-2.5 mb-1">
-          <Clock className="w-5 h-5 text-[#cc8b3c]" />
-          <h2 className="text-base font-semibold text-[#f0f0f0] tracking-tight">Temporal Decay &amp; Half-Life Parameters</h2>
+          <Clock className="w-5 h-5 text-[#06b6d4]" />
+          <h2 className="text-base font-semibold text-[#ffffff] tracking-tight">Temporal Decay &amp; Half-Life Parameters</h2>
         </div>
-        <p className="text-xs text-[#b4b4b4] leading-relaxed">
-          ANCHOR recency decay formula: <code className="text-[#f0aa55] font-mono bg-[#181818] px-2 py-0.5 rounded border border-[#383838]">recency = 0.5 ^ (age_days / half_life)</code>
+        <p className="text-xs text-[#94a3b8] leading-relaxed">
+          ANCHOR recency decay formula: <code className="text-[#38bdf8] font-mono bg-[#080d1a] px-2 py-0.5 rounded border border-[#1e293b]">recency = 0.5 ^ (age_days / half_life)</code>
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          <div className="card p-4 rounded-xl border-[#383838]">
+          <div className="card p-4 rounded-xl border-[#1e293b]">
             <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Episodic Memories</span>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xl font-bold text-[#f0f0f0] font-mono">{episodicHalfLife} Days</span>
+              <span className="text-xl font-bold text-[#ffffff] font-mono">{episodicHalfLife} Days</span>
               <Badge variant="purple" size="sm">Rapid Decay</Badge>
             </div>
             <input
@@ -208,14 +208,14 @@ export const SettingsPage: React.FC = () => {
               max="30"
               value={episodicHalfLife}
               onChange={(e) => setEpisodicHalfLife(parseInt(e.target.value))}
-              className="w-full accent-[#a855f7] cursor-pointer h-1.5 bg-[#181818] rounded-lg"
+              className="w-full accent-[#a855f7] cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
             />
           </div>
 
-          <div className="card p-4 rounded-xl border-[#383838]">
+          <div className="card p-4 rounded-xl border-[#1e293b]">
             <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Semantic Memories</span>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xl font-bold text-[#f0f0f0] font-mono">{semanticHalfLife} Days</span>
+              <span className="text-xl font-bold text-[#ffffff] font-mono">{semanticHalfLife} Days</span>
               <Badge variant="primary" size="sm">Standard</Badge>
             </div>
             <input
@@ -224,14 +224,14 @@ export const SettingsPage: React.FC = () => {
               max="180"
               value={semanticHalfLife}
               onChange={(e) => setSemanticHalfLife(parseInt(e.target.value))}
-              className="w-full accent-[#cc8b3c] cursor-pointer h-1.5 bg-[#181818] rounded-lg"
+              className="w-full accent-[#06b6d4] cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
             />
           </div>
 
-          <div className="card p-4 rounded-xl border-[#383838]">
+          <div className="card p-4 rounded-xl border-[#1e293b]">
             <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Procedural Fixes</span>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xl font-bold text-[#f0f0f0] font-mono">{proceduralHalfLife} Days</span>
+              <span className="text-xl font-bold text-[#ffffff] font-mono">{proceduralHalfLife} Days</span>
               <Badge variant="warning" size="sm">Long-Lived</Badge>
             </div>
             <input
@@ -240,7 +240,7 @@ export const SettingsPage: React.FC = () => {
               max="365"
               value={proceduralHalfLife}
               onChange={(e) => setProceduralHalfLife(parseInt(e.target.value))}
-              className="w-full accent-[#d4a843] cursor-pointer h-1.5 bg-[#181818] rounded-lg"
+              className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
             />
           </div>
         </div>
@@ -249,10 +249,10 @@ export const SettingsPage: React.FC = () => {
       {/* Privacy, Export & Cascade Forgetting (Module 11) */}
       <div className="card p-6 rounded-2xl shadow-xl space-y-4">
         <div className="flex items-center space-x-2.5 mb-1">
-          <Shield className="w-5 h-5 text-[#cc8b3c]" />
-          <h2 className="text-base font-semibold text-[#f0f0f0] tracking-tight">Privacy, Export &amp; Cascade Forgetting</h2>
+          <Shield className="w-5 h-5 text-[#06b6d4]" />
+          <h2 className="text-base font-semibold text-[#ffffff] tracking-tight">Privacy, Export &amp; Cascade Forgetting</h2>
         </div>
-        <p className="text-xs text-[#b4b4b4] leading-relaxed">
+        <p className="text-xs text-[#94a3b8] leading-relaxed">
           Multi-tenant memory isolation ensures strict workspace segregation. Supports GDPR Right-to-be-Forgotten via cascade tombstoning.
         </p>
 
@@ -261,7 +261,7 @@ export const SettingsPage: React.FC = () => {
             onClick={handleExportData}
             className="btn-ghost flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold"
           >
-            <Download className="w-4 h-4 text-[#cc8b3c]" />
+            <Download className="w-4 h-4 text-[#06b6d4]" />
             <span>Export User Memory Data (JSON)</span>
           </button>
 

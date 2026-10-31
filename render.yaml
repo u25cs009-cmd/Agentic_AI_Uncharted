@@ -5,7 +5,7 @@ services:
     runtime: node
     plan: free
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -13,7 +13,7 @@ services:
       - key: STORE
         value: mongo
       - key: MONGODB_URI
-        value: mongodb+srv://dhakedayushkrl_db_user:jdXAIMs9js5xeK3M@shakti-2.2uziuij.mongodb.net/anchor?retryWrites=true&w=majority
+        sync: false
       - key: MONGODB_DB_NAME
         value: anchor
       - key: JWT_SECRET
@@ -29,7 +29,7 @@ services:
     runtime: static
     plan: free
     rootDir: frontend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     staticPublishPath: dist
     routes:
       - type: rewrite

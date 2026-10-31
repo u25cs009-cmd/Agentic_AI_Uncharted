@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, 
   Check, 
@@ -79,10 +79,10 @@ export const QuarantinePage: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">Quarantine Inbox</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">Quarantine Inbox</h1>
               <Badge variant="danger" size="sm">Poisoning Defense Active</Badge>
             </div>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">
+            <p className="text-xs text-[#94a3b8] mt-0.5">
               Deterministic isolation vault for prompt injections, untrusted overrides, and conflicting memory mutations.
             </p>
           </div>
@@ -90,7 +90,7 @@ export const QuarantinePage: React.FC = () => {
 
         {/* Defense Status Radar */}
         <div className="flex items-center space-x-2">
-          <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-[#b4b4b4]">
+          <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-[#94a3b8]">
             <Radio className="w-3.5 h-3.5 text-[#f07070] animate-pulse" />
             <span>P1–P4 Rules: <span className="text-[#60d49a] font-bold">100% Enforced</span></span>
           </div>
@@ -122,22 +122,22 @@ export const QuarantinePage: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-base font-semibold text-[#f0f0f0]">
+              <h3 className="text-base font-semibold text-[#ffffff]">
                 Active Threat Containment Facility
               </h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[rgba(220,80,80,0.18)] text-[#f07070] border border-[rgba(220,80,80,0.35)]">
                 {quarantined.length} PENDING REVIEW
               </span>
             </div>
-            <p className="text-xs text-[#b4b4b4] mt-1 max-w-xl leading-relaxed">
+            <p className="text-xs text-[#94a3b8] mt-1 max-w-xl leading-relaxed">
               Quarantined items are strictly segregated from agent context retrieval, ensuring zero hallucination and zero prompt hijacking.
             </p>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-2 text-xs font-mono">
-          <div className="px-3 py-1.5 rounded-xl bg-[#1e1e1e] border border-[#383838] text-[#b4b4b4] flex items-center space-x-1.5">
-            <Info className="w-3.5 h-3.5 text-[#cc8b3c]" />
+          <div className="px-3 py-1.5 rounded-xl bg-[#0b1222] border border-[#1e293b] text-[#94a3b8] flex items-center space-x-1.5">
+            <Info className="w-3.5 h-3.5 text-[#06b6d4]" />
             <span>Harmful Action Rate: <strong className="text-[#60d49a]">0.0%</strong></span>
           </div>
         </div>
@@ -167,10 +167,10 @@ export const QuarantinePage: React.FC = () => {
                 className="card p-5 rounded-2xl border-[rgba(220,80,80,0.35)] space-y-4 hover:border-[rgba(220,80,80,0.6)] transition-all duration-200 relative overflow-hidden"
               >
                 {/* Red warning bar on top */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e05c5c] via-[#d4a843] to-[#e05c5c]" />
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e05c5c] via-[#38bdf8] to-[#e05c5c]" />
 
                 {/* Header info */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#383838] pb-3 pt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e293b] pb-3 pt-1">
                   <div className="flex items-center space-x-2.5">
                     <span className="font-mono text-xs font-bold text-[#f07070]">
                       {item._id || item.id}
@@ -179,7 +179,7 @@ export const QuarantinePage: React.FC = () => {
                       ISOLATED THREAT
                     </Badge>
                     <span className="text-xs font-mono text-[#888]">
-                      Key: <strong className="text-[#f0aa55]">{item.attribute_key}</strong>
+                      Key: <strong className="text-[#38bdf8]">{item.attribute_key}</strong>
                     </span>
                   </div>
 
@@ -187,9 +187,9 @@ export const QuarantinePage: React.FC = () => {
                     <span className="text-[#888]">
                       Trust: <strong className="text-[#f07070]">{item.trust.toFixed(2)}</strong>
                     </span>
-                    <span className="text-[#484848]">|</span>
+                    <span className="text-[#334155]">|</span>
                     <span className="text-[#888]">
-                      Confidence: <strong className="text-[#ececec]">{item.confidence.toFixed(2)}</strong>
+                      Confidence: <strong className="text-[#f8fafc]">{item.confidence.toFixed(2)}</strong>
                     </span>
                   </div>
                 </div>
@@ -199,16 +199,16 @@ export const QuarantinePage: React.FC = () => {
                   <AlertTriangle className="w-4 h-4 text-[#f07070] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-[#f07070]">Quarantine Reason: </span>
-                    <span className="text-[#ececec]">{item.quarantine_reason || 'Untrusted low-confidence source with potential policy violation'}</span>
+                    <span className="text-[#f8fafc]">{item.quarantine_reason || 'Untrusted low-confidence source with potential policy violation'}</span>
                   </div>
                 </div>
 
                 {/* Conflicting Memory Comparison Matrix */}
-                <div className="bg-[#1e1e1e] rounded-xl p-4 border border-[#383838] space-y-3">
-                  <div className="flex items-center justify-between text-xs font-mono text-[#b4b4b4]">
+                <div className="bg-[#0b1222] rounded-xl p-4 border border-[#1e293b] space-y-3">
+                  <div className="flex items-center justify-between text-xs font-mono text-[#94a3b8]">
                     <div className="flex items-center space-x-2">
-                      <Scale className="w-4 h-4 text-[#cc8b3c]" />
-                      <span className="font-bold uppercase tracking-wider text-[#ececec]">
+                      <Scale className="w-4 h-4 text-[#06b6d4]" />
+                      <span className="font-bold uppercase tracking-wider text-[#f8fafc]">
                         Fact Governance Comparison Matrix
                       </span>
                     </div>
@@ -228,19 +228,19 @@ export const QuarantinePage: React.FC = () => {
                               {conflictingActive.tier.toUpperCase()} TIER
                             </Badge>
                           </div>
-                          <p className="text-xs text-[#d8d8d8] font-medium leading-relaxed mb-3">
+                          <p className="text-xs text-[#cbd5e1] font-medium leading-relaxed mb-3">
                             "{conflictingActive.content}"
                           </p>
                         </div>
 
-                        <div className="pt-2 border-t border-[#383838] text-[11px] font-mono text-[#888] space-y-1">
+                        <div className="pt-2 border-t border-[#1e293b] text-[11px] font-mono text-[#888] space-y-1">
                           <div className="flex justify-between">
                             <span>Memory ID:</span>
-                            <span className="text-[#ececec]">{conflictingActive._id || conflictingActive.id}</span>
+                            <span className="text-[#f8fafc]">{conflictingActive._id || conflictingActive.id}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Source Kind:</span>
-                            <span className="text-[#ececec]">{conflictingActive.source.kind}</span>
+                            <span className="text-[#f8fafc]">{conflictingActive.source.kind}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Trust Level:</span>
@@ -272,7 +272,7 @@ export const QuarantinePage: React.FC = () => {
                         <div className="pt-2 border-t border-[rgba(220,80,80,0.25)] text-[11px] font-mono text-[#888] space-y-1">
                           <div className="flex justify-between">
                             <span>Memory ID:</span>
-                            <span className="text-[#ececec]">{item._id || item.id}</span>
+                            <span className="text-[#f8fafc]">{item._id || item.id}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Source Kind:</span>
@@ -284,31 +284,31 @@ export const QuarantinePage: React.FC = () => {
                           </div>
                           <div className="flex justify-between">
                             <span>Governance Action:</span>
-                            <span className="text-[#f0aa55] font-semibold">Blocked by Policy Guard</span>
+                            <span className="text-[#38bdf8] font-semibold">Blocked by Policy Guard</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="card p-4 rounded-xl border-[#383838] text-xs text-[#b4b4b4] leading-relaxed">
-                      <div className="text-[#f0f0f0] font-semibold mb-1 flex items-center space-x-1.5">
-                        <FileText className="w-3.5 h-3.5 text-[#cc8b3c]" />
+                    <div className="card p-4 rounded-xl border-[#1e293b] text-xs text-[#94a3b8] leading-relaxed">
+                      <div className="text-[#ffffff] font-semibold mb-1 flex items-center space-x-1.5">
+                        <FileText className="w-3.5 h-3.5 text-[#06b6d4]" />
                         <span>Isolated Direct Adversarial Vector:</span>
                       </div>
-                      <p className="text-[#ececec] font-mono italic my-2 bg-[#181818] p-2.5 rounded-lg border border-[#383838]">
+                      <p className="text-[#f8fafc] font-mono italic my-2 bg-[#080d1a] p-2.5 rounded-lg border border-[#1e293b]">
                         "{item.content}"
                       </p>
                       <p className="text-[11px] text-[#888]">
-                        No conflicting active memory currently exists for attribute key <code className="text-[#f0aa55] font-mono">{item.attribute_key}</code>. This payload was isolated directly by deterministic safety screening (prompt injection / exfiltration defense).
+                        No conflicting active memory currently exists for attribute key <code className="text-[#38bdf8] font-mono">{item.attribute_key}</code>. This payload was isolated directly by deterministic safety screening (prompt injection / exfiltration defense).
                       </p>
                     </div>
                   )}
                 </div>
 
                 {/* Operator Actions Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-[#383838]">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-[#1e293b]">
                   <span className="text-[11px] font-mono text-[#888]">
-                    Source: <span className="text-[#ececec]">{item.source.kind}</span> • Recorded: {new Date(item.valid_from).toLocaleDateString()}
+                    Source: <span className="text-[#f8fafc]">{item.source.kind}</span> • Recorded: {new Date(item.valid_from).toLocaleDateString()}
                   </span>
 
                   <div className="flex items-center space-x-2.5">

@@ -16,18 +16,18 @@ export const Badge: React.FC<BadgeProps> = ({
   className = '',
 }) => {
   const variantStyles = {
-    primary: 'bg-[rgba(204,139,60,0.18)] text-[#f0aa55] border-[rgba(204,139,60,0.4)]' + (glow ? ' shadow-[0_0_12px_rgba(204,139,60,0.25)]' : ''),
-    success: 'bg-[rgba(76,175,125,0.15)] text-[#60d49a] border-[rgba(76,175,125,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(76,175,125,0.25)]' : ''),
-    warning: 'bg-[rgba(220,170,60,0.15)] text-[#e8c060] border-[rgba(220,170,60,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(220,170,60,0.25)]' : ''),
-    danger: 'bg-[rgba(220,80,80,0.15)] text-[#f07070] border-[rgba(220,80,80,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(220,80,80,0.25)]' : ''),
-    purple: 'bg-[rgba(168,130,220,0.15)] text-[#c4a5f5] border-[rgba(168,130,220,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(168,130,220,0.25)]' : ''),
-    cyan: 'bg-[rgba(120,160,240,0.15)] text-[#90b4f0] border-[rgba(120,160,240,0.35)]' + (glow ? ' shadow-[0_0_12px_rgba(120,160,240,0.25)]' : ''),
-    neutral: 'bg-[#2a2a2a] text-[#b4b4b4] border-[#404040]',
+    primary: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/35' + (glow ? ' shadow-[0_0_12px_rgba(6,182,212,0.3)]' : ''),
+    cyan: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/35' + (glow ? ' shadow-[0_0_12px_rgba(6,182,212,0.3)]' : ''),
+    success: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35' + (glow ? ' shadow-[0_0_12px_rgba(16,185,129,0.3)]' : ''),
+    warning: 'bg-amber-500/15 text-amber-300 border-amber-500/35' + (glow ? ' shadow-[0_0_12px_rgba(245,158,11,0.25)]' : ''),
+    danger: 'bg-rose-500/15 text-rose-300 border-rose-500/35' + (glow ? ' shadow-[0_0_12px_rgba(244,63,94,0.3)]' : ''),
+    purple: 'bg-purple-500/15 text-purple-300 border-purple-500/35' + (glow ? ' shadow-[0_0_12px_rgba(168,85,247,0.3)]' : ''),
+    neutral: 'bg-slate-800/80 text-slate-300 border-slate-700/60',
   };
 
   const sizeStyles = {
-    sm: 'text-[10px] px-2 py-0.5 tracking-wider',
-    md: 'text-xs px-2.5 py-0.5 tracking-wide',
+    sm: 'text-[10px] px-2 py-0.5 tracking-wider font-semibold',
+    md: 'text-xs px-2.5 py-0.5 tracking-wide font-medium',
     lg: 'text-xs px-3 py-1 font-semibold tracking-wide',
   };
 

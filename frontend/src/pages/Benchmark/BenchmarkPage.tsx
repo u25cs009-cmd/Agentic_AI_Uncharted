@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Play, 
   CheckCircle2, 
@@ -113,15 +113,15 @@ export const BenchmarkPage: React.FC = () => {
       {/* Header & Title HUD */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
+          <div className="w-10 h-10 rounded-xl bg-[rgba(6,182,212,0.12)] border border-[rgba(6,182,212,0.3)] flex items-center justify-center text-[#06b6d4]">
             <Award className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold tracking-tight text-[#f0f0f0]">15-Scenario Benchmark Arena</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">15-Scenario Benchmark Arena</h1>
               <Badge variant="primary" size="sm">Official Evaluation</Badge>
             </div>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">
+            <p className="text-xs text-[#94a3b8] mt-0.5">
               Rigorous empirical evaluation comparing None, Naive Vector Search, and XYRO101 Governed Memory across 15 production edge-cases.
               {lastExecuted && (
                 <span className="text-[#888] ml-2 font-mono">
@@ -145,7 +145,7 @@ export const BenchmarkPage: React.FC = () => {
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#555] transition-all">
+        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
           <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
             <span>Correct-Action Rate</span>
             <CheckCircle2 className="w-4 h-4 text-[#60d49a]" />
@@ -158,7 +158,7 @@ export const BenchmarkPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#555] transition-all">
+        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
           <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
             <span>Harmful Action Rate</span>
             <ShieldAlert className="w-4 h-4 text-[#e05c5c]" />
@@ -171,12 +171,12 @@ export const BenchmarkPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#555] transition-all">
+        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
           <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
             <span>Poison Resistance</span>
-            <Zap className="w-4 h-4 text-[#cc8b3c]" />
+            <Zap className="w-4 h-4 text-[#06b6d4]" />
           </div>
-          <div className="text-3xl font-bold text-[#cc8b3c] font-mono tracking-tight">
+          <div className="text-3xl font-bold text-[#06b6d4] font-mono tracking-tight">
             {(100 - metrics.poisonAcceptanceRate.governed).toFixed(1)}%
           </div>
           <div className="text-[10px] text-[#888] font-mono mt-1">
@@ -184,12 +184,12 @@ export const BenchmarkPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#555] transition-all">
+        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
           <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
             <span>Abstention Precision</span>
-            <Activity className="w-4 h-4 text-[#cc8b3c]" />
+            <Activity className="w-4 h-4 text-[#06b6d4]" />
           </div>
-          <div className="text-3xl font-bold text-[#f0aa55] font-mono tracking-tight">
+          <div className="text-3xl font-bold text-[#38bdf8] font-mono tracking-tight">
             {metrics.abstentionPrecision.governed.toFixed(1)}%
           </div>
           <div className="text-[10px] text-[#888] font-mono mt-1">
@@ -243,19 +243,19 @@ export const BenchmarkPage: React.FC = () => {
         {/* Chart 1: Grouped Success Rate across Categories */}
         <div className="card p-6 rounded-2xl shadow-xl space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-[#f0f0f0]">Correct Action Rate by Scenario Type (%)</h2>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">Empirical proof of ANCHOR governance across test categories</p>
+            <h2 className="text-sm font-semibold text-[#ffffff]">Correct Action Rate by Scenario Type (%)</h2>
+            <p className="text-xs text-[#94a3b8] mt-0.5">Empirical proof of ANCHOR governance across test categories</p>
           </div>
 
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis dataKey="category" tick={{ fill: '#b4b4b4', fontSize: 11 }} />
-                <YAxis domain={[0, 100]} tick={{ fill: '#b4b4b4', fontSize: 11 }} />
+                <XAxis dataKey="category" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                <YAxis domain={[0, 100]} tick={{ fill: '#94a3b8', fontSize: 11 }} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#252525', borderColor: '#383838', borderRadius: '10px', color: '#ececec', fontSize: '12px' }} 
-                  itemStyle={{ color: '#ececec' }}
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '10px', color: '#f8fafc', fontSize: '12px' }} 
+                  itemStyle={{ color: '#f8fafc' }}
                 />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Bar dataKey="None" fill="#777" radius={[4, 4, 0, 0]} />
@@ -269,21 +269,21 @@ export const BenchmarkPage: React.FC = () => {
         {/* Chart 2: Harmful Action Rate */}
         <div className="card p-6 rounded-2xl shadow-xl space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-[#f0f0f0]">Harmful Action Rate (Lower is Better)</h2>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">Frequency of applying dangerous, poisoned or obsolete commands</p>
+            <h2 className="text-sm font-semibold text-[#ffffff]">Harmful Action Rate (Lower is Better)</h2>
+            <p className="text-xs text-[#94a3b8] mt-0.5">Frequency of applying dangerous, poisoned or obsolete commands</p>
           </div>
 
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={harmfulRateData} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                <XAxis type="number" domain={[0, 60]} tick={{ fill: '#b4b4b4', fontSize: 11 }} unit="%" />
-                <YAxis dataKey="mode" type="category" tick={{ fill: '#b4b4b4', fontSize: 10 }} width={110} />
+                <XAxis type="number" domain={[0, 60]} tick={{ fill: '#94a3b8', fontSize: 11 }} unit="%" />
+                <YAxis dataKey="mode" type="category" tick={{ fill: '#94a3b8', fontSize: 10 }} width={110} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#252525', borderColor: '#383838', borderRadius: '10px', color: '#ececec', fontSize: '12px' }} 
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '10px', color: '#f8fafc', fontSize: '12px' }} 
                   formatter={(value: any) => [`${value}%`, 'Harmful Rate']}
                 />
-                <Bar dataKey="HarmfulRate" fill="#d4a843" radius={[0, 6, 6, 0]} />
+                <Bar dataKey="HarmfulRate" fill="#38bdf8" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -294,8 +294,8 @@ export const BenchmarkPage: React.FC = () => {
       <div className="card p-6 rounded-2xl shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-[#f0f0f0]">Feedback Loop &amp; Quarantine Decay Trajectory (W3 Pipeline)</h2>
-            <p className="text-xs text-[#b4b4b4] mt-0.5">Confidence degradation and automated isolation after operator rejection</p>
+            <h2 className="text-sm font-semibold text-[#ffffff]">Feedback Loop &amp; Quarantine Decay Trajectory (W3 Pipeline)</h2>
+            <p className="text-xs text-[#94a3b8] mt-0.5">Confidence degradation and automated isolation after operator rejection</p>
           </div>
           <Badge variant="purple" size="sm">Self-Healing Pipeline</Badge>
         </div>
@@ -304,13 +304,13 @@ export const BenchmarkPage: React.FC = () => {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={confidenceTrajectoryData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-              <XAxis dataKey="step" tick={{ fill: '#b4b4b4', fontSize: 11 }} />
-              <YAxis domain={[0, 1.0]} tick={{ fill: '#b4b4b4', fontSize: 11 }} />
+              <XAxis dataKey="step" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+              <YAxis domain={[0, 1.0]} tick={{ fill: '#94a3b8', fontSize: 11 }} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#252525', borderColor: '#383838', borderRadius: '10px', color: '#ececec', fontSize: '12px' }} 
+                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '10px', color: '#f8fafc', fontSize: '12px' }} 
               />
               <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-              <Line type="monotone" dataKey="Confidence" stroke="#cc8b3c" strokeWidth={2.5} dot={{ r: 4, fill: '#cc8b3c' }} />
+              <Line type="monotone" dataKey="Confidence" stroke="#06b6d4" strokeWidth={2.5} dot={{ r: 4, fill: '#06b6d4' }} />
               <Line type="monotone" dataKey="Trust" stroke="#a855f7" strokeWidth={2.5} strokeDasharray="4 4" dot={{ r: 4, fill: '#a855f7' }} />
             </LineChart>
           </ResponsiveContainer>
@@ -321,7 +321,7 @@ export const BenchmarkPage: React.FC = () => {
       <div className="card p-6 rounded-2xl shadow-xl space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <h2 className="text-base font-semibold text-[#f0f0f0]">Full 15-Scenario Evaluation Matrix</h2>
+            <h2 className="text-base font-semibold text-[#ffffff]">Full 15-Scenario Evaluation Matrix</h2>
             <Badge variant="primary" size="sm">{filteredScenarios.length} Cases</Badge>
           </div>
 
@@ -332,8 +332,8 @@ export const BenchmarkPage: React.FC = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-3 py-1 rounded-lg capitalize font-medium transition-all ${
                   activeCategory === cat
-                    ? 'bg-[#333] text-[#f0aa55] font-semibold shadow-sm'
-                    : 'text-[#888] hover:text-[#ececec]'
+                    ? 'bg-[#333] text-[#38bdf8] font-semibold shadow-sm'
+                    : 'text-[#888] hover:text-[#f8fafc]'
                 }`}
               >
                 {cat}
@@ -349,14 +349,14 @@ export const BenchmarkPage: React.FC = () => {
               <div
                 key={sc.id}
                 onClick={() => setExpandedScenarioId(isExpanded ? null : sc.id)}
-                className="card p-4 rounded-xl cursor-pointer border-[#383838] hover:border-[#555] transition-all"
+                className="card p-4 rounded-xl cursor-pointer border-[#1e293b] hover:border-[#475569] transition-all"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div className="flex items-center space-x-2.5">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-[rgba(204,139,60,0.15)] text-[#f0aa55] border border-[rgba(204,139,60,0.3)]">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-[rgba(6,182,212,0.12)] text-[#38bdf8] border border-[rgba(6,182,212,0.3)]">
                       {sc.id}
                     </span>
-                    <span className="text-xs font-semibold text-[#f0f0f0]">{sc.title}</span>
+                    <span className="text-xs font-semibold text-[#ffffff]">{sc.title}</span>
                     <Badge variant="purple" size="sm">
                       {sc.category}
                     </Badge>
@@ -366,12 +366,12 @@ export const BenchmarkPage: React.FC = () => {
                     <span className={sc.results?.none.status === 'passed' ? 'text-[#60d49a] font-bold' : 'text-[#f07070] font-bold'}>
                       {sc.results?.none.status.toUpperCase()}
                     </span>
-                    <span className="text-[#555]">|</span>
+                    <span className="text-[#475569]">|</span>
                     <span className="text-[#888]">Naive:</span>
                     <span className={sc.results?.naive.status === 'passed' ? 'text-[#60d49a] font-bold' : 'text-[#f07070] font-bold'}>
                       {sc.results?.naive.status.toUpperCase()}
                     </span>
-                    <span className="text-[#555]">|</span>
+                    <span className="text-[#475569]">|</span>
                     <span className="text-[#888]">Governed:</span>
                     <span className="text-[#60d49a] font-bold flex items-center space-x-1">
                       <CheckCircle2 className="w-3.5 h-3.5 inline text-[#60d49a]" />
@@ -380,27 +380,27 @@ export const BenchmarkPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="text-xs text-[#b4b4b4] mb-1 leading-relaxed">
+                <div className="text-xs text-[#94a3b8] mb-1 leading-relaxed">
                   <span className="text-[#888] font-mono">Query:</span> <em>"{sc.query}"</em>
                 </div>
-                <div className="text-[11px] text-[#f0aa55] font-mono">
+                <div className="text-[11px] text-[#38bdf8] font-mono">
                   <span className="text-[#888]">Expected Behavior:</span> {sc.expected_governed}
                 </div>
 
                 {isExpanded && (
-                  <div className="mt-3 pt-3 border-t border-[#383838] text-xs space-y-2 text-[#b4b4b4] animate-fade-in font-mono">
+                  <div className="mt-3 pt-3 border-t border-[#1e293b] text-xs space-y-2 text-[#94a3b8] animate-fade-in font-mono">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <div className="bg-[#1e1e1e] p-2.5 rounded-lg border border-[#383838]">
+                      <div className="bg-[#0b1222] p-2.5 rounded-lg border border-[#1e293b]">
                         <div className="text-[10px] text-[#888] uppercase font-bold mb-1">None Mode Output</div>
-                        <div className="text-[#b4b4b4] text-[11px]">{sc.results?.none.answer || 'Generic response without context'}</div>
+                        <div className="text-[#94a3b8] text-[11px]">{sc.results?.none.answer || 'Generic response without context'}</div>
                       </div>
-                      <div className="bg-[#1e1e1e] p-2.5 rounded-lg border border-[rgba(220,80,80,0.3)]">
+                      <div className="bg-[#0b1222] p-2.5 rounded-lg border border-[rgba(220,80,80,0.3)]">
                         <div className="text-[10px] text-[#f07070] uppercase font-bold mb-1">Naive Mode Output</div>
-                        <div className="text-[#b4b4b4] text-[11px]">{sc.results?.naive.answer || 'Executed harmful or stale memory'}</div>
+                        <div className="text-[#94a3b8] text-[11px]">{sc.results?.naive.answer || 'Executed harmful or stale memory'}</div>
                       </div>
-                      <div className="bg-[#1e1e1e] p-2.5 rounded-lg border border-[rgba(76,175,125,0.35)]">
+                      <div className="bg-[#0b1222] p-2.5 rounded-lg border border-[rgba(76,175,125,0.35)]">
                         <div className="text-[10px] text-[#60d49a] uppercase font-bold mb-1">Governed Output</div>
-                        <div className="text-[#ececec] text-[11px]">{sc.results?.governed.answer || 'Verified correct governed action'}</div>
+                        <div className="text-[#f8fafc] text-[11px]">{sc.results?.governed.answer || 'Verified correct governed action'}</div>
                       </div>
                     </div>
                   </div>
