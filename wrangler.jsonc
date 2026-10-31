@@ -1,0 +1,7 @@
+{
+  "name": "agentic-ai-uncharted",
+  "compatibility_date": "2024-09-23",
+  "assets": {
+    "directory": "./frontend/dist"
+  }
+}
