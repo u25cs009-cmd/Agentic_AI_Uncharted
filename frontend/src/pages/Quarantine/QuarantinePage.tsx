@@ -104,7 +104,7 @@ export const QuarantinePage: React.FC = () => {
         <div className="flex items-center space-x-2">
           <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-slate-700 bg-white border border-slate-200 shadow-xs">
             <Radio className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
-            <span>P1–P4 Rules: <span className="text-emerald-700 font-bold">100% Enforced</span></span>
+            <span>P1–P4 Safety Rules: <span className="text-emerald-700 font-bold">Active</span></span>
           </div>
           <button
             type="button"

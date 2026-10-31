@@ -106,7 +106,7 @@ The user delivered five sequential declarative messages introducing identity, pr
   🛡️ [XYRO101 GOVERNED ABSTENTION]
   Relevant prior resolution was invalidated by a recent deployment event. Abstaining from obsolete recommendation.
 
-  I have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Telegram bot?
+  I have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?
   ```
 - **Analysis:** The network error triggered the catch-block offline simulation. No entity extraction occurred.
 - **Verdict:** **FAIL**
@@ -252,7 +252,7 @@ Evaluating if the assistant can connect distinct memories to provide intelligent
 
 #### Turn 6.3: n8n Workflow Integration
 - **User Prompt:** `"How can I use n8n in this architecture?"`
-- **Expected Response:** Connecting n8n for background expiration, entity extraction webhooks, and Slack/Telegram alerts.
+- **Expected Response:** Connecting n8n for background expiration, entity extraction webhooks, and dashboard alerts and webhooks.
 - **Actual Assistant Response:** Canned Governed Abstention message.
 - **Verdict:** **FAIL**
 
