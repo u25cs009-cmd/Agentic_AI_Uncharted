@@ -118,6 +118,7 @@ apiRouter.get('/timetravel', requireAuth, timeTravel);
 // 9. AI Engine Interaction Routes (User JWT or External Automation Secret)
 apiRouter.post('/chat', authenticateUserOrWebhook, chat);
 apiRouter.post('/ingest', authenticateUserOrWebhook, ingestObservation);
+apiRouter.post('/memories/observations', authenticateUserOrWebhook, ingestObservation);
 apiRouter.post('/retrieve', authenticateUserOrWebhook, retrieveMemories);
 
 // 10. 15-Scenario Empirical Benchmark Matrix

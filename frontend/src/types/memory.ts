@@ -1,4 +1,4 @@
-export type MemoryType = 'semantic' | 'episodic' | 'procedural';
+export type MemoryType = 'semantic' | 'episodic' | 'procedural' | 'constraint' | 'preference' | 'ephemeral';
 export type MemoryTier = 'hot' | 'warm' | 'archive';
 export type MemoryStatus = 'active' | 'stale' | 'quarantined' | 'superseded' | 'expired';
 
