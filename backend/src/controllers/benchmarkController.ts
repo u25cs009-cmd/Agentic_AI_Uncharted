@@ -279,7 +279,8 @@ export async function getBenchmarkResults(req: Request, res: Response, next: Nex
           staleReuseRate: { none: 0.0, naive: 60.0, governed: 0.0 },
           poisonAcceptanceRate: { none: 33.3, naive: 100.0, governed: 0.0 },
           abstentionPrecision: { none: 0.0, naive: 0.0, governed: 100.0 },
-          avgLatencyMs: { none: 140, naive: 250, governed: 380 }
+          avgLatencyMs: { none: 140, naive: 250, governed: 380 },
+          tokenUsage: { none: 1850, naive: 6840, governed: 4620 }
         },
         categoryData: [
           { category: 'Stale (S1-S4)', None: 0, Naive: 25, Governed: 100 },

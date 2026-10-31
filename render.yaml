@@ -11,9 +11,15 @@ services:
       - key: NODE_ENV
         value: production
       - key: STORE
-        value: memory
+        value: mongo
+      - key: MONGODB_URI
+        value: mongodb+srv://dhakedayushkrl_db_user:jdXAIMs9js5xeK3M@shakti-2.2uziuij.mongodb.net/anchor?retryWrites=true&w=majority
+      - key: MONGODB_DB_NAME
+        value: anchor
       - key: JWT_SECRET
         generateValue: true
+      - key: INTERNAL_API_KEY
+        value: shakti2_internal_key_for_n8n_webhooks
       - key: PORT
         value: 10000
 
@@ -29,4 +35,3 @@ services:
       - type: rewrite
         source: /*
         destination: /index.html
-
