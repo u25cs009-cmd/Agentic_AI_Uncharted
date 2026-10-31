@@ -72,20 +72,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Live Status Pill */}
-        <div className="px-5 pt-3.5 pb-1">
-          <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-emerald-50/60 border border-emerald-200/70 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-bold text-emerald-950 tracking-wide font-mono">GOVERNED</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-800 font-mono font-medium">
-              <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-              <span>Atlas Live</span>
-            </div>
-          </div>
-        </div>
-
         {/* ── Command Center Sections Navigation ──── */}
         <div className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
           <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400 font-bold px-3 py-1 mb-1">

@@ -43,7 +43,7 @@ export const SettingsPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `xyro101-anchor-memory-export-${Date.now()}.json`;
+    a.download = `shaktai-anchor-memory-export-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
 

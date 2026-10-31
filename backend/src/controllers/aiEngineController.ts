@@ -263,6 +263,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     const userEmail = req.user?.email || 'user';
 
     const query = (message || '').trim();
+    const qLower = query.toLowerCase();
 
     // Loop Prevention & Internal Authentication Context (Timing-Safe)
     const configuredKey = config.internalApiKey;
@@ -471,14 +472,15 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       }
 
       // Check if relevant instructions were invalidated by a recent deploy (only if relevant to the query!)
+      const isIncidentQuery = qLower.includes('checkout') || qLower.includes('timeout') || qLower.includes('restart') || qLower.includes('pg_ctlcluster') || qLower.includes('deploy') || qLower.includes('fix');
       const relevantStaleMemory = excluded.find(e => {
         if (e.exclusion_reason !== 'stale') return false;
         const memoryText = `${e.content} ${e.attribute_key} ${(e.entities || []).join(' ')}`.toLowerCase();
         const contentTokens = memoryText.split(/\W+/).filter(Boolean);
         const hasTokenMatch = queryTokens.some((t: string) => contentTokens.includes(t));
-        return (hasTokenMatch && e.similarity >= 0.45) || e.similarity >= 0.82;
+        return isIncidentQuery && (hasTokenMatch || e.similarity >= 0.70);
       });
-      if (!abstention && retrieved.length === 0 && relevantStaleMemory) {
+      if (!abstention && retrieved.length === 0 && relevantStaleMemory && isIncidentQuery) {
         abstention = true;
         abstentionReason = `Relevant prior resolution was invalidated by a recent deployment event. Abstaining from obsolete recommendation.`;
       }
@@ -557,10 +559,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       }
     } else {
       // Governed Mode
-      if (isExplicitOffTopic && !abstention) {
-        abstention = true;
-        abstentionReason = 'Query contains no operational keywords or domain entities. Abstaining from blind resolution.';
-      }
+      // Natural conversation, general questions and greetings do not trigger blind abstention
       if (abstention) {
         answer = `🛡️ [ShaktAI GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Please confirm the intended procedure with your team.`;
         structuredAnswer = {
@@ -641,14 +640,17 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
           answer += `\n\n⚠️ **Validation Warnings**:\n${citationWarnings.map(w => `- ${w}`).join('\n')}`;
         }
       } else {
-        const isGreeting = /^(hi|hello|hey|greetings|morning|evening|afternoon|help)\b/i.test(query.trim());
+        const isGreeting = /^(hi+|hello+|hey+|greetings|morning|evening|afternoon|help|yo)\b/i.test(query.trim());
+        const isAboutWebsite = /website|platform|anchor|shaktai|what is this|about/i.test(query.toLowerCase());
         const llmPrompt = isGreeting
-          ? `You are ShaktAI, the ANCHOR Governed AI Memory Engine. A user says: "${query}". Answer courteously and helpfully in 1-2 sentences as an AI engineering assistant.`
+          ? `You are ShaktAI, the ANCHOR Governed AI Memory Engine. A user says: "${query}". Answer courteously, warmly, and helpfully in 1-2 sentences as an AI engineering assistant.`
+          : isAboutWebsite
+          ? `You are ShaktAI, the ANCHOR Governed AI Memory Engine. Explain what ANCHOR and ShaktAI do: enterprise governed agentic memory engine with trust scoring, recency decay, and safety gates.`
           : `You are ShaktAI, the ANCHOR Governed AI Memory Engine. A user asks: "${query}". Answer accurately and concisely using general knowledge, noting that no internal corporate memories applied.`;
         const llmRes = await LLMService.complete(llmPrompt, {
           systemPrompt: 'You are ShaktAI, an intelligent agentic memory assistant. Be concise, polite, and helpful.'
         });
-        answer = `🛡️ [ShaktAI GOVERNED AGENT]\n${llmRes.content}\n\n*(Verified: No corporate operational memories applied for general query).*`;
+        answer = `🛡️ [ShaktAI GOVERNED AGENT]\n${llmRes.content}\n\n*(Verified: No corporate operational memories applied for general query).*`
         structuredAnswer = {
           diagnosis: isGreeting ? 'Natural conversational greeting' : 'General knowledge query (no internal memories applied)',
           proposedFix: llmRes.content,

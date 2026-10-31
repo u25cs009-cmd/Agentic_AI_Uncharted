@@ -482,10 +482,13 @@ export class LLMService {
     if (lower.includes('timeout') || lower.includes('checkout')) {
       return 'Checkout DB timeouts are fixed by restarting the pool with max_connections: 50. Legacy pg_ctlcluster commands are stale and must not be used.';
     }
+    if (lower.includes('website') || lower.includes('platform') || lower.includes('about the website') || lower.includes('what is this') || lower.includes('about this')) {
+      return "Welcome to ANCHOR (ShaktAI) — the Governed Agentic Memory Engine!\n\nThis platform guarantees enterprise AI reliability with mathematical trust scoring, bi-temporal validity tracking, and deterministic safety gates. You can ask me about system architecture, inspect memories, manage quarantines, or resolve operational incidents.";
+    }
     if (lower.includes('how are you') || lower.includes('how r u') || lower.includes('how are u')) {
       return "Hello! I am doing well, thank you for asking. How can I assist you with your operations and system queries today?";
     }
-    if (/^(hi|hello|hey|greetings)\b/i.test(prompt.trim())) {
+    if (/^(hi+|hello+|hey+|greetings|yo)\b/i.test(prompt.trim()) || /^(hi+|hello+|hey+|greetings|yo)\b/i.test(lower.trim())) {
       return "Hello! I am ShaktAI, your Governed Memory Agent. How can I assist you today?";
     }
     return `I have processed your request using the verified memory governance engine.`;

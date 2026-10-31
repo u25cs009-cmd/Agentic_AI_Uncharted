@@ -642,19 +642,19 @@ export const ChatPage: React.FC = () => {
               </button>
             )}
 
-            {/* Model / Engine Dropdown Pill (Claude/ChatGPT style) */}
-            <div className="flex items-center bg-slate-100/80 p-0.5 rounded-xl border border-slate-200">
+            {/* Model / Engine Selector */}
+            <div className="inline-flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/80 shadow-2xs">
               <button
                 type="button"
                 onClick={() => { setActiveMode('governed'); setCompareMode(false); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   !compareMode && activeMode === 'governed'
-                    ? 'bg-white text-indigo-700 shadow-xs'
+                    ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Engram Governed</span>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Governed</span>
               </button>
 
               <button
@@ -666,7 +666,7 @@ export const ChatPage: React.FC = () => {
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <span>Baseline (No Memory)</span>
+                <span>Baseline</span>
               </button>
 
               <button
@@ -674,7 +674,7 @@ export const ChatPage: React.FC = () => {
                 onClick={() => setCompareMode(!compareMode)}
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                   compareMode
-                    ? 'bg-indigo-600 text-white font-semibold shadow-xs'
+                    ? 'bg-slate-900 text-white font-semibold shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -684,72 +684,15 @@ export const ChatPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Scripted Demo Actions */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              disabled={quickActionLoading !== null}
-              onClick={() => handleQuickAction('alert')}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors cursor-pointer"
-              title="Dispatch simulated payments-api connection pool incident"
-            >
-              <Bell className="w-3.5 h-3.5" />
-              <span>Simulate Alert</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={quickActionLoading !== null}
-              onClick={() => handleQuickAction('deploy')}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 transition-colors cursor-pointer"
-              title="Deploy checkout-api v3.0 to test stale memory invalidation"
-            >
-              <Rocket className="w-3.5 h-3.5" />
-              <span>Deploy v3.0</span>
-            </button>
-
-            <button
-              type="button"
-              disabled={quickActionLoading !== null}
-              onClick={() => handleQuickAction('poison')}
-              className="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 transition-colors cursor-pointer"
-              title="Send prompt injection note to test security quarantine"
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Poison Test</span>
-            </button>
-
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleNewChat}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Reset conversation"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer shadow-2xs"
+              title="Start a new chat session"
             >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-
-            {/* Fullscreen Expand / Collapse Button */}
-            <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                isExpanded
-                  ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 ring-1 ring-indigo-300'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-              title={isExpanded ? 'Collapse to standard view (Esc)' : 'Expand chat to full screen'}
-            >
-              {isExpanded ? (
-                <>
-                  <Minimize2 className="w-4 h-4 text-indigo-600" />
-                  <span className="text-[11px] font-mono font-semibold hidden sm:inline">Exit Fullscreen</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="w-4 h-4" />
-                  <span className="text-[11px] font-mono font-medium hidden sm:inline text-slate-600">Expand</span>
-                </>
-              )}
+              <RotateCcw className="w-3.5 h-3.5 text-emerald-600" />
+              <span>New Chat</span>
             </button>
           </div>
         </div>
@@ -789,14 +732,14 @@ export const ChatPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleSendQuery('Which database are we currently using in production?')}
-                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-slate-900 border border-emerald-300/80 transition-all cursor-pointer shadow-2xs font-medium"
+                    className="text-xs px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-200 shadow-2xs transition-all cursor-pointer shadow-2xs font-medium"
                   >
                     🔍 Which database are we using?
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSendQuery('How do I fix the checkout DB timeout right now?')}
-                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-slate-900 border border-emerald-300/80 transition-all cursor-pointer shadow-2xs font-medium"
+                    className="text-xs px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-950 border border-emerald-200 shadow-2xs transition-all cursor-pointer shadow-2xs font-medium"
                   >
                     ⚡ Fix checkout DB timeout
                   </button>

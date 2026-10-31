@@ -812,7 +812,7 @@ export const api = {
     // Generate response text
     let answer = "";
     const qLower = query.toLowerCase();
-    const isGreeting = /^(hi|hello|hey|greetings|good morning|good evening)\b/i.test(query.trim());
+    const isGreeting = /^(hi+|hello+|hey+|greetings|good morning|good evening|yo)\b/i.test(query.trim());
     const isHowAreYou = qLower.includes('how are you') || qLower.includes('how r u') || qLower.includes('how are u');
 
     if (mode === 'none') {
