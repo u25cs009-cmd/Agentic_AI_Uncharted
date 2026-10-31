@@ -1,3 +1,5 @@
+import dns from 'node:dns';
+try { dns.setServers(['8.8.8.8', '1.1.1.1']); } catch {}
 import { Repository } from './types.js';
 import { InMemoryRepository } from './InMemoryRepository.js';
 import { MongoRepository } from './MongoRepository.js';
