@@ -303,7 +303,7 @@ export const MemoryExplorerPage: React.FC = () => {
             <Database className="w-3.5 h-3.5 text-indigo-600" />
           </div>
           <div className="text-2xl font-bold font-mono text-slate-900 mt-1">{stats.total}</div>
-          <div className="text-[10px] text-slate-500 mt-0.5 font-mono">Governed MongoDB Collection</div>
+          <div className="text-[10px] text-slate-500 mt-0.5 font-mono">Governed Memory Store</div>
         </div>
 
         <div className="card p-4 relative overflow-hidden group hover:border-sky-300 transition-all bg-sky-50/50 border border-sky-200 shadow-xs">
