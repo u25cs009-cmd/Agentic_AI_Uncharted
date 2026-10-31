@@ -25,7 +25,7 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'anchor_dev_jwt_secret_change_in_production_key_2026',
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   internalApiKey: process.env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks',
-  webhookSecret: process.env.WEBHOOK_SECRET || process.env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks',
+  webhookSecret: process.env.ENGRAM_SHARED_SECRET || process.env.WEBHOOK_SECRET || process.env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks',
 
   mongo: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/anchor',

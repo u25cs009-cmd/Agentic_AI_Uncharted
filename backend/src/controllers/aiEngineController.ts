@@ -12,6 +12,7 @@ import {
 import { CandidateFactExtractor, TRUST_LADDER } from '../engine/extractor.js';
 import { SourceKind } from '../engine/types.js';
 import { calculateRecency, calculateFinalScore } from '../utils/scoring.js';
+import { filterStopwords } from '../utils/stopwords.js';
 import { getEmbedding } from '../services/embedding.js';
 import { config } from '../config/index.js';
 
@@ -34,12 +35,14 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     let retrievalPath: 'atlas-hybrid' | 'memory' = config.store === 'mongo' ? 'atlas-hybrid' : 'memory';
     let indexError: string | undefined;
 
-    const queryTokens = query.toLowerCase().split(/\W+/).filter((w: string) => w.length > 2);
+    const rawTokens = query.toLowerCase().split(/\W+/).filter(Boolean);
+    const queryTokens = filterStopwords(rawTokens);
+    const isOffTopic = queryTokens.length === 0;
 
     for (const mem of allMemories) {
       const contentTokens = `${mem.content} ${mem.attribute_key} ${mem.entities.join(' ')}`.toLowerCase().split(/\W+/);
       const matches = queryTokens.filter((t: string) => contentTokens.includes(t));
-      const overlap = queryTokens.length > 0 ? matches.length / queryTokens.length : 0.1;
+      const overlap = (!isOffTopic && queryTokens.length > 0) ? matches.length / queryTokens.length : 0;
       const sim = Number(Math.min(0.98, Math.max(0.15, overlap > 0 ? 0.70 + (overlap * 0.25) : 0.20)).toFixed(3));
 
       const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
@@ -116,6 +119,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     let llmFallback = false;
 
     if (activeMode === 'none') {
+      const isNoneOffTopic = isOffTopic || (!query.toLowerCase().includes('database') && !query.toLowerCase().includes('pool') && !query.toLowerCase().includes('checkout') && !query.toLowerCase().includes('api'));
       const llmPrompt = `Answer this user question directly using general knowledge, without assuming any internal system context: "${query}"`;
       const llmRes = await LLMService.complete(llmPrompt, {
         systemPrompt: 'You are an AI assistant with NO memory recall. Do not invent company-specific internal facts.'
@@ -127,10 +131,29 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
         citedMemoryIds: [],
         confidence: 0.5,
         warnings: ['Operating in zero-memory mode'],
-        abstain: false,
-        abstainReason: null
+        abstain: isNoneOffTopic,
+        abstainReason: isNoneOffTopic ? 'Zero-memory mode: query is off-topic with no domain context' : null
       };
+      if (isNoneOffTopic) {
+        abstention = true;
+        abstentionReason = 'Zero-memory mode: query is off-topic with no domain context';
+      }
     } else if (activeMode === 'naive') {
+      const isNaiveOffTopic = isOffTopic || topRetrieved.length === 0;
+      if (isNaiveOffTopic) {
+        answer = '⚠️ [NAIVE MODE - NO RELEVANT VECTORS]\nNaive retrieval found zero vector neighbours above similarity threshold.';
+        structuredAnswer = {
+          diagnosis: 'No matching vectors in database',
+          proposedFix: 'Query has no matching vector embeddings in store',
+          citedMemoryIds: [],
+          confidence: 0.1,
+          warnings: ['No vector matches found'],
+          abstain: true,
+          abstainReason: 'Naive vector search matched 0 relevant documents'
+        };
+        abstention = true;
+        abstentionReason = 'Naive vector search matched 0 relevant documents';
+      } else {
       const memoryContext = topRetrieved.map(m => `- [${m.status}] ${m.content}`).join('\n');
       const llmPrompt = `Answer the question based on these retrieved memories (even if they might be outdated):\n${memoryContext}\n\nQuestion: "${query}"`;
       const llmRes = await LLMService.complete(llmPrompt, {
@@ -146,8 +169,13 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
         abstain: false,
         abstainReason: null
       };
+      }
     } else {
       // Governed Mode
+      if (isOffTopic && !abstention) {
+        abstention = true;
+        abstentionReason = 'Query contains no operational keywords or domain entities. Abstaining from blind resolution.';
+      }
       if (abstention) {
         answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Please confirm the intended procedure with your team.`;
         structuredAnswer = {
@@ -157,7 +185,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
           confidence: 0.1,
           warnings: [abstentionReason],
           abstain: true,
-          abstainReason
+          abstainReason: abstentionReason
         };
       } else if (topRetrieved.length > 0) {
         const memoryContext = topRetrieved
@@ -228,6 +256,8 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
           answer += `\n\n⚠️ **Validation Warnings**:\n${citationWarnings.map(w => `- ${w}`).join('\n')}`;
         }
       } else {
+        abstention = true;
+        abstentionReason = 'No qualifying memories passed score threshold (>= 0.25).';
         answer = '🛡️ [XYRO101 GOVERNED DECISION]\nNo sufficiently trusted memory found meeting threshold (final score >= 0.25). Abstaining from blind resolution.';
         structuredAnswer = {
           diagnosis: 'No qualifying memories passed score threshold (>= 0.25)',

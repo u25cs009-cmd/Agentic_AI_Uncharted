@@ -49,6 +49,12 @@ import {
 } from '../controllers/benchmarkController.js';
 import { consolidateMemories } from '../controllers/lifecycleController.js';
 import {
+  demoAlert,
+  demoDeploy,
+  demoPoison,
+  demoReset
+} from '../controllers/demoController.js';
+import {
   authenticateUser,
   requireAuth,
   requireWebhookSecret,
@@ -59,6 +65,16 @@ import { config } from '../config/index.js';
 export const apiRouter = Router();
 
 // 1. Health check (Public)
+apiRouter.get('/meta', (req, res) => {
+  res.json({
+    embedProvider: config.embedProvider,
+    dimension: config.embedProvider === 'openai' ? 1536 : 384,
+    store: config.store,
+    retrievalPath: config.store === 'mongo' ? 'atlas-hybrid' : 'memory',
+    version: '2.1.0'
+  });
+});
+
 apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -131,3 +147,9 @@ apiRouter.get('/benchmark/results', requireAuth, getBenchmarkResults);
 
 // 11. Automated Memory Lifecycle & Consolidation (W4)
 apiRouter.post('/lifecycle/consolidate', authenticateUserOrWebhook, consolidateMemories);
+
+// 12. Scripted Demo Endpoints (Protected by User JWT)
+apiRouter.post('/demo/alert', requireAuth, demoAlert);
+apiRouter.post('/demo/deploy', requireAuth, demoDeploy);
+apiRouter.post('/demo/poison', requireAuth, demoPoison);
+apiRouter.post('/demo/reset', requireAuth, demoReset);
