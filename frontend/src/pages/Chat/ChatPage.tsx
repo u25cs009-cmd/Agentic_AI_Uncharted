@@ -49,11 +49,10 @@ interface MessageItem {
   sender: 'user' | 'agent';
   text: string;
   timestamp: string;
-  mode?: 'none' | 'naive' | 'governed';
+  mode?: 'none' | 'governed';
   result?: ChatModeResult;
   comparison?: {
     none: ChatModeResult;
-    naive: ChatModeResult;
     governed: ChatModeResult;
   };
   feedback?: ProposalFeedback;
@@ -71,7 +70,7 @@ function cleanText(text: string): string {
 const DEFAULT_GREETING: MessageItem = {
   id: 'init-1',
   sender: 'agent',
-  text: 'Hello! I am XYRO101, your Governed Agentic Memory Engine (built on ANCHOR architecture).\n\nI can answer questions and triage incidents using three distinct operating modes:\n\n• None Mode: Standard LLM without memory recall\n• Naive Mode: Pure vector similarity (vulnerable to stale & poisoned data)\n• Governed Mode: Complete ANCHOR governance (source trust ladder, temporal recency decay, dependency fingerprints, and abstention)\n\nTry asking: "Which database are we currently using in production?" or "How do I fix the checkout DB timeout right now?"',
+  text: 'Hello! I am XYRO101, your Governed Agentic Memory Engine (built on ANCHOR architecture).\n\nI can answer questions and triage incidents using two operating modes:\n\n• Baseline Mode: Standard LLM without internal memory (stateless zero-recall baseline)\n• Engram Mode: Unified ANCHOR governed memory (vector retrieval, source trust ladder, temporal recency decay, dependency fingerprints, and deterministic safety gates)\n\nTry asking: "Which database are we currently using in production?" or "How do I fix the checkout DB timeout right now?"',
   timestamp: 'Just now',
   mode: 'governed',
   result: {
@@ -99,7 +98,7 @@ export const ChatPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [messages, setMessages] = useState<MessageItem[]>([DEFAULT_GREETING]);
   const [input, setInput] = useState('');
-  const [activeMode, setActiveMode] = useState<'none' | 'naive' | 'governed'>('governed');
+  const [activeMode, setActiveMode] = useState<'none' | 'governed'>('governed');
   const [compareMode, setCompareMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sourceKind, setSourceKind] = useState<'user_stated' | 'system_event' | 'human_approved' | 'unverified'>('user_stated');
@@ -215,20 +214,18 @@ export const ChatPage: React.FC = () => {
     try {
       let agentMsg: MessageItem;
       if (compareMode) {
-        const [resNone, resNaive, resGov] = await Promise.all([
+        const [resNone, resGov] = await Promise.all([
           api.chat(queryText, 'none'),
-          api.chat(queryText, 'naive'),
           api.chat(queryText, 'governed'),
         ]);
 
         agentMsg = {
           id: `agt-${Date.now()}`,
           sender: 'agent',
-          text: 'Comparative evaluation across all 3 memory operating modes:',
+          text: 'Comparative evaluation: Baseline (Zero Recall) vs Engram (Governed Memory):',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           comparison: {
             none: resNone,
-            naive: resNaive,
             governed: resGov,
           }
         };
@@ -478,14 +475,14 @@ export const ChatPage: React.FC = () => {
 
         {/* Distinct Abstention Card */}
         {isAbstained && (
-          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 shadow-xs animate-fade-in">
+          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 shadow-xs animate-fade-in">
             <div className="flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div>
-                <div className="font-bold text-xs font-mono text-amber-800">
+                <div className="font-bold text-xs font-mono text-amber-900">
                   Abstained: {cleanText(structured.abstainReason || res?.abstention_reason || 'Query refrained under governance policies')}
                 </div>
-                <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                <p className="text-[11px] text-amber-800 mt-1 leading-relaxed font-medium">
                   XYRO101 ANCHOR governance safely halted automated action to prevent applying unverified, superseded, or out-of-domain instructions.
                 </p>
               </div>
@@ -495,23 +492,23 @@ export const ChatPage: React.FC = () => {
 
         {/* Proposed Fix Action Card (Hidden if abstained) */}
         {!isAbstained && structured.proposedFix && (
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-200/90 shadow-sm shadow-[0_0_15px_rgba(6,182,212,0.1)] space-y-2">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-indigo-700 font-bold flex items-center gap-1.5">
+          <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-200 shadow-sm space-y-2">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-indigo-800 font-bold flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Proposed Remediation Plan
             </div>
-            <div className="text-xs font-mono text-slate-800 whitespace-pre-wrap leading-relaxed bg-white p-3 rounded-lg border border-slate-200 text-slate-800">
+            <div className="text-xs font-mono text-slate-900 whitespace-pre-wrap leading-relaxed bg-white p-3 rounded-lg border border-slate-200 shadow-xs">
               {cleanText(structured.proposedFix)}
             </div>
 
             {/* C4: Human-in-the-Loop Proposal Approval */}
             {msg.mode === 'governed' && targetMemoryId && (
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
-                <span className="text-[11px] font-mono text-slate-400">Human-in-the-Loop Verification:</span>
+              <div className="pt-2 border-t border-indigo-100 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[11px] font-mono text-slate-700 font-medium">Human-in-the-Loop Verification:</span>
                 {msg.feedback ? (
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 ${
                     msg.feedback.action === 'APPROVED'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
-                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-xs'
+                      : 'bg-rose-50 text-rose-800 border border-rose-300 shadow-xs'
                   }`}>
                     {msg.feedback.action === 'APPROVED' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
                     Confidence updated: {msg.feedback.previous_confidence.toFixed(2)} -&gt; {msg.feedback.new_confidence.toFixed(2)} ({msg.feedback.delta >= 0 ? '+' : ''}{msg.feedback.delta.toFixed(2)})
@@ -522,7 +519,7 @@ export const ChatPage: React.FC = () => {
                       type="button"
                       disabled={submittingOutcomeId === msg.id}
                       onClick={() => handleProposalOutcome(msg.id, targetMemoryId, 'APPROVED')}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40 shadow-xs"
                     >
                       <Check className="w-3.5 h-3.5" /> Approve this fix
                     </button>
@@ -530,7 +527,7 @@ export const ChatPage: React.FC = () => {
                       type="button"
                       disabled={submittingOutcomeId === msg.id}
                       onClick={() => handleProposalOutcome(msg.id, targetMemoryId, 'REJECTED')}
-                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                      className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40 shadow-xs"
                     >
                       <X className="w-3.5 h-3.5" /> Reject this fix
                     </button>
@@ -543,11 +540,11 @@ export const ChatPage: React.FC = () => {
 
         {/* Warnings Callout Box (Omit if empty) */}
         {structured.warnings && structured.warnings.length > 0 && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-amber-800 font-mono font-bold text-[11px]">
-              <AlertTriangle className="w-3.5 h-3.5" /> Operational Warnings &amp; Governance Guardrails:
+          <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-amber-900 font-mono text-[11px]">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> Operational Warnings &amp; Governance Guardrails:
             </div>
-            <ul className="list-disc list-inside space-y-0.5 pl-1 text-[11px] text-slate-300">
+            <ul className="list-disc list-inside space-y-0.5 pl-1 text-[11px] text-amber-900 font-medium">
               {structured.warnings.map((w, idx) => (
                 <li key={idx} className="font-sans">{cleanText(w)}</li>
               ))}
@@ -559,12 +556,12 @@ export const ChatPage: React.FC = () => {
         {citedChips.length > 0 && (
           <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-mono text-slate-400 text-[11px] font-semibold">Citations:</span>
+              <span className="font-mono text-slate-700 text-[11px] font-semibold">Citations:</span>
               {citedChips.map((chip) => (
                 <Link
                   key={chip.id}
                   to={`/inspector?id=${encodeURIComponent(chip.id)}`}
-                  className="px-2 py-0.5 rounded-lg bg-cyan-500/15 text-indigo-600 hover:text-white hover:bg-cyan-500/30 border border-slate-200/90 shadow-sm font-mono text-[10px] font-semibold transition-all shadow-sm"
+                  className="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 hover:text-indigo-900 hover:bg-indigo-100 border border-indigo-200 font-mono text-[10px] font-semibold transition-all shadow-xs"
                   title={`Inspect memory ${chip.id}`}
                 >
                   [{chip.id}] (Score: {chip.score.toFixed(2)})
@@ -573,7 +570,7 @@ export const ChatPage: React.FC = () => {
             </div>
             <Link
               to="/inspector"
-              className="text-indigo-600 hover:text-indigo-600 font-semibold font-mono text-[11px] flex items-center gap-0.5"
+              className="text-indigo-600 hover:text-indigo-800 font-semibold font-mono text-[11px] flex items-center gap-0.5"
             >
               Decompose Formula <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -607,60 +604,41 @@ export const ChatPage: React.FC = () => {
       {/* ── Top Mission Control HUD Bar ── */}
       <div className="glass-panel p-3.5 shadow-2xl relative overflow-hidden border-slate-200/90 rounded-2xl shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* C2: Three Clearly-Labelled Mode Cards with Subtitles */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full lg:max-w-2xl">
-            {/* None */}
+          {/* C2: Two Clearly-Labelled Operating Mode Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 w-full lg:max-w-2xl">
+            {/* 1. Baseline Mode */}
             <button
               type="button"
               onClick={() => { setActiveMode('none'); setCompareMode(false); }}
               className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                 !compareMode && activeMode === 'none'
-                  ? 'bg-slate-100 border-slate-300 text-slate-900 shadow-xs font-semibold'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-200 hover:border-slate-700'
+                  ? 'bg-slate-100 border-slate-400 text-slate-900 shadow-xs font-semibold ring-1 ring-slate-300'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
               }`}
               title="Zero memory recall baseline (stateless LLM)"
             >
-              <div className="text-xs font-bold font-mono">1. None Mode</div>
-              <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
-                Zero memory recall baseline (stateless LLM)
+              <div className="text-xs font-bold font-mono text-slate-900">1. Baseline Mode</div>
+              <div className="text-[11px] text-slate-600 mt-0.5 leading-tight font-medium">
+                Zero memory recall baseline (stateless LLM reasoning)
               </div>
             </button>
 
-            {/* Naive */}
-            <button
-              type="button"
-              onClick={() => { setActiveMode('naive'); setCompareMode(false); }}
-              className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
-                !compareMode && activeMode === 'naive'
-                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-xs font-semibold'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-amber-800 hover:border-slate-700'
-              }`}
-              title="Unchecked vector similarity; vulnerable to stale & poisoned data"
-            >
-              <div className="text-xs font-bold font-mono flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" /> 2. Naive Retrieval
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
-                Unchecked vector similarity; vulnerable to stale &amp; poisoned data
-              </div>
-            </button>
-
-            {/* Governed */}
+            {/* 2. Engram Mode */}
             <button
               type="button"
               onClick={() => { setActiveMode('governed'); setCompareMode(false); }}
               className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                 !compareMode && activeMode === 'governed'
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-900 shadow-xs font-semibold ring-1 ring-indigo-500/20'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 hover:border-slate-700'
+                  ? 'bg-indigo-50 border-indigo-400 text-indigo-950 shadow-xs font-semibold ring-1 ring-indigo-400'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
               }`}
-              title="Full ANCHOR governance: trust ladder, recency decay, dependency invalidation, deterministic gates"
+              title="Unified ANCHOR memory governance: vector retrieval, trust ladder, recency decay, guardrails"
             >
-              <div className="text-xs font-bold font-mono flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" /> 3. Engram / Governed
+              <div className="text-xs font-bold font-mono flex items-center gap-1.5 text-indigo-900">
+                <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" /> 2. Engram Mode
               </div>
-              <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
-                Full ANCHOR governance: trust ladder, recency decay, deterministic gates
+              <div className="text-[11px] text-slate-600 mt-0.5 leading-tight font-medium">
+                Unified Governed Memory: vector retrieval, trust ladder &amp; safety gates
               </div>
             </button>
           </div>
@@ -672,8 +650,8 @@ export const ChatPage: React.FC = () => {
               onClick={() => setIsConvSidebarOpen(!isConvSidebarOpen)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
                 isConvSidebarOpen
-                  ? 'bg-cyan-500/20 text-indigo-600 border-cyan-500/40 shadow-[0_0_14px_rgba(6,182,212,0.25)]'
-                  : 'btn-ghost text-slate-300'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
               title="Toggle chat sessions history"
             >
@@ -686,11 +664,11 @@ export const ChatPage: React.FC = () => {
               onClick={() => setCompareMode(!compareMode)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                 compareMode
-                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-[0_0_16px_rgba(99,102,241,0.3)]'
-                  : 'btn-ghost text-slate-300'
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-xs ring-1 ring-indigo-300'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <Split className={`w-4 h-4 ${compareMode ? 'text-indigo-400' : 'text-slate-400'}`} />
+              <Split className={`w-4 h-4 ${compareMode ? 'text-indigo-600' : 'text-slate-500'}`} />
               <span>Comparison View</span>
             </button>
           </div>
@@ -832,13 +810,13 @@ export const ChatPage: React.FC = () => {
                       className="w-5 h-5 rounded-full object-cover border border-amber-400/50 shadow-[0_0_10px_rgba(204,139,60,0.35)] shrink-0"
                     />
                   ) : null}
-                  <span className="text-xs font-semibold text-slate-300">
+                  <span className="text-xs font-semibold text-slate-800">
                     {msg.sender === 'user' ? 'Operator (You)' : 'XYRO101 Engine'}
                   </span>
-                  <span className="text-[10px] font-mono text-slate-500">{msg.timestamp}</span>
+                  <span className="text-[10px] font-mono text-slate-600">{msg.timestamp}</span>
                   {msg.mode && (
                     <Badge
-                      variant={msg.mode === 'governed' ? 'cyan' : msg.mode === 'naive' ? 'warning' : 'neutral'}
+                      variant={msg.mode === 'governed' ? 'cyan' : 'neutral'}
                       size="sm"
                       glow={msg.mode === 'governed'}
                     >
@@ -849,57 +827,39 @@ export const ChatPage: React.FC = () => {
 
                 {/* Message Content Bubble */}
                 {msg.comparison ? (
-                  // 3-Mode Comparison Cards
-                  <div className="w-full card border border-slate-200 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-3 shadow-md bg-white">
-                    {/* None */}
-                    <div className="card border-slate-200 p-3.5 rounded-xl flex flex-col justify-between bg-slate-50/70">
+                  // 2-Mode Comparison Cards (Baseline vs Engram)
+                  <div className="w-full card border border-slate-200 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4 shadow-md bg-white">
+                    {/* Baseline */}
+                    <div className="card border-slate-200 p-4 rounded-xl flex flex-col justify-between bg-slate-50/70 border">
                       <div>
-                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
-                          <span className="text-xs font-mono font-bold text-slate-800">1. NONE MODE</span>
-                          <span className="text-[10px] font-mono bg-slate-800 text-slate-600 px-2 py-0.5 rounded bg-slate-200/80">0 memories</span>
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200">
+                          <span className="text-xs font-mono font-bold text-slate-900">1. BASELINE MODE</span>
+                          <span className="text-[10px] font-mono bg-slate-200 text-slate-700 font-semibold px-2 py-0.5 rounded">0 memories</span>
                         </div>
-                        <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.none.answer)}</p>
+                        <p className="text-xs text-slate-800 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.none.answer)}</p>
                       </div>
-                      <div className="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500">
-                        Zero recall baseline
+                      <div className="mt-3 pt-2 border-t border-slate-200 text-[10px] font-mono text-slate-600 font-medium">
+                        Zero-recall stateless baseline
                       </div>
                     </div>
 
-                    {/* Naive */}
-                    <div className="card border-amber-200 p-3.5 rounded-xl flex flex-col justify-between bg-amber-50/50 shadow-xs">
+                    {/* Engram Governed */}
+                    <div className="card border-indigo-200 p-4 rounded-xl flex flex-col justify-between bg-indigo-50/40 shadow-xs ring-1 ring-indigo-400">
                       <div>
-                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-500/20">
-                          <span className="text-xs font-mono font-bold text-amber-800 flex items-center gap-1.5 font-bold">
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> 2. NAIVE RETRIEVAL
-                          </span>
-                          <span className="text-[10px] font-mono bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">
-                            {msg.comparison.naive.retrieved_memories.length} matched
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-800 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.naive.answer)}</p>
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-amber-500/20 text-[10px] font-mono text-amber-400">
-                        ⚠️ Stale &amp; unverified data accepted
-                      </div>
-                    </div>
-
-                    {/* Governed */}
-                    <div className="card border-indigo-200 p-3.5 rounded-xl flex flex-col justify-between bg-indigo-50/40 shadow-xs ring-1 ring-indigo-500/20">
-                      <div>
-                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/90 shadow-sm">
-                          <span className="text-xs font-mono font-bold text-indigo-900 flex items-center gap-1.5 font-bold">
-                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" /> 3. GOVERNED ANCHOR
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-indigo-100">
+                          <span className="text-xs font-mono font-bold text-indigo-950 flex items-center gap-1.5 font-bold">
+                            <ShieldCheck className="w-4 h-4 text-indigo-600" /> 2. ENGRAM GOVERNED MEMORY
                           </span>
                           <span className="text-[10px] font-mono bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded font-bold">
                             {msg.comparison.governed.retrieved_memories.length} verified
                           </span>
                         </div>
-                        <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.governed.answer)}</p>
+                        <p className="text-xs text-slate-900 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.governed.answer)}</p>
                       </div>
-                      <div className="mt-3 pt-2 border-t border-cyan-500/20 text-[10px] font-mono text-indigo-700 flex items-center justify-between font-semibold">
+                      <div className="mt-3 pt-2 border-t border-indigo-100 text-[10px] font-mono text-indigo-800 flex items-center justify-between font-semibold">
                         <span>🛡️ Governed Decision</span>
                         {msg.comparison.governed.abstention && (
-                          <span className="text-amber-400 font-bold">ABSTAINED</span>
+                          <span className="text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded font-bold">ABSTAINED</span>
                         )}
                       </div>
                     </div>
@@ -1017,10 +977,10 @@ export const ChatPage: React.FC = () => {
               }}
               placeholder={
                 compareMode
-                  ? "Enter query to evaluate across None, Naive, and Governed modes..."
+                  ? "Enter query to compare Baseline (Zero Recall) vs Engram (Governed Memory)..."
                   : activeMode === 'governed'
-                  ? "Ask XYRO101 anything (e.g. 'Which database are we using in prod?', 'How to fix checkout timeout?')..."
-                  : `Query agent in ${activeMode.toUpperCase()} mode...`
+                  ? "Ask XYRO101 anything in Engram Mode (e.g. 'Which database are we using in prod?', 'How to fix checkout timeout?')..."
+                  : "Query agent in Baseline Mode (stateless zero memory recall)..."
               }
               className="flex-1 bg-transparent px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none resize-none max-h-40 font-sans leading-relaxed"
             />
@@ -1038,11 +998,11 @@ export const ChatPage: React.FC = () => {
           {/* Lower Source Tag Controls */}
           <div className="flex items-center justify-between pt-1 text-xs">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="font-mono text-slate-400 text-[11px]">Provenance Tag:</span>
+              <span className="font-mono text-slate-700 text-[11px] font-medium">Provenance Tag:</span>
               <select
                 value={sourceKind}
                 onChange={(e) => setSourceKind(e.target.value as any)}
-                className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono outline-none cursor-pointer focus:border-cyan-400"
+                className="bg-white border border-slate-300 text-slate-800 rounded-lg px-2.5 py-1 text-xs font-mono outline-none cursor-pointer focus:border-indigo-500 shadow-xs"
               >
                 <option value="user_stated">user_stated (Trust: 0.80)</option>
                 <option value="human_approved">human_approved (Trust: 1.00)</option>

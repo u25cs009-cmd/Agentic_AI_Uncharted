@@ -107,10 +107,16 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       }
 
       // Check if relevant instructions were invalidated by a recent deploy (only if relevant to the query!)
-      const relevantStaleMemory = excluded.find(e => e.exclusion_reason === 'stale' && e.similarity >= 0.40);
+      const relevantStaleMemory = excluded.find(e => {
+        if (e.exclusion_reason !== 'stale') return false;
+        const memoryText = `${e.content} ${e.attribute_key} ${(e.entities || []).join(' ')}`.toLowerCase();
+        const contentTokens = memoryText.split(/\W+/).filter(Boolean);
+        const hasTokenMatch = queryTokens.some((t: string) => contentTokens.includes(t));
+        return (hasTokenMatch && e.similarity >= 0.45) || e.similarity >= 0.82;
+      });
       if (!abstention && retrieved.length === 0 && relevantStaleMemory) {
         abstention = true;
-        abstentionReason = `Relevant prior operational fix ('${relevantStaleMemory.attribute_key}') was invalidated following a recent deployment. Deprecated fix excluded from execution.`;
+        abstentionReason = `Relevant prior resolution was invalidated by a recent deployment event. Abstaining from obsolete recommendation.`;
       }
     }
 

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Play, 
   CheckCircle2, 
@@ -123,21 +123,21 @@ export const BenchmarkPage: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">15-Scenario Benchmark Arena</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">15-Scenario Benchmark Arena</h1>
               <Badge variant="primary" size="sm">Official Evaluation</Badge>
               {meta && (
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-cyan-500/35">
                   Embeddings: {meta.embedProvider} ({meta.dimension}d) | Store: {meta.store}
                 </span>
               )}
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-700 border border-slate-200">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
                 {lastExecuted ? 'Live Run' : 'Baseline Reference'}
               </span>
             </div>
-            <p className="text-xs text-[#94a3b8] mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               Rigorous empirical evaluation comparing None, Naive Vector Search, and XYRO101 Governed Memory across 15 production edge-cases.
               {lastExecuted && (
-                <span className="text-[#888] ml-2 font-mono">
+                <span className="text-slate-500 ml-2 font-mono">
                   • Last run: {new Date(lastExecuted).toLocaleTimeString()}
                 </span>
               )}
@@ -213,39 +213,39 @@ export const BenchmarkPage: React.FC = () => {
 
       {/* Secondary Efficiency HUD (Tokens, Latency, Stale Reuse) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card p-4 rounded-xl border-[#383838] flex items-center justify-between">
+        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[#888] font-mono uppercase tracking-wider">Token Consumption</div>
-            <div className="text-lg font-bold text-[#f0f0f0] font-mono mt-0.5">
+            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold">Token Consumption</div>
+            <div className="text-lg font-bold text-slate-900 font-mono mt-0.5">
               {metrics.tokenUsage?.governed?.toLocaleString() ?? '4,620'} tokens
             </div>
-            <div className="text-[10px] text-[#60d49a] font-mono mt-0.5">
+            <div className="text-[10px] text-emerald-700 font-mono mt-0.5 font-bold">
               -32% vs Naive ({metrics.tokenUsage?.naive?.toLocaleString() ?? '6,840'})
             </div>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-[rgba(204,139,60,0.15)] border border-[rgba(204,139,60,0.3)] flex items-center justify-center text-[#cc8b3c]">
+          <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
             <Cpu className="w-4.5 h-4.5" />
           </div>
         </div>
 
-        <div className="card p-4 rounded-xl border-[#383838] flex items-center justify-between">
+        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[#888] font-mono uppercase tracking-wider">Average Latency</div>
-            <div className="text-lg font-bold text-[#f0f0f0] font-mono mt-0.5">{metrics.avgLatencyMs.governed} ms</div>
-            <div className="text-[10px] text-[#888] font-mono mt-0.5">Governed guard overhead: ~110ms</div>
+            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold">Average Latency</div>
+            <div className="text-lg font-bold text-slate-900 font-mono mt-0.5">{metrics.avgLatencyMs.governed} ms</div>
+            <div className="text-[10px] text-slate-500 font-mono mt-0.5">Governed guard overhead: ~110ms</div>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-[rgba(220,170,60,0.15)] border border-[rgba(220,170,60,0.3)] flex items-center justify-center text-[#d4a843]">
+          <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
             <Clock className="w-4.5 h-4.5" />
           </div>
         </div>
 
-        <div className="card p-4 rounded-xl border-[#383838] flex items-center justify-between">
+        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
           <div>
-            <div className="text-[10px] text-[#888] font-mono uppercase tracking-wider">Stale Reuse Rate</div>
-            <div className="text-lg font-bold text-[#60d49a] font-mono mt-0.5">0.0%</div>
-            <div className="text-[10px] text-[#888] font-mono mt-0.5">vs 60.0% in Naive Vector Search</div>
+            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold">Stale Reuse Rate</div>
+            <div className="text-lg font-bold text-emerald-700 font-mono mt-0.5">0.0%</div>
+            <div className="text-[10px] text-slate-600 font-mono mt-0.5">vs 60.0% in Naive Vector Search</div>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-[rgba(76,175,125,0.15)] border border-[rgba(76,175,125,0.3)] flex items-center justify-center text-[#60d49a]">
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
             <CheckCircle2 className="w-4.5 h-4.5" />
           </div>
         </div>
@@ -256,8 +256,8 @@ export const BenchmarkPage: React.FC = () => {
         {/* Chart 1: Grouped Success Rate across Categories */}
         <div className="card p-6 rounded-2xl shadow-xl space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-[#ffffff]">Correct Action Rate by Scenario Type (%)</h2>
-            <p className="text-xs text-[#94a3b8] mt-0.5">Empirical proof of ANCHOR governance across test categories</p>
+            <h2 className="text-sm font-semibold text-slate-900">Correct Action Rate by Scenario Type (%)</h2>
+            <p className="text-xs text-slate-600 mt-0.5">Empirical proof of ANCHOR governance across test categories</p>
           </div>
 
           <div className="h-64 w-full">
@@ -282,8 +282,8 @@ export const BenchmarkPage: React.FC = () => {
         {/* Chart 2: Harmful Action Rate */}
         <div className="card p-6 rounded-2xl shadow-xl space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-[#ffffff]">Harmful Action Rate (Lower is Better)</h2>
-            <p className="text-xs text-[#94a3b8] mt-0.5">Frequency of applying dangerous, poisoned or obsolete commands</p>
+            <h2 className="text-sm font-semibold text-slate-900">Harmful Action Rate (Lower is Better)</h2>
+            <p className="text-xs text-slate-600 mt-0.5">Frequency of applying dangerous, poisoned or obsolete commands</p>
           </div>
 
           <div className="h-64 w-full">
@@ -307,8 +307,8 @@ export const BenchmarkPage: React.FC = () => {
       <div className="card p-6 rounded-2xl shadow-xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-[#ffffff]">Feedback Loop &amp; Quarantine Decay Trajectory (W3 Pipeline)</h2>
-            <p className="text-xs text-[#94a3b8] mt-0.5">Confidence degradation and automated isolation after operator rejection</p>
+            <h2 className="text-sm font-semibold text-slate-900">Feedback Loop &amp; Quarantine Decay Trajectory (W3 Pipeline)</h2>
+            <p className="text-xs text-slate-600 mt-0.5">Confidence degradation and automated isolation after operator rejection</p>
           </div>
           <Badge variant="purple" size="sm">Self-Healing Pipeline</Badge>
         </div>
@@ -334,19 +334,19 @@ export const BenchmarkPage: React.FC = () => {
       <div className="card p-6 rounded-2xl shadow-xl space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <h2 className="text-base font-semibold text-[#ffffff]">Full 15-Scenario Evaluation Matrix</h2>
+            <h2 className="text-base font-semibold text-slate-900">Full 15-Scenario Evaluation Matrix</h2>
             <Badge variant="primary" size="sm">{filteredScenarios.length} Cases</Badge>
           </div>
 
-          <div className="flex items-center space-x-1 card p-1 rounded-xl text-xs">
+          <div className="flex items-center space-x-1 card p-1 rounded-xl text-xs bg-slate-50 border border-slate-200">
             {['all', 'stale', 'poison', 'contradiction', 'control'].map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`px-3 py-1 rounded-lg capitalize font-medium transition-all ${
                   activeCategory === cat
-                    ? 'bg-[#333] text-[#38bdf8] font-semibold shadow-sm'
-                    : 'text-[#888] hover:text-[#f8fafc]'
+                    ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                 }`}
               >
                 {cat}
@@ -362,14 +362,14 @@ export const BenchmarkPage: React.FC = () => {
               <div
                 key={sc.id}
                 onClick={() => setExpandedScenarioId(isExpanded ? null : sc.id)}
-                className="card p-4 rounded-xl cursor-pointer border-[#1e293b] hover:border-[#475569] transition-all"
+                className="card p-4 rounded-xl cursor-pointer border-slate-200 hover:border-slate-300 transition-all bg-white shadow-xs"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div className="flex items-center space-x-2.5">
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-[rgba(6,182,212,0.12)] text-[#38bdf8] border border-[rgba(6,182,212,0.3)]">
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
                       {sc.id}
                     </span>
-                    <span className="text-xs font-semibold text-[#ffffff]">{sc.title}</span>
+                    <span className="text-xs font-semibold text-slate-900">{sc.title}</span>
                     <Badge variant="purple" size="sm">
                       {sc.category}
                     </Badge>
@@ -401,19 +401,19 @@ export const BenchmarkPage: React.FC = () => {
                 </div>
 
                 {isExpanded && (
-                  <div className="mt-3 pt-3 border-t border-[#1e293b] text-xs space-y-2 text-[#94a3b8] animate-fade-in font-mono">
+                  <div className="mt-3 pt-3 border-t border-slate-200 text-xs space-y-2 text-slate-700 animate-fade-in font-mono">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <div className="bg-[#0b1222] p-2.5 rounded-lg border border-[#1e293b]">
-                        <div className="text-[10px] text-[#888] uppercase font-bold mb-1">None Mode Output</div>
-                        <div className="text-[#94a3b8] text-[11px]">{sc.results?.none.answer || 'Generic response without context'}</div>
+                      <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        <div className="text-[10px] text-slate-600 uppercase font-bold mb-1">None Mode Output</div>
+                        <div className="text-slate-800 text-[11px]">{sc.results?.none.answer || 'Generic response without context'}</div>
                       </div>
-                      <div className="bg-[#0b1222] p-2.5 rounded-lg border border-[rgba(220,80,80,0.3)]">
-                        <div className="text-[10px] text-[#f07070] uppercase font-bold mb-1">Naive Mode Output</div>
-                        <div className="text-[#94a3b8] text-[11px]">{sc.results?.naive.answer || 'Executed harmful or stale memory'}</div>
+                      <div className="bg-rose-50/50 p-2.5 rounded-lg border border-rose-200">
+                        <div className="text-[10px] text-rose-800 uppercase font-bold mb-1">Naive Mode Output</div>
+                        <div className="text-rose-950 text-[11px]">{sc.results?.naive.answer || 'Executed harmful or stale memory'}</div>
                       </div>
-                      <div className="bg-[#0b1222] p-2.5 rounded-lg border border-[rgba(76,175,125,0.35)]">
-                        <div className="text-[10px] text-[#60d49a] uppercase font-bold mb-1">Governed Output</div>
-                        <div className="text-[#f8fafc] text-[11px]">{sc.results?.governed.answer || 'Verified correct governed action'}</div>
+                      <div className="bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-200">
+                        <div className="text-[10px] text-emerald-800 uppercase font-bold mb-1">Governed Output</div>
+                        <div className="text-slate-900 text-[11px] font-medium">{sc.results?.governed.answer || 'Verified correct governed action'}</div>
                       </div>
                     </div>
                   </div>

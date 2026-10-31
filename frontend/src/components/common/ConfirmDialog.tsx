@@ -32,10 +32,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               <AlertTriangle className="w-5 h-5" />
             </div>
           )}
-          <p className="text-sm text-[#b4b4b4] leading-relaxed">{message}</p>
+          <p className="text-sm text-slate-700 leading-relaxed font-medium">{message}</p>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-3 border-t border-[#383838]">
+        <div className="flex justify-end space-x-3 pt-3 border-t border-slate-200">
           <button
             type="button"
             onClick={onClose}

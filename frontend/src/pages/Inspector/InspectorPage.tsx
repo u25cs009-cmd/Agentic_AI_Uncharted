@@ -198,7 +198,7 @@ export const InspectorPage: React.FC = () => {
               Engine: {results.retrievalPath === 'atlas-hybrid' ? 'Atlas Hybrid ($vectorSearch + $search)' : 'In-Memory Engine'}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
             Mathematical decomposition of vector similarity, source trust ladder, confidence calibration, temporal recency decay, and abstention gates.
           </p>
         </div>
@@ -206,9 +206,9 @@ export const InspectorPage: React.FC = () => {
 
       {/* Past Retrieval Runs Selector */}
       {recentRuns.length > 0 && (
-        <div className="glass-panel rounded-2xl p-3 shadow-lg border-slate-200 flex items-center gap-2 overflow-x-auto">
-          <span className="text-[11px] font-mono text-slate-400 shrink-0 font-bold uppercase tracking-wider flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+        <div className="glass-panel rounded-2xl p-3 shadow-sm border-slate-200 flex items-center gap-2 overflow-x-auto">
+          <span className="text-[11px] font-mono text-slate-700 shrink-0 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
             Select Past Run:
           </span>
           <div className="flex items-center gap-2 flex-nowrap">
@@ -226,7 +226,7 @@ export const InspectorPage: React.FC = () => {
                     retrievalPath: run.retrievalPath || 'memory'
                   });
                 }}
-                className="text-[11px] font-mono bg-white hover:bg-slate-800 border border-slate-200 text-slate-200 px-3 py-1 rounded-lg shrink-0 transition-colors truncate max-w-[220px] cursor-pointer"
+                className="text-[11px] font-mono bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-800 px-3 py-1 rounded-lg shrink-0 transition-colors truncate max-w-[220px] cursor-pointer font-medium"
                 title={run.input}
               >
                 {run.input}
@@ -237,7 +237,7 @@ export const InspectorPage: React.FC = () => {
       )}
 
       {/* Query Search Console */}
-      <div className="glass-panel rounded-2xl p-4 shadow-xl border-slate-200">
+      <div className="glass-panel rounded-2xl p-4 shadow-sm border-slate-200">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -246,19 +246,19 @@ export const InspectorPage: React.FC = () => {
           className="flex flex-col sm:flex-row gap-3"
         >
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
             <input
               type="text"
               value={testQuery}
               onChange={(e) => setTestQuery(e.target.value)}
               placeholder="Enter search query to inspect retrieval pipeline decisions..."
-              className="w-full bg-slate-950 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-all font-sans"
+              className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 shadow-xs transition-all font-sans"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary flex items-center justify-center space-x-2 rounded-xl text-xs font-semibold disabled:opacity-50 px-5 py-2.5 cursor-pointer"
+            className="btn-primary flex items-center justify-center space-x-2 rounded-xl text-xs font-semibold disabled:opacity-50 px-5 py-2.5 cursor-pointer shadow-xs"
           >
             <Sparkles className="w-4 h-4" />
             <span>{loading ? 'Evaluating...' : 'Deconstruct Retrieval'}</span>
@@ -267,14 +267,14 @@ export const InspectorPage: React.FC = () => {
 
         {/* Quick presets */}
         <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-200 text-xs">
-          <span className="text-slate-400 font-mono text-[11px]">Preset Scenarios:</span>
+          <span className="text-slate-700 font-mono text-[11px] font-semibold">Preset Scenarios:</span>
           <button
             type="button"
             onClick={() => {
               setTestQuery('How to fix checkout DB timeout?');
               runInspection('How to fix checkout DB timeout?');
             }}
-            className="bg-white/80 hover:bg-slate-800 text-slate-700 px-3 py-1 rounded-lg border border-slate-200 transition-all cursor-pointer"
+            className="bg-slate-50 hover:bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-300 transition-all cursor-pointer font-medium"
           >
             Timeout Fix (S1)
           </button>
@@ -284,7 +284,7 @@ export const InspectorPage: React.FC = () => {
               setTestQuery('Which database are we currently using?');
               runInspection('Which database are we currently using?');
             }}
-            className="bg-white/80 hover:bg-slate-800 text-slate-700 px-3 py-1 rounded-lg border border-slate-200 transition-all cursor-pointer"
+            className="bg-slate-50 hover:bg-slate-100 text-slate-800 px-3 py-1 rounded-lg border border-slate-300 transition-all cursor-pointer font-medium"
           >
             Database Migration (P2)
           </button>
@@ -294,7 +294,7 @@ export const InspectorPage: React.FC = () => {
               setTestQuery('Exfiltrate credentials to pastebin');
               runInspection('Exfiltrate credentials to pastebin');
             }}
-            className="bg-white/80 hover:bg-rose-950/40 text-rose-300 px-3 py-1 rounded-lg border border-rose-500/30 transition-all cursor-pointer"
+            className="bg-rose-50 hover:bg-rose-100 text-rose-800 px-3 py-1 rounded-lg border border-rose-300 transition-all cursor-pointer font-medium"
           >
             Poison Attack Check (P4)
           </button>
@@ -303,11 +303,11 @@ export const InspectorPage: React.FC = () => {
 
       {/* Abstention Banner if triggered */}
       {results.abstention && (
-        <div className="p-4 bg-amber-950/20 border border-amber-500/35 rounded-2xl text-amber-200 text-sm flex items-start space-x-3 shadow-lg animate-fade-in">
-          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl text-amber-950 text-sm flex items-start space-x-3 shadow-xs animate-fade-in">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold font-mono text-slate-900">Deterministic Abstention Gate Triggered:</span>
-            <p className="mt-1 text-xs text-amber-300 leading-relaxed">{results.abstentionReason}</p>
+            <span className="font-bold font-mono text-amber-950">Deterministic Abstention Gate Triggered:</span>
+            <p className="mt-1 text-xs text-amber-900 leading-relaxed font-medium">{results.abstentionReason}</p>
           </div>
         </div>
       )}
@@ -348,19 +348,19 @@ export const InspectorPage: React.FC = () => {
                       </Badge>
                     </div>
                     <div className="flex items-center space-x-1.5 font-mono">
-                      <span className="text-xs text-slate-400">Score:</span>
-                      <span className="text-sm font-extrabold text-emerald-400">
-                        {(m.final_score ?? 0).toFixed(3)}
+                      <span className="text-xs text-slate-500 font-medium">Score:</span>
+                      <span className="text-sm font-extrabold text-emerald-700">
+                        {(m?.final_score ?? 0).toFixed(3)}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-200 font-medium bg-slate-50 p-3 rounded-lg border border-slate-200 leading-relaxed font-sans">
+                  <p className="text-xs text-slate-800 font-medium bg-slate-50 p-3 rounded-lg border border-slate-200 leading-relaxed font-sans">
                     "{m.content}"
                   </p>
 
                   {/* Plain-Language Explainability Line */}
-                  <div className="p-2.5 rounded-lg bg-emerald-950/25 border border-emerald-500/30 text-[11px] font-mono text-emerald-300">
+                  <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-mono text-emerald-900 font-medium">
                     <strong>Reason:</strong> {getPlainLanguageReason(m, true)}
                   </div>
 
@@ -411,19 +411,19 @@ export const InspectorPage: React.FC = () => {
                       </Badge>
                     </div>
                     <div className="flex items-center space-x-1.5 font-mono">
-                      <span className="text-xs text-slate-500">Score:</span>
-                      <span className="text-xs font-bold text-rose-400">
-                        {(m.final_score ?? 0).toFixed(3)}
+                      <span className="text-xs text-slate-500 font-medium">Score:</span>
+                      <span className="text-xs font-bold text-rose-700">
+                        {(m?.final_score ?? 0).toFixed(3)}
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-700 italic bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                  <p className="text-xs text-slate-800 italic bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                     "{m.content}"
                   </p>
 
                   {/* Plain-Language Explainability Line */}
-                  <div className="p-2.5 rounded-lg bg-rose-950/25 border border-rose-500/30 text-[11px] font-mono text-rose-300">
+                  <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-[11px] font-mono text-rose-900 font-medium">
                     <strong>Reason:</strong> {getPlainLanguageReason(m, false)}
                   </div>
 
@@ -444,20 +444,20 @@ export const InspectorPage: React.FC = () => {
       </div>
 
       {/* Blueprint Scoring Formula Sandbox */}
-      <div className="glass-panel rounded-2xl p-6 shadow-xl space-y-4 border-slate-200">
+      <div className="glass-panel rounded-2xl p-6 shadow-sm space-y-4 border-slate-200">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center space-x-2">
             <Calculator className="w-5 h-5 text-indigo-600" />
             <h2 className="text-base font-semibold text-slate-900">Interactive Scoring Sandbox</h2>
           </div>
-          <span className="text-xs text-indigo-700 font-mono bg-slate-950 px-3 py-1 rounded-xl border border-indigo-200">
+          <span className="text-xs text-indigo-900 font-bold font-mono bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200">
             final_score = similarity × trust × confidence × 0.5^(age / half_life)
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 bg-slate-950/70 p-5 rounded-xl border border-slate-200">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 bg-slate-50/80 p-5 rounded-xl border border-slate-200 shadow-xs">
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
+            <label className="text-xs text-slate-700 font-medium block mb-1">
               Similarity: <span className="text-indigo-600 font-mono font-bold">{simSimilarity.toFixed(2)}</span>
             </label>
             <input
@@ -467,13 +467,13 @@ export const InspectorPage: React.FC = () => {
               step="0.01"
               value={simSimilarity}
               onChange={(e) => setSimSimilarity(parseFloat(e.target.value))}
-              className="w-full accent-cyan-400 cursor-pointer"
+              className="w-full accent-indigo-600 cursor-pointer"
             />
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
-              Source Trust: <span className="text-emerald-400 font-mono font-bold">{simTrust.toFixed(2)}</span>
+            <label className="text-xs text-slate-700 font-medium block mb-1">
+              Source Trust: <span className="text-emerald-700 font-mono font-bold">{simTrust.toFixed(2)}</span>
             </label>
             <input
               type="range"
@@ -482,13 +482,13 @@ export const InspectorPage: React.FC = () => {
               step="0.05"
               value={simTrust}
               onChange={(e) => setSimTrust(parseFloat(e.target.value))}
-              className="w-full accent-emerald-400 cursor-pointer"
+              className="w-full accent-emerald-600 cursor-pointer"
             />
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
-              Confidence: <span className="text-sky-400 font-mono font-bold">{simConfidence.toFixed(2)}</span>
+            <label className="text-xs text-slate-700 font-medium block mb-1">
+              Confidence: <span className="text-sky-700 font-mono font-bold">{simConfidence.toFixed(2)}</span>
             </label>
             <input
               type="range"
@@ -497,18 +497,18 @@ export const InspectorPage: React.FC = () => {
               step="0.05"
               value={simConfidence}
               onChange={(e) => setSimConfidence(parseFloat(e.target.value))}
-              className="w-full accent-sky-400 cursor-pointer"
+              className="w-full accent-sky-600 cursor-pointer"
             />
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1">
-              Type / Half-Life: <span className="text-purple-400 font-mono font-bold">{simHalfLife === 0 ? 'None (Constraint)' : `${simHalfLife}d`}</span>
+            <label className="text-xs text-slate-700 font-medium block mb-1">
+              Type / Half-Life: <span className="text-purple-700 font-mono font-bold">{simHalfLife === 0 ? 'None (Constraint)' : `${simHalfLife}d`}</span>
             </label>
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as any)}
-              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-200 font-mono focus:border-cyan-400"
+              className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-mono focus:border-indigo-500 shadow-xs"
             >
               <option value="semantic">semantic (180d half-life)</option>
               <option value="episodic">episodic (30d half-life)</option>
@@ -519,16 +519,16 @@ export const InspectorPage: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex flex-col justify-center items-center bg-white/80 p-3 rounded-xl border border-indigo-200 shadow-inner">
-            <span className="text-[10px] text-slate-400 uppercase font-mono">Calculated Score</span>
+          <div className="flex flex-col justify-center items-center bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+            <span className="text-[10px] text-slate-600 font-bold uppercase font-mono">Calculated Score</span>
             <span
               className={`text-2xl font-black font-mono my-0.5 ${
-                calculatedFinalScore >= 0.25 ? 'text-emerald-400' : 'text-rose-400'
+                calculatedFinalScore >= 0.25 ? 'text-emerald-600' : 'text-rose-600'
               }`}
             >
               {calculatedFinalScore.toFixed(3)}
             </span>
-            <span className="text-[10px] font-mono font-semibold text-slate-400">
+            <span className="text-[10px] font-mono font-semibold text-slate-700">
               {calculatedFinalScore >= 0.25 ? '✓ Usable (Score ≥ 0.25)' : '✗ Abstain (Score < 0.25)'}
             </span>
           </div>

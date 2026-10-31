@@ -266,7 +266,7 @@ export const TimelinePage: React.FC = () => {
               {(Array.isArray(historicalState) ? historicalState : []).map((m) => (
                 <div
                   key={m._id || m.id}
-                  className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-300 flex flex-col justify-between hover:border-slate-700 transition-colors"
+                  className="bg-white p-3.5 rounded-xl border border-slate-200 text-xs text-slate-800 flex flex-col justify-between hover:border-slate-300 transition-colors shadow-xs"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
@@ -275,11 +275,11 @@ export const TimelinePage: React.FC = () => {
                         {m.status.toUpperCase()}
                       </Badge>
                     </div>
-                    <p className="line-clamp-2 text-slate-100 font-medium text-xs leading-relaxed font-sans">{m.content}</p>
+                    <p className="line-clamp-2 text-slate-800 font-medium text-xs leading-relaxed font-sans">{m.content}</p>
                   </div>
-                  <div className="text-[10px] font-mono text-slate-400 mt-2.5 pt-2 border-t border-slate-900 flex justify-between">
+                  <div className="text-[10px] font-mono text-slate-500 mt-2.5 pt-2 border-t border-slate-200 flex justify-between">
                     <span>Key: <strong className="text-indigo-700">{m.attribute_key}</strong></span>
-                    <span>Trust: <strong className="text-emerald-400">{(typeof m.trust === 'number' ? m.trust.toFixed(2) : '1.00')}</strong></span>
+                    <span>Trust: <strong className="text-emerald-700">{(typeof m.trust === 'number' ? m.trust.toFixed(2) : '1.00')}</strong></span>
                   </div>
                 </div>
               ))}
@@ -296,12 +296,12 @@ export const TimelinePage: React.FC = () => {
               <Radio className="w-4 h-4 text-indigo-600 animate-pulse" />
               <h2 className="text-base font-semibold text-slate-900 tracking-tight">Immutable Audit Log</h2>
             </div>
-            <span className="text-[11px] font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/35 px-2.5 py-0.5 rounded-full flex items-center space-x-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[11px] font-mono bg-emerald-50 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full flex items-center space-x-1.5 font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
               <span>Real-Time Stream Active</span>
             </span>
           </div>
-          <span className="text-xs font-mono text-slate-400">
+          <span className="text-xs font-mono text-slate-500">
             {Array.isArray(events) ? events.length : 0} Events Logged
           </span>
         </div>
@@ -317,12 +317,12 @@ export const TimelinePage: React.FC = () => {
             {(Array.isArray(events) ? events : []).map((evt) => (
               <div key={evt.id} className="relative group">
                 {/* Dot Icon on timeline line */}
-                <div className="absolute -left-[35px] top-0.5 w-7 h-7 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center shadow-md">
+                <div className="absolute -left-[35px] top-0.5 w-7 h-7 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-xs">
                   {getEventIcon(evt.event_type)}
                 </div>
 
                 {/* Event Card */}
-                <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 group-hover:border-slate-700 transition-all">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 group-hover:border-slate-300 transition-all shadow-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div className="flex items-center space-x-2">
                       <Badge
@@ -350,13 +350,13 @@ export const TimelinePage: React.FC = () => {
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-200 mt-1 leading-relaxed font-sans">
+                  <p className="text-xs text-slate-800 mt-1 leading-relaxed font-sans">
                     {evt.reason}
                   </p>
 
-                  <div className="mt-2.5 pt-2 border-t border-slate-900 text-[10px] font-mono text-slate-400 flex items-center justify-between">
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 text-[10px] font-mono text-slate-500 flex items-center justify-between">
                     <span>Actor: <strong className="text-slate-900">{evt.actor}</strong></span>
-                    <span className="text-slate-600">ID: {evt.id}</span>
+                    <span className="text-slate-500">ID: {evt.id}</span>
                   </div>
                 </div>
               </div>
