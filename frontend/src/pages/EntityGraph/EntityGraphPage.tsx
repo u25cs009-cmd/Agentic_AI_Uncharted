@@ -210,21 +210,35 @@ export const EntityGraphPage: React.FC = () => {
       const nodeId = memId;
       const memKey = (mem as any).attribute_key || (mem as any).metadata?.key || 'governed';
 
-      let borderColor = '#4caf7d';
-      let bgColor = '#212a23';
-      let statusColor = 'text-[#60d49a]';
-      let badgeBg = 'bg-[rgba(76,175,125,0.25)] text-[#60d49a]';
+      const isSuperseded = statusUpper === 'SUPERSEDED';
+      const isExpiredOrDeleted = statusUpper === 'EXPIRED' || statusUpper === 'DELETED';
+
+      // Status colors matching D2 palette (active green, stale amber, quarantined red, superseded slate, expired/deleted muted)
+      let borderColor = '#22c55e';
+      let bgColor = '#052e16';
+      let statusColor = 'text-emerald-400';
+      let badgeBg = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
 
       if (isStale) {
-        borderColor = '#38bdf8';
-        bgColor = '#0e1f38';
-        statusColor = 'text-[#38bdf8]';
-        badgeBg = 'bg-[rgba(220,170,60,0.2)] text-[#e8c060]';
+        borderColor = '#f59e0b';
+        bgColor = '#261304';
+        statusColor = 'text-amber-400';
+        badgeBg = 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
       } else if (isQuarantined) {
-        borderColor = '#e05c5c';
-        bgColor = '#2a1d1d';
-        statusColor = 'text-[#f07070]';
-        badgeBg = 'bg-[rgba(220,80,80,0.2)] text-[#f07070]';
+        borderColor = '#ef4444';
+        bgColor = '#280c0c';
+        statusColor = 'text-rose-400';
+        badgeBg = 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
+      } else if (isSuperseded) {
+        borderColor = '#64748b';
+        bgColor = '#1e293b';
+        statusColor = 'text-slate-400';
+        badgeBg = 'bg-slate-500/20 text-slate-400 border border-slate-500/30';
+      } else if (isExpiredOrDeleted) {
+        borderColor = '#475569';
+        bgColor = '#0f172a';
+        statusColor = 'text-slate-500';
+        badgeBg = 'bg-slate-800/40 text-slate-500 border border-slate-700/30';
       }
 
       memoryNodes.push({
@@ -364,16 +378,24 @@ export const EntityGraphPage: React.FC = () => {
             <span>Component</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#60d49a]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
             <span>Active Memory</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#e8c060]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
             <span>Stale / Invalid</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-[#e05c5c]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
             <span>Quarantined</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#64748b]" />
+            <span>Superseded</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#475569]" />
+            <span>Expired / Muted</span>
           </div>
           <div className="flex items-center space-x-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-purple-400" />
@@ -398,9 +420,11 @@ export const EntityGraphPage: React.FC = () => {
               if (n.id.includes('svc')) return '#06b6d4';
               if (n.id.includes('cmp')) return '#38bdf8';
               if (n.id.includes('ent')) return '#4caf7d';
-              if (n.data?.status === 'ACTIVE') return '#60d49a';
-              if (n.data?.status === 'STALE' || n.data?.status === 'INVALIDATED') return '#38bdf8';
-              if (n.data?.status === 'QUARANTINED') return '#e05c5c';
+              if (n.data?.status === 'ACTIVE') return '#22c55e';
+              if (n.data?.status === 'STALE' || n.data?.status === 'INVALIDATED') return '#f59e0b';
+              if (n.data?.status === 'QUARANTINED') return '#ef4444';
+              if (n.data?.status === 'SUPERSEDED') return '#64748b';
+              if (n.data?.status === 'EXPIRED' || n.data?.status === 'DELETED') return '#475569';
               return '#a855f7';
             }}
             className="bg-[#0f172a] border border-[#1e293b] rounded-xl overflow-hidden shadow-2xl"

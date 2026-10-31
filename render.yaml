@@ -19,6 +19,8 @@ services:
         value: anchor
       - key: JWT_SECRET
         generateValue: true
+      - key: ENGRAM_SHARED_SECRET
+        value: shakti2_internal_key_for_n8n_webhooks
       - key: INTERNAL_API_KEY
         value: shakti2_internal_key_for_n8n_webhooks
       - key: PORT

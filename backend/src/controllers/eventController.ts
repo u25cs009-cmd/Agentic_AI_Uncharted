@@ -88,13 +88,16 @@ export async function handleOutcomeFeedback(req: Request, res: Response, next: N
       last_used_at: new Date().toISOString()
     });
 
+    const userId = user_id || req.user?.id || 'reviewer';
+    const feedbackSource = feedback_source || 'dashboard_ui';
+
     const eventType = action === 'APPROVED' ? 'feedback_approved' : 'feedback_rejected';
     await repo.appendEvent({
       id: `evt-${Date.now()}`,
       memory_id,
       event_type: eventType,
-      reason: `Human operator (${user_id || 'reviewer'}) marked action as ${action}. Confidence updated from ${previousConfidence} to ${newConfidence}.`,
-      actor: feedback_source || 'Telegram Approval Bot',
+      reason: `Human operator (${userId}) marked action as ${action}. Confidence updated from ${previousConfidence} to ${newConfidence}.`,
+      actor: feedbackSource,
       timestamp: new Date().toISOString(),
       snapshot: { confidence: newConfidence }
     });
@@ -103,8 +106,8 @@ export async function handleOutcomeFeedback(req: Request, res: Response, next: N
       id: `out-${Date.now()}`,
       memory_id,
       action,
-      feedback_source: feedback_source || 'operator',
-      user_id: user_id || 'admin',
+      feedback_source: feedbackSource,
+      user_id: userId,
       timestamp: new Date().toISOString(),
       previous_confidence: previousConfidence,
       new_confidence: newConfidence,

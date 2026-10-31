@@ -57,8 +57,8 @@ interface Repository {
 | **Embeddings** | Local model via Transformers.js (`all-MiniLM-L6-v2`, 384 dimensions) | No API key, zero cost, no rate limit, runs locally inside Node.js. Use **384 dimensions** (not 1536) in the vector index. (Alternative: Gemini embeddings free tier). |
 | **Benchmark Judge** | Deterministic checks (string and field assertions) | Skip second-vendor LLM judge; deterministic checks are faster, reproducible, and cost nothing. |
 | **Automation** | n8n Community Edition (self-hosted via Docker or `npx n8n`) | Completely free. Avoid n8n Cloud since it is a time-limited trial. |
-| **Public URL for Webhooks** | `cloudflared tunnel` (free) or `ngrok` (free tier) | Exposes local backend port so n8n and Telegram webhooks reach the server. |
-| **Human Approval** | Telegram Bot via `@BotFather` | Free, instant, mobile-friendly interactive buttons. |
+| **Public URL for Webhooks** | `cloudflared tunnel` (free) or `ngrok` (free tier) | Exposes local backend port so n8n and Operator Webhook / UI webhooks reach the server. |
+| **Human Approval** | Operator Webhook / UI Review | Free, instant, mobile-friendly interactive buttons. |
 | **Database (Last Phase)** | MongoDB Atlas M0 free cluster | Confirm in Atlas console that vector search, transactions, and change streams work on M0. Free tier permits two search indexes (1 vector + 1 text). Fallback if change streams are restricted: poll `memory_events` every 2 seconds. |
 | **Frontend Hosting** | Vercel Hobby (free) | Instant continuous deployment from GitHub. |
 | **Backend Hosting** | Render free web service (or run locally via tunnel during demo) | Free services sleep on idle; ping `/health` before demo presentation. |
@@ -72,7 +72,7 @@ interface Repository {
 |---|---|---|
 | **Member A (Lead 1)** | Backend & Memory Engine Lead | Write path, trust & guard rules, retrieval & scoring, abstention, naive/none modes, lifecycle, time-travel, forget cascade, auth & isolation, `MongoRepository`. |
 | **Member B (Lead 2)** | Frontend & Demo Lead | Dashboard (Chat, Inspector, Explorer, Quarantine Inbox, Timeline, Entity Graph, Benchmark charts, Simulate panel), UI polish, 3-minute demo video. |
-| **Member C (Lead 3)** | Automation, Benchmark & Delivery Lead | n8n workflows (W1 to W5), Telegram bot, benchmark scenario fixtures (15 cases) and runner, tests, hosting/deploys, Atlas setup & indexes, README, pitch deck. |
+| **Member C (Lead 3)** | Automation, Benchmark & Delivery Lead | n8n workflows (W1 to W5), operator notification webhook, benchmark scenario fixtures (15 cases) and runner, tests, hosting/deploys, Atlas setup & indexes, README, pitch deck. |
 
 > **Working Agreement:** Each member reviews at least one other member's pull requests so every team member understands the entire system.
 
@@ -751,7 +751,7 @@ These buttons should call the n8n webhooks so judges can demonstrate the full ev
 
 ## Member 3 (Member C) – Automation, Benchmark and Delivery Lead
 
-**Primary responsibility:** Build external automation workflows (n8n W1 to W5), Telegram approval bot, benchmark fixtures (15 scenarios) and runner, MongoDB Atlas setup, and final project delivery (README, deck, demo video rehearsal).
+**Primary responsibility:** Build external automation workflows (n8n W1 to W5), operator notification webhook, benchmark fixtures (15 scenarios) and runner, MongoDB Atlas setup, and final project delivery (README, deck, demo video rehearsal).
 
 This member should not independently write memories directly into MongoDB. All memory-changing operations must strictly go through Member 1's governed backend API.
 
@@ -760,15 +760,15 @@ This member should not independently write memories directly into MongoDB. All m
 Set up n8n using:
 
 - **n8n Community Edition** self-hosted on a laptop via Docker or `npx n8n` (completely free; avoid n8n Cloud trial due to time limits).
-- Expose the local backend and webhooks via **`cloudflared tunnel`** (free) or **ngrok free**, allowing n8n and Telegram to reach backend endpoints.
-- Configure Telegram Bot via `@BotFather` and capture Bot Token and Chat ID.
+- Expose the local backend and webhooks via **`cloudflared tunnel`** (free) or **ngrok free**, allowing n8n and Operator Webhook / UI to reach backend endpoints.
+- Configure Operator Webhook / UI Review and capture Bot Token and Chat ID.
 - Store the shared free LLM key (Google Gemini or Groq) in n8n and backend environment variables (never committed to GitHub).
 
 Configure:
 
 - n8n instance.
 - Webhook access.
-- Telegram Bot.
+- operator notification webhook.
 - Backend API credentials.
 - Internal API secret.
 
@@ -796,7 +796,7 @@ POST /api/agent/triage
 Generate proposed fix
       |
       v
-Send Telegram message
+Send Operator Webhook / UI message
       |
       v
 Approve / Reject
@@ -810,7 +810,7 @@ Implementation tasks:
 4. Send the alert to `/api/ingest`.
 5. Send the incident to the agent for triage.
 6. Receive the proposed fix.
-7. Send the result to Telegram.
+7. Send the result to Operator Webhook / UI.
 8. Include inline Approve and Reject buttons.
 9. Save workflow exports as JSON in `docs/n8n/`.
 10. **Fallback Script:** Maintain a `curl`-based fallback shell script for all webhook triggers in case n8n or tunnels encounter local connectivity issues during the live demo.
@@ -842,7 +842,7 @@ Backend identifies affected memories
 Mark affected memories stale
           |
           v
-Send Telegram summary
+Send Operator Webhook / UI summary
 ```
 
 Tasks:
@@ -853,7 +853,7 @@ Tasks:
 4. Extract changed components.
 5. Call `/api/events/deploy`.
 6. Receive the number of affected memories.
-7. Send a Telegram summary.
+7. Send a Operator Webhook / UI summary.
 
 **Expected output:** Only memories that depend on changed components are marked stale.
 
@@ -864,7 +864,7 @@ Tasks:
 Workflow:
 
 ```text
-Telegram Approval/Reject
+Operator Webhook / UI Approval/Reject
           |
           v
 Parse callback
@@ -879,18 +879,18 @@ Update confidence/trust
 Release or reject quarantine item
           |
           v
-Send result to Telegram
+Send result to Operator Webhook / UI
 ```
 
 Tasks:
 
-1. Create a Telegram Trigger.
+1. Create a Operator Webhook / UI Trigger.
 2. Capture the approval or rejection callback.
 3. Identify the memory.
 4. Send the outcome to `/api/outcomes`.
 5. Update confidence through the backend.
 6. If the item is quarantined, call the appropriate release or reject API.
-7. Update the Telegram message.
+7. Update the Operator Webhook / UI message.
 
 **Expected output:** Human approval and rejection influence future memory decisions.
 
@@ -913,7 +913,7 @@ Read-only MongoDB aggregation
 Collect memory statistics
        |
        v
-Send Telegram/Slack digest
+Send Operator Webhook / UI/Slack digest
 ```
 
 Tasks:
@@ -922,7 +922,7 @@ Tasks:
 - Call the consolidation endpoint.
 - Read memory statistics using the MongoDB node.
 - Prepare a digest.
-- Send the digest to Telegram or Slack.
+- Send the digest to Operator Webhook / UI or Slack.
 
 The MongoDB node should be read-only for this workflow. The backend owns governed memory writes.
 
@@ -1016,7 +1016,7 @@ Test the complete system.
 - Backend to MongoDB.
 - Frontend to backend.
 - n8n to backend.
-- Telegram approval to backend.
+- Operator Webhook / UI approval to backend.
 - Deploy webhook to stale-memory detection.
 
 **Security tests**
@@ -1035,7 +1035,7 @@ Tasks:
 1. Check backend deployment.
 2. Check frontend deployment.
 3. Check n8n workflows.
-4. Test Telegram integration.
+4. Test Operator Webhook / UI integration.
 5. Test the system using deployed URLs.
 6. Export n8n workflows as JSON.
 7. Prepare benchmark results.
@@ -1052,7 +1052,7 @@ Tasks:
 - [ ] W3 Human approval.
 - [ ] W4 Consolidation and digest.
 - [ ] W5 Benchmark workflow.
-- [ ] Telegram integration.
+- [ ] Operator Webhook / UI integration.
 - [ ] 15 benchmark scenarios.
 - [ ] Three-mode benchmark execution.
 - [ ] Integration and security tests.
@@ -1074,7 +1074,7 @@ The team executes in 9 distinct phases. Until Phase 7, the system runs 100% on `
 | **1** | Governed write path | Poisoned text is quarantined; supersede works |
 | **2** | Retrieval, scoring, abstention | Inspector data is correct; abstention triggers |
 | **3** | Three modes (none / naive / governed) | Same question gives three different behaviours |
-| **4** | Event paths (deploy staleness, n8n W1 to W3) | Alert, then memory, then Telegram buttons, then outcome works end to end |
+| **4** | Event paths (deploy staleness, n8n W1 to W3) | Alert, then memory, then dashboard approval buttons, then outcome works end to end |
 | **5** | Benchmark | 15 cases run; three-arm charts shown |
 | **6** | Time travel, lifecycle, forget, auth, graph | Slider and forget demo work |
 | **7** | MongoDB Atlas (last phase) | Whole app runs with `STORE=mongo` and passes the same tests |
@@ -1095,7 +1095,7 @@ The team executes in 9 distinct phases. Until Phase 7, the system runs 100% on `
   - Build a mock API (static JSON or a small mock server) directly from the contract so the UI can be built and styled without waiting for the backend.
 - **Member C (Automation & Delivery):**
   - Start n8n locally via Docker or `npx n8n` and open a `cloudflared tunnel` or `ngrok` tunnel.
-  - Create Telegram Bot via `@BotFather`, note bot token and chat ID.
+  - Create Operator Webhook / UI Review, note bot token and chat ID.
   - Acquire free LLM API key (Google Gemini or Groq) and distribute privately (never in git).
   - Create `.env.example` listing every environment variable without secrets.
 
@@ -1159,10 +1159,10 @@ The team executes in 9 distinct phases. Until Phase 7, the system runs 100% on `
   - Memory cards show prominent `stale` badge; confidence bar updates dynamically after feedback.
   - Live event feed using Server-Sent Events (SSE) backed by Node `EventEmitter`.
 - **Member C (Automation & Delivery):**
-  - **W1 Alert Ingestion:** Webhook trigger → `/api/ingest` → `/api/agent/triage` → Telegram message with interactive Approve and Reject buttons.
-  - **W2 Deploy to Stale:** Webhook trigger → `/api/events/deploy` → Telegram summary of affected components.
-  - **W3 Human Approval:** Telegram callback query → `/api/outcomes` (and quarantine release/reject) → edit Telegram message in place.
-  - Error workflow routing execution failures to Telegram.
+  - **W1 Alert Ingestion:** Webhook trigger → `/api/ingest` → `/api/agent/triage` → Operator Webhook / UI message with interactive Approve and Reject buttons.
+  - **W2 Deploy to Stale:** Webhook trigger → `/api/events/deploy` → Operator Webhook / UI summary of affected components.
+  - **W3 Human Approval:** Operator Webhook / UI callback query → `/api/outcomes` (and quarantine release/reject) → edit Operator Webhook / UI message in place.
+  - Error workflow routing execution failures to Operator Webhook / UI.
   - Export every workflow as JSON into `docs/n8n/`; keep a `curl`-based fallback shell script for demo safety.
 
 ### Phase 5: Benchmark (~3 hours)
@@ -1178,7 +1178,7 @@ The team executes in 9 distinct phases. Until Phase 7, the system runs 100% on `
     - Chart 3: Confidence trajectory of one memory under repeated rejections.
 - **Member C (Automation & Delivery):**
   - Own scenario fixtures and ground truth; fix any ambiguous assertions.
-  - **W5 Benchmark Runner Workflow** (trigger, poll status, send Telegram notification on completion).
+  - **W5 Benchmark Runner Workflow** (trigger, poll status, send Operator Webhook / UI notification on completion).
   - Report honest results including control scenarios (`S5`, `K1`, `K2`); tune abstention thresholds with Member A if governed mode over-triggers.
 
 ### Phase 6: Time Travel, Lifecycle, Forget, Auth, Graph (~4 hours)
@@ -1232,7 +1232,7 @@ The team executes in 9 distinct phases. Until Phase 7, the system runs 100% on `
 
 | Day & Time | Phases Covered | Milestone / Deliverable |
 |---|---|---|
-| **30 Oct, Full Day** | Phase 0 to Phase 4 | Full alert-to-Telegram loop working locally with `InMemoryRepository` |
+| **30 Oct, Full Day** | Phase 0 to Phase 4 | Full alert-to-Operator Webhook / UI loop working locally with `InMemoryRepository` |
 | **31 Oct, Morning** | Phase 5, Phase 6 | 15-case benchmark complete, time-travel slider and forget cascade working |
 | **31 Oct, Afternoon** | Phase 7 (MongoDB Atlas) | Drop-in swap to `STORE=mongo`, feature freeze by ~5:00 PM |
 | **31 Oct, Evening** | Phase 8 (Deploy & Polish) | Submit by ~8:00 PM, leaving a 2-hour buffer before the 10:00 PM deadline |
@@ -1243,7 +1243,7 @@ The team executes in 9 distinct phases. Until Phase 7, the system runs 100% on `
 
 If the team falls behind schedule, drop non-essential stretch features strictly in this order:
 1. **MCP Server** (Drop first)
-2. **Slack Integration** (Rely solely on Telegram)
+2. **Slack Integration** (Rely solely on Operator Webhook / UI)
 3. **Entity Graph View** (Keep table/list representation)
 4. **W4 Consolidation Workflow** (Keep manual trigger)
 5. **Time-Travel Interactive Slider** (Keep API-only time travel)
@@ -1253,7 +1253,7 @@ If the team falls behind schedule, drop non-essential stretch features strictly 
 - Governed write path with trust hierarchy.
 - Hybrid retrieval with deterministic abstention.
 - None / Naive / Governed operating mode toggle.
-- n8n W1 to W3 workflows with Telegram interactive approval.
+- n8n W1 to W3 workflows with Operator Webhook / UI interactive approval.
 - Retrieval Inspector showing exact score breakdowns.
 - Benchmark with at least 10 scenarios and comparison charts.
 - Public deployed URLs (Render + Vercel), comprehensive README, and recorded demo video.
@@ -1384,7 +1384,7 @@ Request:
 {
   "memory_id": "memory_123",
   "action": "APPROVED",
-  "feedback_source": "telegram_human_approval",
+  "feedback_source": "operator_human_approval",
   "user_id": "user_admin"
 }
 ```
@@ -1627,7 +1627,7 @@ The team should build toward the exact demonstration described in the blueprint.
 |---|---|---|
 | 0:00–0:20 | Explain the problem and ANCHOR | All |
 | 0:20–0:50 | Enter preferences and constraints; show memory inspector | Member 1 + 2 |
-| 0:50–1:20 | Simulate alert and approve through Telegram | Member 3 |
+| 0:50–1:20 | Simulate alert and approve through Operator Webhook / UI | Member 3 |
 | 1:20–1:50 | Simulate deployment; compare none, naive and governed | All |
 | 1:50–2:15 | Submit poisoned note and show quarantine | Member 1 + 2 |
 | 2:15–2:35 | Show time-travel slider | Member 2 |
@@ -1647,7 +1647,7 @@ ANCHOR is ready for submission when the following end-to-end scenario works:
 5. The old memory is superseded or quarantined according to trust rules.
 6. An alert arrives through n8n.
 7. The copilot proposes a fix using relevant memories.
-8. A human approves or rejects the proposal through Telegram.
+8. A human approves or rejects the proposal through Operator Webhook / UI.
 9. A deployment event arrives and affected memories become stale.
 10. The same question is tested in none, naive and governed modes.
 11. The governed mode avoids blindly using stale or poisoned information.

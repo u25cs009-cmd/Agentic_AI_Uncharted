@@ -11,10 +11,12 @@ import {
   AlertCircle, 
   CheckCircle, 
   X,
-  ShieldCheck
+  ShieldCheck,
+  Loader2,
+  Key
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/api';
+import { api, subscribeToWakingState } from '../../services/api';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState(() => localStorage.getItem('anchor_remember_email') || 'demo@anchor.io');
@@ -24,6 +26,7 @@ export const LoginPage: React.FC = () => {
   
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ email?: string; password?: string }>({});
+  const [isWaking, setIsWaking] = useState(false);
   
   // Forgot password modal state
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
@@ -33,6 +36,11 @@ export const LoginPage: React.FC = () => {
 
   const { login, loginWithGoogle, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsub = subscribeToWakingState(setIsWaking);
+    return unsub;
+  }, []);
 
   // Load Google Identity Services script
   useEffect(() => {
@@ -116,7 +124,26 @@ export const LoginPage: React.FC = () => {
       await login(email.trim(), password);
       navigate('/');
     } catch (err: any) {
-      setError(err?.message || 'Invalid email or password. Please try again.');
+      const msg = err?.message || '';
+      if (msg.includes('401') || msg.toLowerCase().includes('credential') || msg.toLowerCase().includes('password')) {
+        setError('Incorrect email or password. Please verify your credentials or use the Judge Demo Account above.');
+      } else if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')) {
+        setError('Server is unreachable. Please verify backend is running on port 5000 or check connection.');
+      } else {
+        setError(msg || 'Authentication failed. Please try again.');
+      }
+    }
+  };
+
+  const handleFillDemoLogin = async () => {
+    setError(null);
+    setEmail('demo@anchor.io');
+    setPassword('password123');
+    try {
+      await login('demo@anchor.io', 'password123');
+      navigate('/');
+    } catch (err: any) {
+      setError(err?.message || 'Demo sign-in failed. Please retry in a moment.');
     }
   };
 
@@ -153,17 +180,56 @@ export const LoginPage: React.FC = () => {
 
       <div className="w-full max-w-md glass-panel border border-cyan-500/25 rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] relative z-10 bg-slate-950/80 backdrop-blur-2xl">
         {/* Brand Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-5">
           <img
             src="/logo.jpg"
             alt="XYRO101 Logo"
-            className="w-16 h-16 rounded-full object-cover mx-auto mb-4 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
+            className="w-16 h-16 rounded-full object-cover mx-auto mb-3 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
           />
           <h1 className="text-2xl font-bold tracking-tight text-white">Welcome Back</h1>
-          <p className="text-xs text-slate-400 mt-1.5 font-medium">
-            Sign in to continue to your ANCHOR workspace.
+          <p className="text-xs text-slate-400 mt-1 font-medium">
+            Sign in to access your governed ANCHOR workspace.
           </p>
         </div>
+
+        {/* D1: Judge Demo Account Card */}
+        <div className="mb-5 p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 to-indigo-950/40 border border-cyan-500/35 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-300 font-bold flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-cyan-400" /> Judge Demo Account
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
+              One-Click
+            </span>
+          </div>
+          <div className="space-y-1 text-xs font-mono text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Email:</span>
+              <span className="text-slate-200 font-semibold">demo@anchor.io</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Password:</span>
+              <span className="text-slate-200 font-semibold">password123</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleFillDemoLogin}
+            disabled={isLoading}
+            className="w-full mt-2.5 py-2 px-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 rounded-xl text-xs font-semibold font-mono transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.25)]"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Fill Demo Login &amp; Sign In</span>
+          </button>
+        </div>
+
+        {/* Cold-Start Waking Banner */}
+        {isWaking && (
+          <div className="mb-4 p-3 rounded-xl bg-amber-500/15 border border-amber-500/35 text-xs text-amber-300 flex items-center space-x-2.5 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse">
+            <Loader2 className="w-4 h-4 text-amber-400 animate-spin shrink-0" />
+            <span>Waking server from cold start... This can take up to a minute.</span>
+          </div>
+        )}
 
         {/* Global Error Banner */}
         {error && (
@@ -304,23 +370,6 @@ export const LoginPage: React.FC = () => {
           <Link to="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
             Create an account
           </Link>
-        </div>
-
-        {/* Demo Fast Login */}
-        <div className="mt-6 pt-4 border-t border-slate-800">
-          <button
-            type="button"
-            onClick={async () => {
-              setEmail('demo@anchor.io');
-              setPassword('password123');
-              await login('demo@anchor.io', 'password123');
-              navigate('/');
-            }}
-            className="w-full py-2 bg-cyan-950/20 hover:bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 rounded-xl text-[11px] font-mono transition-all flex items-center justify-center space-x-2 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.2)]"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Instant Demo Sign In (demo@anchor.io)</span>
-          </button>
         </div>
       </div>
 

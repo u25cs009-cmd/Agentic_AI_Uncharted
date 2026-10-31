@@ -61,7 +61,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Validation failed. Both 'user_id' and 'conversation_text' (min 6 characters) are required.\"\n}",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Validation failed: 'user_id' and 'conversation_text' (>5 characters) are required.\"\n}",
         "options": {
           "responseCode": 400
         }
@@ -77,7 +77,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// WF1 Node 3: Text Preprocessing, Sanitization & Semantic Chunking\nconst body = $input.item.json.body || {};\nconst rawText = body.conversation_text || '';\nconst userId = body.user_id || 'unknown';\nconst sessionId = body.session_id || null;\nconst sourceTimestamp = body.source_timestamp || new Date().toISOString();\n\n// 1. Remove URLs, excessive whitespace, conversational small talk\nlet cleanText = rawText\n  .replace(/(?:https?|ftp):\\/\\/[\\n\\S]+/g, '')\n  .replace(/^(hi|hello|hey|good morning|thanks|thank you)[\\.\\,\\!]?\\s*/gi, '')\n  .replace(/\\r\\n/g, '\\n')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// 2. Chunk if length > 2000 chars along paragraph boundaries\nconst maxChunkSize = 2000;\nconst chunks = [];\nif (cleanText.length <= maxChunkSize) {\n  chunks.push(cleanText);\n} else {\n  const paragraphs = cleanText.split(/\\n\\s*\\n/);\n  let current = '';\n  for (const p of paragraphs) {\n    if ((current + '\\n\\n' + p).length <= maxChunkSize) {\n      current = current ? current + '\\n\\n' + p : p;\n    } else {\n      if (current) chunks.push(current);\n      current = p;\n    }\n  }\n  if (current) chunks.push(current);\n}\n\nreturn chunks.map((chunk, idx) => ({\n  json: {\n    user_id: userId,\n    session_id: sessionId,\n    chunk_index: idx,\n    total_chunks: chunks.length,\n    text_content: chunk,\n    reference_date: sourceTimestamp,\n    processed_at: new Date().toISOString()\n  }\n}));"
+        "jsCode": "// WF1 Node 3: Text Preprocessing & Paragraph Chunking\nconst body = $input.item.json.body || {};\nconst rawText = body.conversation_text || '';\nconst userId = body.user_id || 'usr-shakti2';\nconst sessionId = body.session_id || null;\nconst sourceTimestamp = body.source_timestamp || new Date().toISOString();\n\n// 1. Sanitize text: remove URLs, filler phrases, duplicate newlines\nlet cleanText = rawText\n  .replace(/(?:https?|ftp):\\/\\/[\\n\\S]+/g, '')\n  .replace(/^(hi|hello|hey|good morning|thanks|thank you)[\\.\\,\\!]?\\s*/gi, '')\n  .replace(/\\r\\n/g, '\\n')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// 2. Chunk if length > 2000 characters along paragraph boundaries\nconst maxChunkSize = 2000;\nconst chunks = [];\nif (cleanText.length <= maxChunkSize) {\n  chunks.push(cleanText);\n} else {\n  const paragraphs = cleanText.split(/\\n\\s*\\n/);\n  let current = '';\n  for (const p of paragraphs) {\n    if ((current + '\\n\\n' + p).length <= maxChunkSize) {\n      current = current ? current + '\\n\\n' + p : p;\n    } else {\n      if (current) chunks.push(current);\n      current = p;\n    }\n  }\n  if (current) chunks.push(current);\n}\n\nreturn chunks.map((chunk, idx) => ({\n  json: {\n    user_id: userId,\n    session_id: sessionId,\n    chunk_index: idx,\n    total_chunks: chunks.length,\n    text_content: chunk,\n    reference_date: sourceTimestamp,\n    processed_at: new Date().toISOString()\n  }\n}));"
       },
       "id": "wf1-node-03",
       "name": "Text Preprocessing & Chunking",
@@ -118,29 +118,29 @@
     },
     {
       "parameters": {
-        "model": "gpt-4o",
+        "modelName": "models/gemini-2.5-flash",
         "options": {
           "temperature": 0.1
         }
       },
       "id": "wf1-node-05b",
-      "name": "OpenAI Model - Extractor",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
+      "name": "Google Gemini Model - Extractor",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
       "position": [
         980,
         500
       ],
       "credentials": {
-        "openAiApi": {
-          "id": "openAiApiCredential",
-          "name": "OpenAI Account (Configure in n8n Credentials)"
+        "googlePalmApi": {
+          "id": "googlePalmApiCredential",
+          "name": "Google Gemini account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// WF1 Node 6: Parse & Validate Extraction Output\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    is_informative: false,\n    parse_error: true,\n    raw_output: String(rawLlm)\n  };\n}\n\nconst chunkInfo = $('Loop Over Chunks').first().json;\n\nreturn {\n  json: {\n    user_id: chunkInfo.user_id,\n    session_id: chunkInfo.session_id,\n    reference_date: chunkInfo.reference_date,\n    original_text: chunkInfo.text_content,\n    is_informative: Boolean(parsed.is_informative),\n    topic: parsed.topic || 'General Memory',\n    topic_description: parsed.topic_description || '',\n    keywords: parsed.keywords || [],\n    important_facts: parsed.important_facts || [],\n    entities: parsed.entities || [],\n    dates: parsed.dates || [],\n    confidence_score: parsed.confidence_score || 0.8,\n    is_temporary: Boolean(parsed.is_temporary),\n    expiration_date: parsed.expiration_date || null\n  }\n};"
+        "jsCode": "// WF1 Node 6: Parse & Validate Gemini Extraction\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    is_informative: false,\n    parse_error: true,\n    raw_output: String(rawLlm)\n  };\n}\n\nconst chunkInfo = $('Loop Over Chunks').item.json;\n\nreturn {\n  json: {\n    user_id: chunkInfo.user_id,\n    session_id: chunkInfo.session_id,\n    chunk_index: chunkInfo.chunk_index,\n    total_chunks: chunkInfo.total_chunks,\n    reference_date: chunkInfo.reference_date,\n    original_text: chunkInfo.text_content,\n    is_informative: Boolean(parsed.is_informative),\n    topic: parsed.topic || 'General Memory',\n    topic_description: parsed.topic_description || '',\n    keywords: parsed.keywords || [],\n    important_facts: parsed.important_facts || [],\n    entities: parsed.entities || [],\n    dates: parsed.dates || [],\n    confidence_score: parsed.confidence_score || 0.85,\n    is_temporary: Boolean(parsed.is_temporary),\n    expiration_date: parsed.expiration_date || null\n  }\n};"
       },
       "id": "wf1-node-06",
       "name": "Parse & Validate Extraction",
@@ -154,31 +154,27 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/similarity-search",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
             },
             {
-              "name": "X-Workflow-ID",
-              "value": "WF1-CREATION"
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
             },
             {
-              "name": "X-Execution-ID",
-              "value": "={{ $execution.id }}"
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"user_id\": \"{{ $json.user_id }}\",\n  \"topic\": \"{{ $json.topic }}\",\n  \"query_text\": \"{{ $json.important_facts.join(' ') }}\",\n  \"top_k\": 3,\n  \"similarity_threshold\": 0.65,\n  \"status_filter\": [\"ACTIVE\"]\n}",
+        "jsonBody": "={\n  \"query\": \"{{ $json.important_facts.join(' ') || $json.topic }}\"\n}",
         "options": {
           "response": {
             "response": {
@@ -205,7 +201,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are the Memory Governance Engine for ANCHOR.\nCompare the newly extracted memory against candidate memories retrieved from vector search.\n\nNewly Extracted Memory:\n- User ID: {{ $('Parse & Validate Extraction').first().json.user_id }}\n- Topic: {{ $('Parse & Validate Extraction').first().json.topic }}\n- Description: {{ $('Parse & Validate Extraction').first().json.topic_description }}\n- Facts: {{ JSON.stringify($('Parse & Validate Extraction').first().json.important_facts) }}\n- Is Temporary: {{ $('Parse & Validate Extraction').first().json.is_temporary }}\n- Expiration: {{ $('Parse & Validate Extraction').first().json.expiration_date }}\n\nCandidate Existing Memories from Backend:\n{{ JSON.stringify($json.results || []) }}\n\nGovernance Rules:\n1. If no candidates exist or facts are completely new, decide 'ADD'.\n2. If the new facts are an exact duplicate of an active memory, decide 'IGNORE'.\n3. If the new memory adds supplemental details without contradiction, decide 'UPDATE'.\n4. If the new memory updates or reschedules a past event (e.g. date change, location change), decide 'SUPERSEDE' and provide target_memory_id.\n5. If there is an unresolved or severe factual contradiction, decide 'QUARANTINE'.\n\nReturn JSON ONLY:\n{\n  \"decision\": \"ADD | UPDATE | SUPERSEDE | QUARANTINE | IGNORE\",\n  \"target_memory_id\": \"string or null\",\n  \"rationale\": \"Clear 1-sentence justification\",\n  \"confidence\": 0.95\n}"
+        "text": "=You are the Memory Governance Engine for ANCHOR.\nCompare the newly extracted memory against candidate memories retrieved from vector/keyword search.\n\nNewly Extracted Memory:\n- User ID: {{ $('Parse & Validate Extraction').item.json.user_id }}\n- Topic: {{ $('Parse & Validate Extraction').item.json.topic }}\n- Description: {{ $('Parse & Validate Extraction').item.json.topic_description }}\n- Facts: {{ JSON.stringify($('Parse & Validate Extraction').item.json.important_facts) }}\n- Is Temporary: {{ $('Parse & Validate Extraction').item.json.is_temporary }}\n- Expiration: {{ $('Parse & Validate Extraction').item.json.expiration_date }}\n\nCandidate Existing Memories from Backend:\n{{ JSON.stringify($json.retrieved || $json.results || []) }}\n\nGovernance Rules:\n1. If no candidates exist or facts are completely new, decide 'ADD'.\n2. If the new facts are an exact duplicate of an active memory, decide 'IGNORE'.\n3. If the new memory adds supplemental details without contradiction, decide 'UPDATE'.\n4. If the new memory updates or reschedules a past event (e.g. date change, location change), decide 'SUPERSEDE' and provide target_memory_id.\n5. If there is an unresolved or severe factual contradiction, decide 'QUARANTINE'.\n\nReturn JSON ONLY:\n{\n  \"decision\": \"ADD | UPDATE | SUPERSEDE | QUARANTINE | IGNORE\",\n  \"target_memory_id\": \"string or null\",\n  \"rationale\": \"Clear 1-sentence justification\",\n  \"confidence\": 0.95\n}"
       },
       "id": "wf1-node-08",
       "name": "Memory Governance Engine",
@@ -218,29 +214,29 @@
     },
     {
       "parameters": {
-        "model": "gpt-4o",
+        "modelName": "models/gemini-2.5-flash",
         "options": {
           "temperature": 0.1
         }
       },
       "id": "wf1-node-08b",
-      "name": "OpenAI Model - Governance",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
+      "name": "Google Gemini Model - Governance",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
       "position": [
         1640,
         500
       ],
       "credentials": {
-        "openAiApi": {
-          "id": "openAiApiCredential",
-          "name": "OpenAI Account (Configure in n8n Credentials)"
+        "googlePalmApi": {
+          "id": "googlePalmApiCredential",
+          "name": "Google Gemini account"
         }
       }
     },
     {
       "parameters": {
-        "jsCode": "// WF1 Node 9: Parse Governance Decision\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    decision: 'QUARANTINE',\n    target_memory_id: null,\n    rationale: 'Failed to parse governance LLM response.',\n    confidence: 0.5\n  };\n}\n\nconst memoryData = $('Parse & Validate Extraction').first().json;\nconst validDecisions = ['ADD', 'UPDATE', 'SUPERSEDE', 'QUARANTINE', 'IGNORE'];\nlet decision = (parsed.decision || 'ADD').toUpperCase();\nif (!validDecisions.includes(decision)) decision = 'QUARANTINE';\n\nreturn {\n  json: {\n    decision: decision,\n    target_memory_id: parsed.target_memory_id || null,\n    rationale: parsed.rationale || 'Processed by ANCHOR governance.',\n    confidence: parsed.confidence || 0.9,\n    memory_payload: {\n      user_id: memoryData.user_id,\n      topic: memoryData.topic,\n      description: memoryData.topic_description,\n      keywords: memoryData.keywords,\n      facts: memoryData.important_facts,\n      entities: memoryData.entities,\n      dates: memoryData.dates,\n      confidence_score: memoryData.confidence_score,\n      is_temporary: memoryData.is_temporary,\n      expiration_date: memoryData.expiration_date,\n      governance_decision: decision,\n      governance_rationale: parsed.rationale,\n      source_context: memoryData.original_text\n    }\n  }\n};"
+        "jsCode": "// WF1 Node 9: Parse Governance Decision (Preserving Chunk Scope)\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    decision: 'QUARANTINE',\n    target_memory_id: null,\n    rationale: 'Failed to parse governance Gemini response.',\n    confidence: 0.5\n  };\n}\n\nconst extraction = $('Parse & Validate Extraction').item.json;\nconst validDecisions = ['ADD', 'UPDATE', 'SUPERSEDE', 'QUARANTINE', 'IGNORE'];\nlet decision = (parsed.decision || 'ADD').toUpperCase();\nif (!validDecisions.includes(decision)) decision = 'QUARANTINE';\n\nreturn {\n  json: {\n    chunk_index: extraction.chunk_index,\n    total_chunks: extraction.total_chunks,\n    user_id: extraction.user_id,\n    decision: decision,\n    target_memory_id: parsed.target_memory_id || null,\n    rationale: parsed.rationale || 'Processed by ANCHOR governance engine.',\n    confidence: parsed.confidence || 0.9,\n    memory_payload: {\n      user_id: extraction.user_id,\n      topic: extraction.topic,\n      description: extraction.topic_description,\n      content: extraction.original_text,\n      keywords: extraction.keywords,\n      facts: extraction.important_facts,\n      entities: extraction.entities,\n      dates: extraction.dates,\n      confidence_score: extraction.confidence_score,\n      is_temporary: extraction.is_temporary,\n      expiration_date: extraction.expiration_date,\n      governance_decision: decision,\n      governance_rationale: parsed.rationale\n    }\n  }\n};"
       },
       "id": "wf1-node-09",
       "name": "Parse Governance Decision",
@@ -375,27 +371,27 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/commit",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/ingest",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
             {
               "name": "Content-Type",
               "value": "application/json"
             },
             {
-              "name": "X-Workflow-ID",
-              "value": "WF1-CREATION"
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json.memory_payload) }}",
+        "jsonBody": "={\n  \"text\": \"{{ $json.memory_payload.content }}\",\n  \"source\": {\n    \"kind\": \"user_stated\",\n    \"actor\": \"{{ $json.user_id }}\"\n  }\n}",
         "options": {
           "response": {
             "response": {
@@ -416,23 +412,27 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/{{ $json.target_memory_id }}",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"user_id\": \"{{ $json.memory_payload.user_id }}\",\n  \"fields_to_update\": {\n    \"description\": \"{{ $json.memory_payload.description }}\",\n    \"facts\": {{ JSON.stringify($json.memory_payload.facts) }},\n    \"dates\": {{ JSON.stringify($json.memory_payload.dates) }}\n  },\n  \"audit_reason\": \"{{ $json.rationale }}\"\n}",
+        "jsonBody": "={\n  \"content\": \"{{ $json.memory_payload.content }}\",\n  \"value\": \"{{ $json.memory_payload.description }}\",\n  \"expires_at\": \"{{ $json.memory_payload.expiration_date }}\",\n  \"reason\": \"{{ $json.rationale }}\"\n}",
         "options": {
           "response": {
             "response": {
@@ -453,23 +453,27 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/{{ $json.target_memory_id }}/supersede",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/ingest",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"user_id\": \"{{ $json.memory_payload.user_id }}\",\n  \"old_memory_id\": \"{{ $json.target_memory_id }}\",\n  \"replacement\": {{ JSON.stringify($json.memory_payload) }}\n}",
+        "jsonBody": "={\n  \"text\": \"{{ $json.memory_payload.content }}\",\n  \"source\": {\n    \"kind\": \"user_stated\",\n    \"actor\": \"{{ $json.user_id }}\"\n  }\n}",
         "options": {
           "response": {
             "response": {
@@ -489,24 +493,28 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/{{ $json.target_memory_id || 'unassigned' }}/quarantine",
+        "method": "PATCH",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id || 'quarantine-item' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"user_id\": \"{{ $json.memory_payload.user_id }}\",\n  \"conflicting_memory_id\": \"{{ $json.target_memory_id }}\",\n  \"quarantine_data\": {{ JSON.stringify($json.memory_payload) }},\n  \"quarantine_reason\": \"{{ $json.rationale }}\"\n}",
+        "jsonBody": "={\n  \"status\": \"quarantined\",\n  \"quarantine_reason\": \"{{ $json.rationale }}\"\n}",
         "options": {
           "response": {
             "response": {
@@ -526,7 +534,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// WF1 Node 11e: Log Ignored Event\nreturn {\n  json: {\n    success: true,\n    action: \"IGNORE\",\n    message: \"Content was determined to be duplicate or non-informative. Skipped storage.\",\n    rationale: $input.item.json.rationale,\n    topic: $input.item.json.memory_payload.topic\n  }\n};"
+        "jsCode": "// WF1 Node 11e: Log Ignored Event\nconst decision = $('Parse Governance Decision').item.json;\nreturn {\n  json: {\n    success: true,\n    action: \"IGNORE\",\n    chunk_index: decision.chunk_index,\n    topic: decision.memory_payload.topic,\n    reason: decision.rationale\n  }\n};"
       },
       "id": "wf1-node-11e",
       "name": "Log Ignored Event (IGNORE)",
@@ -539,7 +547,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// WF1 Node 12: Aggregate Mutation Results for Batch Loop\nconst decisionNode = $('Parse Governance Decision').first().json;\nconst apiResponse = $input.item.json;\n\nreturn {\n  json: {\n    decision: decisionNode.decision,\n    topic: decisionNode.memory_payload.topic,\n    is_temporary: decisionNode.memory_payload.is_temporary,\n    expiration_date: decisionNode.memory_payload.expiration_date,\n    backend_status: apiResponse.status || 'PROCESSED',\n    memory_id: apiResponse.memory_id || decisionNode.target_memory_id || null,\n    rationale: decisionNode.rationale\n  }\n};"
+        "jsCode": "// WF1 Node 12: Aggregate Chunk Result (Fixed Bug: Retains Current Chunk Scope)\nconst decisionNode = $('Parse Governance Decision').item.json;\nconst apiResponse = $input.item.json;\n\nreturn {\n  json: {\n    chunk_index: decisionNode.chunk_index,\n    total_chunks: decisionNode.total_chunks,\n    user_id: decisionNode.user_id,\n    topic: decisionNode.memory_payload.topic,\n    decision: decisionNode.decision,\n    is_temporary: decisionNode.memory_payload.is_temporary,\n    expiration_date: decisionNode.memory_payload.expiration_date,\n    backend_status: apiResponse.action || apiResponse.status || (apiResponse.success ? 'SUCCESS' : 'PROCESSED'),\n    memory_id: apiResponse.memory?._id || apiResponse.memory?.id || decisionNode.target_memory_id || null,\n    rationale: decisionNode.rationale,\n    timestamp: new Date().toISOString()\n  }\n};"
       },
       "id": "wf1-node-12",
       "name": "Aggregate Step Result",
@@ -627,7 +635,7 @@
         ]
       ]
     },
-    "OpenAI Model - Extractor": {
+    "Google Gemini Model - Extractor": {
       "ai_languageModel": [
         [
           {
@@ -671,7 +679,7 @@
         ]
       ]
     },
-    "OpenAI Model - Governance": {
+    "Google Gemini Model - Governance": {
       "ai_languageModel": [
         [
           {
@@ -814,7 +822,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "1.0.0",
+  "versionId": "1.1.0",
   "meta": {
     "templateCredsSetupCompleted": false,
     "instanceId": "anchor-automation-instance"
@@ -827,7 +835,7 @@
       "name": "Memory Creation"
     },
     {
-      "name": "Governance"
+      "name": "Gemini-2.5"
     }
   ]
 }

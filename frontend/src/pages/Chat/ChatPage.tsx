@@ -24,11 +24,25 @@ import {
   Plus,
   Trash2,
   X,
-  History
+  History,
+  CheckCircle2,
+  XCircle,
+  Menu,
+  RotateCcw,
+  Rocket,
+  Bell,
+  ShieldAlert
 } from 'lucide-react';
 import { api } from '../../services/api';
-import { ChatModeResult } from '../../types/memory';
+import { ChatModeResult, RetrievalScoring } from '../../types/memory';
 import { Badge } from '../../components/common/Badge';
+
+interface ProposalFeedback {
+  action: 'APPROVED' | 'REJECTED';
+  previous_confidence: number;
+  new_confidence: number;
+  delta: number;
+}
 
 interface MessageItem {
   id: string;
@@ -42,24 +56,43 @@ interface MessageItem {
     naive: ChatModeResult;
     governed: ChatModeResult;
   };
+  feedback?: ProposalFeedback;
 }
 
-/** Simple markdown renderer — bold, italics, code, bullet points */
-const renderMarkdown = (text: string): string => {
+/** Clean any stray JSON tokens or markdown artifacts */
+function cleanText(text: string): string {
+  if (!text) return '';
   return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em class="text-cyan-300">$1</em>')
-    .replace(/`(.*?)`/g, '<code class="bg-slate-800 text-cyan-300 px-1.5 py-0.5 rounded text-xs font-mono border border-slate-700">$1</code>')
-    .replace(/â€¢/g, '•')
-    .replace(/\n/g, '<br/>');
-};
+    .replace(/^```[a-z]*\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+}
 
 const DEFAULT_GREETING: MessageItem = {
   id: 'init-1',
   sender: 'agent',
-  text: "Hello! I am **XYRO101**, your Governed Agentic Memory Engine (built on ANCHOR architecture).\n\nI can answer questions and triage incidents using three distinct operating modes:\n\n• **None Mode**: Standard LLM without memory recall\n• **Naive Mode**: Pure vector similarity (vulnerable to stale & poisoned data)\n• **Governed Mode**: Complete ANCHOR governance (source trust ladder, temporal recency decay, dependency fingerprints, and abstention)\n\nTry asking: *\"Which database are we currently using in production?\"* or *\"How do I fix the checkout DB timeout right now?\"*",
+  text: 'Hello! I am XYRO101, your Governed Agentic Memory Engine (built on ANCHOR architecture).\n\nI can answer questions and triage incidents using three distinct operating modes:\n\n• None Mode: Standard LLM without memory recall\n• Naive Mode: Pure vector similarity (vulnerable to stale & poisoned data)\n• Governed Mode: Complete ANCHOR governance (source trust ladder, temporal recency decay, dependency fingerprints, and abstention)\n\nTry asking: "Which database are we currently using in production?" or "How do I fix the checkout DB timeout right now?"',
   timestamp: 'Just now',
-  mode: 'governed'
+  mode: 'governed',
+  result: {
+    mode: 'governed',
+    answer: 'Ready to assist with governed agentic memory operations.',
+    structuredOutput: {
+      diagnosis: 'System Initialized & Ready',
+      proposedFix: 'Select an operating mode above or enter an operational incident query to begin governed triage.',
+      citedMemoryIds: [],
+      confidence: 1.0,
+      warnings: [],
+      abstain: false,
+      abstainReason: null
+    },
+    retrieved_memories: [],
+    excluded_memories: [],
+    abstention: false,
+    retrievalPath: 'memory',
+    latency_ms: 10,
+    tokens_used: 0
+  }
 };
 
 export const ChatPage: React.FC = () => {
@@ -70,12 +103,19 @@ export const ChatPage: React.FC = () => {
   const [compareMode, setCompareMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sourceKind, setSourceKind] = useState<'user_stated' | 'system_event' | 'human_approved' | 'unverified'>('user_stated');
-  const [ingestNotice, setIngestNotice] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isConvSidebarOpen, setIsConvSidebarOpen] = useState(false);
+
+  // Quick Action & Outcome state
+  const [quickActionLoading, setQuickActionLoading] = useState<string | null>(null);
+  const [demoToast, setDemoToast] = useState<{ text: string; type: 'success' | 'warn' | 'info' } | null>(null);
+  const [submittingOutcomeId, setSubmittingOutcomeId] = useState<string | null>(null);
+
+  // Meta state
+  const [meta, setMeta] = useState<{ embedProvider: string; dimension: number; store: string; retrievalPath: string } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -90,6 +130,7 @@ export const ChatPage: React.FC = () => {
 
   useEffect(() => {
     textareaRef.current?.focus();
+    api.getMeta().then(setMeta).catch(() => {});
   }, []);
 
   const loadConversations = async () => {
@@ -216,9 +257,29 @@ export const ChatPage: React.FC = () => {
       const fallbackMsg: MessageItem = {
         id: `err-${Date.now()}`,
         sender: 'agent',
-        text: `⚠️ **Memory Engine Status Alert**\n\nCould not query the backend (${err?.message || 'timeout/network issue'}). The local fallback memory simulation was consulted instead.`,
+        text: 'Failed to contact backend memory service.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         mode: activeMode,
+        result: {
+          mode: activeMode,
+          answer: 'Backend connection timeout',
+          structuredOutput: {
+            diagnosis: 'Network / Backend Unreachable',
+            proposedFix: 'Ensure backend server is running and check /api/health.',
+            citedMemoryIds: [],
+            confidence: 0.1,
+            warnings: ['Failed to reach agentic memory backend'],
+            abstain: true,
+            abstainReason: 'Server connection error'
+          },
+          retrieved_memories: [],
+          excluded_memories: [],
+          abstention: true,
+          abstention_reason: 'Server connection error',
+          retrievalPath: 'memory',
+          latency_ms: 0,
+          tokens_used: 0
+        }
       };
       setMessages(prev => [...prev, fallbackMsg]);
     } finally {
@@ -232,28 +293,111 @@ export const ChatPage: React.FC = () => {
     handleSendQuery(input.trim());
   };
 
-  const handleIngest = async () => {
-    if (!input.trim()) return;
-    const observation = input.trim();
-    setInput('');
-    setLoading(true);
+  // C3: Quick Actions (JWT-protected /api/demo/* endpoints only)
+  const handleQuickAction = async (action: 'alert' | 'deploy' | 'poison' | 'reset') => {
+    setQuickActionLoading(action);
     try {
-      const res = await api.ingestObservation(observation, sourceKind);
-      setIngestNotice(`Ingestion Result [${res.action}]: ${res.reason}`);
-      setTimeout(() => setIngestNotice(null), 5000);
-
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `sys-${Date.now()}`,
-          sender: 'agent',
-          text: `📥 **[INGESTION PIPELINE]**\nEvaluated candidate fact: "${observation}"\nAction: **${res.action}**\nReason: ${res.reason}`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          mode: 'governed'
+      if (action === 'alert') {
+        const res = await api.demoAlert();
+        const prefix = res.path === 'n8n' ? '[via n8n] ' : '';
+        setDemoToast({
+          text: `${prefix}${res.message || 'payments-api pool exhaustion triaged'}`,
+          type: 'success'
+        });
+        if (res.triageResult) {
+          const triageMsg: MessageItem = {
+            id: `agt-${Date.now()}`,
+            sender: 'agent',
+            text: res.triageResult.answer || 'Alert Triaged',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            mode: 'governed',
+            result: {
+              mode: 'governed',
+              answer: res.triageResult.answer || '',
+              structuredOutput: res.triageResult.structuredOutput,
+              retrieved_memories: res.triageResult.retrieved_memories || [],
+              excluded_memories: res.triageResult.excluded_memories || [],
+              abstention: res.triageResult.abstention || false,
+              abstention_reason: res.triageResult.abstention_reason,
+              retrievalPath: res.triageResult.retrievalPath || 'memory',
+              latency_ms: res.triageResult.latency_ms || 120,
+              tokens_used: res.triageResult.tokens_used || 240
+            }
+          };
+          setMessages(prev => [...prev, triageMsg]);
         }
-      ]);
+      } else if (action === 'deploy') {
+        const res = await api.demoDeploy('payments-api', 'v1.0.1');
+        const prefix = res.path === 'n8n' ? '[via n8n] ' : '';
+        setDemoToast({
+          text: `${prefix}${res.message || `payments-api v1.0.1 deployed; ${res.staleCount ?? 2} memories marked stale`}`,
+          type: 'warn'
+        });
+      } else if (action === 'poison') {
+        const res = await api.demoPoison();
+        setDemoToast({
+          text: res.message || 'Poison note quarantined deterministically by write pipeline',
+          type: 'info'
+        });
+      } else if (action === 'reset') {
+        const res = await api.demoReset();
+        setDemoToast({
+          text: res.message || 'Demo baseline restored to verified seed state',
+          type: 'success'
+        });
+        handleNewChat();
+      }
+    } catch (err: any) {
+      setDemoToast({
+        text: `Action failed: ${err?.message || 'Error executing action'}`,
+        type: 'warn'
+      });
     } finally {
-      setLoading(false);
+      setQuickActionLoading(null);
+      setTimeout(() => setDemoToast(null), 6000);
+    }
+  };
+
+  // C4: Human-in-the-Loop Proposal Feedback
+  const handleProposalOutcome = async (msgId: string, memoryId: string, action: 'APPROVED' | 'REJECTED') => {
+    setSubmittingOutcomeId(msgId);
+    try {
+      const res = await api.submitOutcome({
+        memory_id: memoryId,
+        action,
+        feedback_source: 'dashboard_ui'
+      });
+
+      if (res.success) {
+        const delta = parseFloat((res.new_confidence - res.previous_confidence).toFixed(4));
+        setMessages(prev => prev.map(m => {
+          if (m.id === msgId) {
+            return {
+              ...m,
+              feedback: {
+                action,
+                previous_confidence: res.previous_confidence,
+                new_confidence: res.new_confidence,
+                delta
+              }
+            };
+          }
+          return m;
+        }));
+
+        setDemoToast({
+          text: `Confidence updated for ${memoryId}: ${res.previous_confidence.toFixed(2)} -> ${res.new_confidence.toFixed(2)} (${delta >= 0 ? '+' : ''}${delta.toFixed(2)})`,
+          type: 'success'
+        });
+      }
+    } catch (err: any) {
+      setDemoToast({
+        text: `Failed to record outcome: ${err?.message || 'Error'}`,
+        type: 'warn'
+      });
+    } finally {
+      setSubmittingOutcomeId(null);
+      setTimeout(() => setDemoToast(null), 5000);
     }
   };
 
@@ -263,66 +407,270 @@ export const ChatPage: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  return (
-    <div className="flex flex-col h-[calc(100vh-6.5rem)] max-w-6xl mx-auto space-y-3.5">
-      {/* ── Top Mission Control HUD Bar ── */}
-      <div className="glass-panel p-3.5 shadow-2xl relative overflow-hidden border-cyan-500/20">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Mode Selector */}
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-mono text-slate-400 flex items-center pr-1 font-semibold">
-              <Sliders className="w-3.5 h-3.5 text-cyan-400 mr-1.5" /> MODE:
+  // C1: Render Structured Agent Bubble (No raw JSON, no raw markdown fences)
+  const renderAgentStructuredBubble = (msg: MessageItem) => {
+    const res = msg.result;
+    const structured = res?.structuredOutput;
+
+    // Fallback if no structured output exists
+    if (!structured) {
+      return (
+        <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed font-sans">
+          {cleanText(msg.text)}
+        </div>
+      );
+    }
+
+    const confidence = structured.confidence ?? 0.5;
+    const confPct = Math.round(confidence * 100);
+    const isHighConf = confidence >= 0.7;
+    const isAbstained = structured.abstain || res?.abstention;
+
+    // Find primary cited memory for C4 feedback
+    const targetMemoryId = structured.citedMemoryIds?.[0] || res?.retrieved_memories?.[0]?.memory_id;
+
+    // Gather cited memory chips with scores
+    const citedMap = new Map<string, number>();
+    if (res?.retrieved_memories) {
+      for (const rm of res.retrieved_memories) {
+        citedMap.set(rm.memory_id, rm.final_score);
+      }
+    }
+    const citedChips = (structured.citedMemoryIds || []).map(id => ({
+      id,
+      score: citedMap.get(id) ?? (res?.retrieved_memories?.[0]?.final_score ?? 0.70)
+    }));
+
+    return (
+      <div className="space-y-3.5">
+        {/* Diagnosis Header */}
+        <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-cyan-400 shrink-0" />
+            <h4 className="text-sm font-bold text-white tracking-wide font-sans">
+              {cleanText(structured.diagnosis)}
+            </h4>
+          </div>
+          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+            {msg.mode || 'governed'} mode
+          </span>
+        </div>
+
+        {/* Confidence Percentage Bar */}
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-xs font-mono">
+            <span className="text-slate-400 font-semibold text-[11px]">Confidence Rating:</span>
+            <span className={`font-bold ${isHighConf ? 'text-cyan-300' : 'text-amber-400'}`}>
+              {confPct}%
             </span>
+          </div>
+          <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-800">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isHighConf
+                  ? 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]'
+                  : 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+              }`}
+              style={{ width: `${Math.max(5, Math.min(100, confPct))}%` }}
+            />
+          </div>
+        </div>
 
-            <div className="flex items-center space-x-1 bg-slate-950/70 border border-slate-800 p-1 rounded-xl shadow-inner">
-              {/* None */}
-              <button
-                type="button"
-                onClick={() => { setActiveMode('none'); setCompareMode(false); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  !compareMode && activeMode === 'none'
-                    ? 'bg-slate-800 text-white font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                None (Zero Memory)
-              </button>
-
-              {/* Naive */}
-              <button
-                type="button"
-                onClick={() => { setActiveMode('naive'); setCompareMode(false); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  !compareMode && activeMode === 'naive'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold shadow-[0_0_12px_rgba(245,158,11,0.25)]'
-                    : 'text-slate-400 hover:text-amber-300'
-                }`}
-              >
-                Naive (Vector Only)
-              </button>
-
-              {/* Governed */}
-              <button
-                type="button"
-                onClick={() => { setActiveMode('governed'); setCompareMode(false); }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-                  !compareMode && activeMode === 'governed'
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold shadow-[0_0_16px_rgba(6,182,212,0.3)]'
-                    : 'text-slate-400 hover:text-cyan-300'
-                }`}
-              >
-                <ShieldCheck className={`w-3.5 h-3.5 ${!compareMode && activeMode === 'governed' ? 'text-cyan-400' : 'text-slate-500'}`} />
-                Governed (ANCHOR)
-              </button>
+        {/* Distinct Abstention Card */}
+        {isAbstained && (
+          <div className="p-3.5 rounded-xl bg-amber-950/25 border border-amber-500/40 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.15)] animate-fade-in">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold text-xs font-mono text-amber-300">
+                  Abstained: {cleanText(structured.abstainReason || res?.abstention_reason || 'Query refrained under governance policies')}
+                </div>
+                <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                  XYRO101 ANCHOR governance safely halted automated action to prevent applying unverified, superseded, or out-of-domain instructions.
+                </p>
+              </div>
             </div>
           </div>
+        )}
 
-          {/* Right Action Controls */}
-          <div className="flex items-center space-x-2">
+        {/* Proposed Fix Action Card (Hidden if abstained) */}
+        {!isAbstained && structured.proposedFix && (
+          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)] space-y-2">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-bold flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Proposed Remediation Plan
+            </div>
+            <div className="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed bg-slate-900/70 p-2.5 rounded-lg border border-slate-800">
+              {cleanText(structured.proposedFix)}
+            </div>
+
+            {/* C4: Human-in-the-Loop Proposal Approval */}
+            {msg.mode === 'governed' && targetMemoryId && (
+              <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[11px] font-mono text-slate-400">Human-in-the-Loop Verification:</span>
+                {msg.feedback ? (
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 ${
+                    msg.feedback.action === 'APPROVED'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.2)]'
+                  }`}>
+                    {msg.feedback.action === 'APPROVED' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                    Confidence updated: {msg.feedback.previous_confidence.toFixed(2)} -&gt; {msg.feedback.new_confidence.toFixed(2)} ({msg.feedback.delta >= 0 ? '+' : ''}{msg.feedback.delta.toFixed(2)})
+                  </span>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={submittingOutcomeId === msg.id}
+                      onClick={() => handleProposalOutcome(msg.id, targetMemoryId, 'APPROVED')}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Approve this fix
+                    </button>
+                    <button
+                      type="button"
+                      disabled={submittingOutcomeId === msg.id}
+                      onClick={() => handleProposalOutcome(msg.id, targetMemoryId, 'REJECTED')}
+                      className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                    >
+                      <X className="w-3.5 h-3.5" /> Reject this fix
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Warnings Callout Box (Omit if empty) */}
+        {structured.warnings && structured.warnings.length > 0 && (
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-amber-400 font-mono text-[11px]">
+              <AlertTriangle className="w-3.5 h-3.5" /> Operational Warnings &amp; Governance Guardrails:
+            </div>
+            <ul className="list-disc list-inside space-y-0.5 pl-1 text-[11px] text-slate-300">
+              {structured.warnings.map((w, idx) => (
+                <li key={idx} className="font-sans">{cleanText(w)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Cited Memory Chips */}
+        {citedChips.length > 0 && (
+          <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-mono text-slate-400 text-[11px] font-semibold">Citations:</span>
+              {citedChips.map((chip) => (
+                <Link
+                  key={chip.id}
+                  to={`/inspector?id=${encodeURIComponent(chip.id)}`}
+                  className="px-2 py-0.5 rounded-lg bg-cyan-500/15 text-cyan-300 hover:text-white hover:bg-cyan-500/30 border border-cyan-500/30 font-mono text-[10px] font-semibold transition-all shadow-sm"
+                  title={`Inspect memory ${chip.id}`}
+                >
+                  [{chip.id}] (Score: {chip.score.toFixed(2)})
+                </Link>
+              ))}
+            </div>
+            <Link
+              to="/inspector"
+              className="text-cyan-400 hover:text-cyan-300 font-semibold font-mono text-[11px] flex items-center gap-0.5"
+            >
+              Decompose Formula <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        )}
+
+        {/* Footer Badges: RetrievalPath, Latency, Tokens, Fallback */}
+        <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+              Path: <strong className="text-cyan-400">{res?.retrievalPath || 'memory'}</strong>
+            </span>
+            {res?.llmFallback && (
+              <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
+                RULE FALLBACK
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2.5 text-slate-400">
+            <span>{res?.latency_ms ?? 140}ms</span>
+            <span>•</span>
+            <span>{res?.tokens_used ?? 0} tokens</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-6.5rem)] max-w-6xl mx-auto space-y-3.5 px-2 sm:px-0">
+      {/* ── Top Mission Control HUD Bar ── */}
+      <div className="glass-panel p-3.5 shadow-2xl relative overflow-hidden border-cyan-500/20 rounded-2xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* C2: Three Clearly-Labelled Mode Cards with Subtitles */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full lg:max-w-2xl">
+            {/* None */}
+            <button
+              type="button"
+              onClick={() => { setActiveMode('none'); setCompareMode(false); }}
+              className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
+                !compareMode && activeMode === 'none'
+                  ? 'bg-slate-800/90 border-slate-600 text-white shadow-md'
+                  : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+              }`}
+              title="Zero memory recall baseline (stateless LLM)"
+            >
+              <div className="text-xs font-bold font-mono">1. None Mode</div>
+              <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                Zero memory recall baseline (stateless LLM)
+              </div>
+            </button>
+
+            {/* Naive */}
+            <button
+              type="button"
+              onClick={() => { setActiveMode('naive'); setCompareMode(false); }}
+              className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
+                !compareMode && activeMode === 'naive'
+                  ? 'bg-amber-500/15 border-amber-500/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                  : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-amber-300 hover:border-slate-700'
+              }`}
+              title="Unchecked vector similarity; vulnerable to stale & poisoned data"
+            >
+              <div className="text-xs font-bold font-mono flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" /> 2. Naive Retrieval
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                Unchecked vector similarity; vulnerable to stale &amp; poisoned data
+              </div>
+            </button>
+
+            {/* Governed */}
+            <button
+              type="button"
+              onClick={() => { setActiveMode('governed'); setCompareMode(false); }}
+              className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
+                !compareMode && activeMode === 'governed'
+                  ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-200 shadow-[0_0_16px_rgba(6,182,212,0.25)]'
+                  : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-cyan-300 hover:border-slate-700'
+              }`}
+              title="Full ANCHOR governance: trust ladder, recency decay, dependency invalidation, deterministic gates"
+            >
+              <div className="text-xs font-bold font-mono flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> 3. Engram / Governed
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                Full ANCHOR governance: trust ladder, recency decay, deterministic gates
+              </div>
+            </button>
+          </div>
+
+          {/* Right Action Controls: Comparison + Mobile Sessions Toggle */}
+          <div className="flex items-center gap-2 self-end lg:self-center">
             <button
               type="button"
               onClick={() => setIsConvSidebarOpen(!isConvSidebarOpen)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
                 isConvSidebarOpen
                   ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_14px_rgba(6,182,212,0.25)]'
                   : 'btn-ghost text-slate-300'
@@ -336,14 +684,14 @@ export const ChatPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setCompareMode(!compareMode)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                 compareMode
                   ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 shadow-[0_0_16px_rgba(99,102,241,0.3)]'
                   : 'btn-ghost text-slate-300'
               }`}
             >
               <Split className={`w-4 h-4 ${compareMode ? 'text-indigo-400' : 'text-slate-400'}`} />
-              <span>3-Mode Comparison View</span>
+              <span>Comparison View</span>
             </button>
           </div>
         </div>
@@ -366,86 +714,103 @@ export const ChatPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Ingestion Banner Notice ── */}
-      {ingestNotice && (
-        <div className="p-3 text-xs flex items-center justify-between rounded-xl bg-cyan-950/40 border border-cyan-500/40 text-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.2)] animate-fade-in">
+      {/* Floating Immediate Demo Action Toast */}
+      {demoToast && (
+        <div className={`p-3 text-xs flex items-center justify-between rounded-xl border animate-fade-in shadow-xl ${
+          demoToast.type === 'success'
+            ? 'bg-cyan-950/80 border-cyan-500/40 text-cyan-200 shadow-[0_0_18px_rgba(6,182,212,0.2)]'
+            : demoToast.type === 'warn'
+            ? 'bg-amber-950/80 border-amber-500/40 text-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.2)]'
+            : 'bg-indigo-950/80 border-indigo-500/40 text-indigo-200'
+        }`}>
           <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
-            <span className="font-mono">{ingestNotice}</span>
+            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
+            <span className="font-mono">{demoToast.text}</span>
           </div>
-          <Link to="/explorer" className="text-cyan-300 hover:text-cyan-200 font-semibold flex items-center gap-1 font-mono">
-            View in Explorer <ExternalLink className="w-3 h-3 ml-0.5" />
-          </Link>
+          <button
+            type="button"
+            onClick={() => setDemoToast(null)}
+            className="text-slate-400 hover:text-white p-1"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
       {/* ── Main Chat Workspace Area ── */}
       <div className="flex-1 flex gap-3 overflow-hidden relative">
-        {/* Collapsible Conversation History Drawer */}
+        {/* C6: Mobile Responsive Drawer (Slide-over on <768px, inline on >=768px) */}
         {isConvSidebarOpen && (
-          <div className="w-72 glass-panel border border-slate-800 p-3.5 rounded-2xl flex flex-col shrink-0 z-20 shadow-2xl animate-fade-in bg-slate-950/95 backdrop-blur-xl">
-            <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-800">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4 text-cyan-400" />
-                <span className="text-white font-bold text-xs">Saved Sessions</span>
+          <div className="fixed inset-0 z-50 md:relative md:inset-auto md:z-0 flex md:block animate-fade-in">
+            {/* Backdrop on mobile */}
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm md:hidden"
+              onClick={() => setIsConvSidebarOpen(false)}
+            />
+            <div className="relative w-80 md:w-72 h-full glass-panel border border-slate-800 p-3.5 rounded-2xl flex flex-col shrink-0 shadow-2xl bg-slate-950/95 backdrop-blur-xl">
+              <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-800">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-4 h-4 text-cyan-400" />
+                  <span className="text-white font-bold text-xs">Saved Sessions</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsConvSidebarOpen(false)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
               </div>
+
               <button
                 type="button"
-                onClick={() => setIsConvSidebarOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+                onClick={handleNewChat}
+                className="btn-primary w-full py-2 mb-2.5 flex items-center justify-center gap-2 text-xs font-semibold shadow-[0_0_15px_rgba(6,182,212,0.35)] cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5" />
+                <span>New Chat Session</span>
               </button>
-            </div>
 
-            <button
-              type="button"
-              onClick={handleNewChat}
-              className="btn-primary w-full py-2 mb-2.5 flex items-center justify-center gap-2 text-xs font-semibold shadow-[0_0_15px_rgba(6,182,212,0.35)]"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New Chat Session</span>
-            </button>
-
-            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
-              {conversations.length === 0 ? (
-                <div className="text-center py-8 text-xs text-slate-500">
-                  <p>No prior sessions found.</p>
-                  <p className="mt-1 text-[11px] text-slate-600">Start chatting to record history.</p>
-                </div>
-              ) : (
-                conversations.map((conv) => {
-                  const isActive = activeConversationId === conv.id;
-                  return (
-                    <div
-                      key={conv.id}
-                      onClick={() => handleSelectConversation(conv.id)}
-                      className={`group p-2.5 rounded-xl cursor-pointer flex items-start justify-between border transition-all ${
-                        isActive
-                          ? 'bg-cyan-500/15 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.15)] text-cyan-200'
-                          : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-800/80 text-slate-300'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1 pr-2">
-                        <p className={`text-xs font-semibold truncate ${isActive ? 'text-cyan-300' : 'text-slate-200'}`}>
-                          {conv.title || 'Untitled Session'}
-                        </p>
-                        <p className="text-[10px] font-mono text-slate-400 mt-0.5">
-                          {conv.messageCount || 0} msgs • {new Date(conv.updatedAt || conv.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeleteConversation(conv.id, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-400 transition-opacity"
-                        title="Delete conversation"
+              <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+                {conversations.length === 0 ? (
+                  <div className="text-center py-8 text-xs text-slate-500">
+                    <p>No prior sessions found.</p>
+                    <p className="mt-1 text-[11px] text-slate-600">Start chatting to record history.</p>
+                  </div>
+                ) : (
+                  conversations.map((conv) => {
+                    const isActive = activeConversationId === conv.id;
+                    return (
+                      <div
+                        key={conv.id}
+                        onClick={() => handleSelectConversation(conv.id)}
+                        className={`group p-2.5 rounded-xl cursor-pointer flex items-start justify-between border transition-all ${
+                          isActive
+                            ? 'bg-cyan-500/15 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.15)] text-cyan-200'
+                            : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-800/80 text-slate-300'
+                        }`}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  );
-                })
-              )}
+                        <div className="min-w-0 flex-1 pr-2">
+                          <p className={`text-xs font-semibold truncate ${isActive ? 'text-cyan-300' : 'text-slate-200'}`}>
+                            {conv.title || 'Untitled Session'}
+                          </p>
+                          <p className="text-[10px] font-mono text-slate-400 mt-0.5">
+                            {conv.messageCount || 0} msgs • {new Date(conv.updatedAt || conv.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteConversation(conv.id, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-400 transition-opacity"
+                          title="Delete conversation"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -487,13 +852,13 @@ export const ChatPage: React.FC = () => {
                   // 3-Mode Comparison Cards
                   <div className="w-full glass-panel border border-slate-800 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-3 shadow-2xl bg-slate-950/70">
                     {/* None */}
-                    <div className="glass-panel border-slate-800 p-4 rounded-xl flex flex-col justify-between bg-slate-900/60">
+                    <div className="glass-panel border-slate-800 p-3.5 rounded-xl flex flex-col justify-between bg-slate-900/60">
                       <div>
-                        <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-800">
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
                           <span className="text-xs font-mono font-bold text-slate-300">1. NONE MODE</span>
                           <span className="text-[10px] font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded">0 memories</span>
                         </div>
-                        <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed">{msg.comparison.none.answer}</p>
+                        <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.none.answer)}</p>
                       </div>
                       <div className="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-slate-500">
                         Zero recall baseline
@@ -501,9 +866,9 @@ export const ChatPage: React.FC = () => {
                     </div>
 
                     {/* Naive */}
-                    <div className="glass-panel border-amber-500/30 p-4 rounded-xl flex flex-col justify-between bg-amber-950/10 shadow-[0_0_15px_rgba(245,158,11,0.08)]">
+                    <div className="glass-panel border-amber-500/30 p-3.5 rounded-xl flex flex-col justify-between bg-amber-950/10 shadow-[0_0_15px_rgba(245,158,11,0.08)]">
                       <div>
-                        <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-amber-500/20">
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-500/20">
                           <span className="text-xs font-mono font-bold text-amber-300 flex items-center gap-1.5">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> 2. NAIVE RETRIEVAL
                           </span>
@@ -511,7 +876,7 @@ export const ChatPage: React.FC = () => {
                             {msg.comparison.naive.retrieved_memories.length} matched
                           </span>
                         </div>
-                        <p className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed">{msg.comparison.naive.answer}</p>
+                        <p className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.naive.answer)}</p>
                       </div>
                       <div className="mt-3 pt-2 border-t border-amber-500/20 text-[10px] font-mono text-amber-400">
                         ⚠️ Stale &amp; unverified data accepted
@@ -519,9 +884,9 @@ export const ChatPage: React.FC = () => {
                     </div>
 
                     {/* Governed */}
-                    <div className="glass-panel border-cyan-500/40 p-4 rounded-xl flex flex-col justify-between bg-cyan-950/15 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                    <div className="glass-panel border-cyan-500/40 p-3.5 rounded-xl flex flex-col justify-between bg-cyan-950/15 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
                       <div>
-                        <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-cyan-500/30">
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/30">
                           <span className="text-xs font-mono font-bold text-cyan-300 flex items-center gap-1.5">
                             <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> 3. GOVERNED ANCHOR
                           </span>
@@ -529,10 +894,10 @@ export const ChatPage: React.FC = () => {
                             {msg.comparison.governed.retrieved_memories.length} verified
                           </span>
                         </div>
-                        <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed font-medium">{msg.comparison.governed.answer}</p>
+                        <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.governed.answer)}</p>
                       </div>
                       <div className="mt-3 pt-2 border-t border-cyan-500/20 text-[10px] font-mono text-cyan-300 flex items-center justify-between">
-                        <span>🛡️ Verified &amp; Provenanced</span>
+                        <span>🛡️ Governed Decision</span>
                         {msg.comparison.governed.abstention && (
                           <span className="text-amber-400 font-bold">ABSTAINED</span>
                         )}
@@ -542,35 +907,18 @@ export const ChatPage: React.FC = () => {
                 ) : (
                   // Single Message Bubble
                   <div
-                    className={`group relative max-w-[85%] rounded-2xl p-4 text-sm leading-relaxed transition-all shadow-xl ${
+                    className={`group relative max-w-[90%] md:max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed transition-all shadow-xl ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white rounded-tr-sm shadow-[0_4px_20px_rgba(6,182,212,0.3)] border border-cyan-400/30'
-                        : 'glass-panel text-slate-200 rounded-tl-sm border-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.4)]'
+                        ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white rounded-tr-sm shadow-[0_4px_20px_rgba(6,182,212,0.3)] border border-cyan-400/30 font-sans'
+                        : 'glass-panel text-slate-200 rounded-tl-sm border-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.4)] w-full'
                     }`}
                   >
-                    <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }} />
-
-                    {/* Citations Footer */}
-                    {msg.result?.retrieved_memories && msg.result.retrieved_memories.length > 0 && (
-                      <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono text-slate-400 text-[11px]">Citations:</span>
-                          {msg.result.retrieved_memories.map((m) => (
-                            <span
-                              key={m.memory_id}
-                              className="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-mono text-[10px] font-semibold"
-                            >
-                              {m.memory_id} (Score: {m.final_score.toFixed(2)})
-                            </span>
-                          ))}
-                        </div>
-                        <Link
-                          to="/inspector"
-                          className="text-cyan-400 hover:text-cyan-300 font-semibold font-mono text-[11px] flex items-center gap-0.5"
-                        >
-                          Decompose Formula <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
+                    {msg.sender === 'user' ? (
+                      <div className="text-sm text-white whitespace-pre-wrap font-sans leading-relaxed">
+                        {msg.text}
                       </div>
+                    ) : (
+                      renderAgentStructuredBubble(msg)
                     )}
 
                     {/* Quick Copy Button */}
@@ -597,6 +945,54 @@ export const ChatPage: React.FC = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
+        </div>
+      </div>
+
+      {/* ── C3: Quick-Action Demo Buttons (JWT-Protected /api/demo/* endpoints) ── */}
+      <div className="glass-panel p-2.5 rounded-xl border-slate-800 bg-slate-950/70 shadow-lg flex items-center justify-between gap-2 overflow-x-auto">
+        <span className="text-[11px] font-mono text-slate-400 shrink-0 font-semibold flex items-center gap-1 pl-1">
+          <Zap className="w-3.5 h-3.5 text-amber-400" /> Scripted Demos:
+        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            disabled={quickActionLoading !== null}
+            onClick={() => handleQuickAction('alert')}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+          >
+            <Bell className={`w-3.5 h-3.5 ${quickActionLoading === 'alert' ? 'animate-spin' : ''}`} />
+            <span>Run demo alert</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={quickActionLoading !== null}
+            onClick={() => handleQuickAction('deploy')}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+          >
+            <Rocket className={`w-3.5 h-3.5 ${quickActionLoading === 'deploy' ? 'animate-bounce' : ''}`} />
+            <span>Simulate deploy</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={quickActionLoading !== null}
+            onClick={() => handleQuickAction('poison')}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+          >
+            <ShieldAlert className={`w-3.5 h-3.5 ${quickActionLoading === 'poison' ? 'animate-pulse' : ''}`} />
+            <span>Send poisoned note</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={quickActionLoading !== null}
+            onClick={() => handleQuickAction('reset')}
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 ${quickActionLoading === 'reset' ? 'animate-spin' : ''}`} />
+            <span>Reset demo</span>
+          </button>
         </div>
       </div>
 
@@ -631,7 +1027,7 @@ export const ChatPage: React.FC = () => {
             <button
               type="submit"
               disabled={!input.trim() || loading}
-              className="btn-primary flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.4)] shrink-0 self-end transition-all"
+              className="btn-primary flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(6,182,212,0.4)] shrink-0 self-end transition-all cursor-pointer"
               title="Send message (Enter)"
             >
               <Send className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -653,20 +1049,14 @@ export const ChatPage: React.FC = () => {
                 <option value="system_event">system_event (Trust: 0.85)</option>
                 <option value="unverified">unverified (Trust: 0.20)</option>
               </select>
-              <button
-                type="button"
-                onClick={handleIngest}
-                disabled={!input.trim() || loading}
-                className="px-2.5 py-1 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 hover:text-white hover:bg-cyan-900/40 font-semibold text-xs font-mono disabled:opacity-40 cursor-pointer transition-all shadow-sm"
-              >
-                + Ingest as Candidate Fact
-              </button>
             </div>
 
             <div className="hidden sm:flex items-center space-x-2 font-mono text-[11px] text-slate-500">
               <span>↵ Enter to send • Shift + ↵ newline</span>
               <span>•</span>
-              <span className="text-cyan-400 font-semibold">1536-dim Vector &amp; Graph Governance</span>
+              <span className="text-cyan-400 font-semibold">
+                {meta ? `${meta.embedProvider.toUpperCase()} ${meta.dimension}-dim • ${meta.store} mode` : '384-dim Vector & Graph Governance'}
+              </span>
             </div>
           </div>
         </form>
