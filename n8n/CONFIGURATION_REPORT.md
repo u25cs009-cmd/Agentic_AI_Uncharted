@@ -87,7 +87,7 @@ All requests point to the backend route tree mounted under `/api/`:
 - **Backend Service Token**:
   `Authorization: Bearer {{ $env.BACKEND_API_KEY || '' }}`
 - **Internal API Key Header**:
-  `x-internal-key: {{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}`
+  `x-internal-key: {{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}`
 - **Gemini Credentials**: References the standard credential identifier `googlePalmApiCredential`.
 
 ---
@@ -105,7 +105,7 @@ Once you import the JSON files into n8n Cloud:
    - Ensure the following variables are present:
      - `BACKEND_BASE_URL`: `https://agentic-ai-uncharted.onrender.com` (or your live Render backend URL).
      - `BACKEND_API_KEY`: Your JWT bearer service token (if auth enforcement is enabled).
-     - `INTERNAL_API_KEY`: `shakti2_internal_key_for_n8n_webhooks`.
+     - `INTERNAL_API_KEY`: `{{ $vars.ENGRAM_SHARED_SECRET }}`.
 3. **Webhook URLs**:
    - Upon setting the workflows to **Active**, copy the production webhook URLs to your backend or client config:
      - `https://<your-n8n-instance>.app.n8n.cloud/webhook/memory-create`

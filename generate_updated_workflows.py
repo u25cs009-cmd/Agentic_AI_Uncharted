@@ -273,7 +273,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -550,7 +550,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -584,7 +584,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -618,7 +618,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -652,7 +652,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1035,7 +1035,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1440,7 +1440,7 @@ Return JSON ONLY:
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1760,7 +1760,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1794,7 +1794,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1825,7 +1825,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -2059,7 +2059,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -2171,7 +2171,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },

@@ -55,7 +55,7 @@
   - No API keys, passwords, database URIs, or JWT secrets were committed to Git or embedded in workflow JSON files.
 - **Workflow Placeholders**:
   - All n8n workflow HTTP nodes point to `{{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/...`.
-  - Service authentication uses `x-internal-key: {{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}` and `Authorization: Bearer {{ $env.BACKEND_API_KEY || '' }}`.
+  - Service authentication uses `x-internal-key: {{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}` and `Authorization: Bearer {{ $env.BACKEND_API_KEY || '' }}`.
   - Gemini nodes use the credential placeholder `googlePalmApiCredential`.
 
 ---
