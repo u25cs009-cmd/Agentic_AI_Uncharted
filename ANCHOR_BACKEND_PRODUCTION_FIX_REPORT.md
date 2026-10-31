@@ -83,7 +83,7 @@ To ensure zero secrets are committed to version control, the following environme
 | `NODE_ENV` | `production` | Enables strict production error handling and security checks |
 | `STORE` | `mongo` | Activates MongoDB Atlas storage repository |
 | `PORT` | `10000` | Port assigned by Render runtime |
-| `MONGODB_URI` | `mongodb+srv://<user>:<password>@shakti-2.2uziuij.mongodb.net/?retryWrites=true&w=majority` | Atlas cluster connection string |
+| `MONGODB_URI` | `mongodb+srv://<cluster-url>/anchor | Atlas cluster connection string |
 | `MONGODB_DB_NAME` | `anchor` | Production database name |
 | `GEMINI_API_KEY` | *(Production Google AI Studio Key)* | Gemini LLM response synthesis |
 | `JWT_SECRET` | *(64-char random hex string)* | User session and token signing |

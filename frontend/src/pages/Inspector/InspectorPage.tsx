@@ -27,10 +27,10 @@ const LargeScoreBar: React.FC<{ label: string; value?: number | null; colorHex: 
   const num = typeof value === 'number' && !isNaN(value) ? value : 0;
   const pct = Math.max(0, Math.min(100, Math.round(num * 100)));
   return (
-    <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl space-y-1.5 shadow-xs">
-      <div className="flex justify-between items-center text-xs font-mono">
-        <span className="text-slate-600 font-medium text-[11px]">{label}</span>
-        <span className="font-bold text-slate-900 text-xs">{num.toFixed(2)}</span>
+    <div className="bg-slate-50 border border-slate-200 p-2 rounded-xl space-y-1 shadow-xs min-w-0">
+      <div className="flex justify-between items-center text-xs font-mono gap-1">
+        <span className="text-slate-600 font-medium text-[11px] truncate min-w-0">{label}</span>
+        <span className="font-bold text-slate-900 text-xs shrink-0 ml-1">{num.toFixed(2)}</span>
       </div>
       <div className="w-full bg-slate-200/70 rounded-full h-2.5 overflow-hidden border border-slate-200">
         <div
@@ -195,7 +195,7 @@ export const InspectorPage: React.FC = () => {
                 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
                 : 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
             }`}>
-              Engine: {results.retrievalPath === 'atlas-hybrid' ? 'Atlas Hybrid ($vectorSearch + $search)' : 'In-Memory Engine'}
+              Engine: {results.retrievalPath === 'atlas-hybrid' ? 'Hybrid Vector Retrieval' : 'In-Memory Engine'}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
@@ -365,7 +365,7 @@ export const InspectorPage: React.FC = () => {
                   </div>
 
                   {/* Large High-Contrast Score Bars */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-slate-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 pt-2 border-t border-slate-200 overflow-hidden">
                     <LargeScoreBar label="Similarity" value={m.similarity ?? 0} colorHex="#06b6d4" />
                     <LargeScoreBar label="Trust" value={m.trust ?? 1.0} colorHex="#10b981" />
                     <LargeScoreBar label="Confidence" value={m.confidence ?? 0.9} colorHex="#38bdf8" />
@@ -428,7 +428,7 @@ export const InspectorPage: React.FC = () => {
                   </div>
 
                   {/* Large High-Contrast Score Bars */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-slate-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 pt-2 border-t border-slate-200 overflow-hidden">
                     <LargeScoreBar label="Similarity" value={m.similarity ?? 0} colorHex="#06b6d4" />
                     <LargeScoreBar label="Trust" value={m.trust ?? 0} colorHex="#10b981" />
                     <LargeScoreBar label="Confidence" value={m.confidence ?? 0} colorHex="#38bdf8" />

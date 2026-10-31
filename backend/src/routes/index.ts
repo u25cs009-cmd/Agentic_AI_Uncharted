@@ -80,6 +80,11 @@ apiRouter.get('/meta', (req, res) => {
 
 apiRouter.get('/health', async (req, res) => {
   try {
+    const delay = parseInt(req.query.delay as string, 10);
+    if (!isNaN(delay) && delay > 0) {
+      await new Promise(resolve => setTimeout(resolve, Math.min(delay, 5000)));
+    }
+
     const repo = await getRepository();
     const isFallback = config.store === 'mongo' && repo.name !== 'MongoRepository';
     

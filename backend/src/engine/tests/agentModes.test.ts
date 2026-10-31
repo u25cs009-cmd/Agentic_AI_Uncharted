@@ -15,7 +15,7 @@ describe('ANCHOR Three Operating Modes (None, Naive, Governed)', () => {
 
     assert.equal(res.mode, 'none');
     assert.equal(res.retrieved_memories.length, 0);
-    assert.match(res.answer, /NONE MODE - NO MEMORY RETRIEVED/i);
+    assert.match(res.answer, /without access to system memory/i);
   });
 
   it('Naive mode blindly retrieves stale/unverified data without governance', async () => {

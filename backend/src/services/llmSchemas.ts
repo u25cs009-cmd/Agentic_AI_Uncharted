@@ -19,7 +19,7 @@ export const MemoryExtractionCandidateSchema = z.object({
   entities: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
   ttlHint: z.number().nullable().optional(),
-  envHint: z.record(z.any()).optional()
+  envHint: z.record(z.string(), z.any()).optional()
 });
 
 export const MemoryExtractionOutputSchema = z.object({

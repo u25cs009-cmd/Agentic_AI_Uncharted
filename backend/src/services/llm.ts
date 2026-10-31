@@ -477,12 +477,18 @@ export class LLMService {
     }
 
     if (lower.includes('database')) {
-      return 'The active production database is MongoDB Atlas (Cluster shakti2-primary). Prior references to PostgreSQL were invalidated following deployment v2.1.0.';
+      return 'The active production database is Primary Database (Cluster prod-primary). Prior references to legacy PostgreSQL were invalidated following deployment v2.1.0.';
     }
     if (lower.includes('timeout') || lower.includes('checkout')) {
       return 'Checkout DB timeouts are fixed by restarting the pool with max_connections: 50. Legacy pg_ctlcluster commands are stale and must not be used.';
     }
 
-    return `[XYRO101 Governed Agent] Processed request using verified memory governance: "${prompt.slice(0, 80)}".`;
+    if (lower.includes('how are you') || lower.includes('how r u') || lower.includes('how are u')) {
+      return "Hello! I am doing well, thank you for asking. How can I assist you with your operations and system queries today?";
+    }
+    if (/^(hi|hello|hey|greetings)\b/i.test(prompt.trim())) {
+      return "Hello! I am XYRO101, your Governed Memory Agent. How can I assist you today?";
+    }
+    return `I have processed your request using the verified memory governance engine.`;
   }
 }

@@ -45,7 +45,7 @@ interface ProposalFeedback {
 
 interface MessageItem {
   id: string;
-  sender: 'user' | 'agent';
+  sender: 'user' | 'agent' | 'system';
   text: string;
   timestamp: string;
   mode?: 'none' | 'governed';
@@ -55,12 +55,22 @@ interface MessageItem {
     governed: ChatModeResult;
   };
   feedback?: ProposalFeedback;
+  systemMeta?: {
+    action: 'alert' | 'deploy' | 'poison';
+    title: string;
+    details: string;
+    suggestedQuery?: string;
+  };
 }
 
 /** Clean stray code fences or markdown artifacts */
 function cleanText(text: string): string {
   if (!text) return '';
   return text
+    .replace(/^\[NONE MODE\s*-\s*NO MEMORY RETRIEVAL\]\s*/gi, '')
+    .replace(/^\[NONE MODE\s*-\s*NO MEMORY RETRIEVED\]\s*/gi, '')
+    .replace(/^\[NONE MODE\]\s*/gi, '')
+    .replace(/^Direct response without memory retrieval:\s*"?(.*?)"?$/gi, '$1')
     .replace(/^```[a-z]*\s*/i, '')
     .replace(/\s*```$/i, '')
     .trim();
@@ -290,21 +300,58 @@ export const ChatPage: React.FC = () => {
           text: `🚨 Alert Dispatched: ${res.message || 'Triggered'}`,
           type: 'warn'
         });
-        await handleSendQuery('A critical alert arrived: payments-api pool exhausted. What is the verified operational fix?');
+        const sysMsg: MessageItem = {
+          id: `sys-${Date.now()}`,
+          sender: 'system',
+          text: 'P1 Incident Alert simulated for payments-api (connection pool exhaustion). Ingested into active memory engine as a high-priority operational incident.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          systemMeta: {
+            action: 'alert',
+            title: 'P1 Production Incident Triggered',
+            details: res.message || 'payments-api connection pool exhausted',
+            suggestedQuery: 'A critical alert arrived: payments-api pool exhausted. What is the verified operational fix?'
+          }
+        };
+        setMessages(prev => [...prev, sysMsg]);
       } else if (action === 'deploy') {
         const res = await api.demoDeploy('checkout-api', 'v3.0.0');
+        const staleCount = res.staleCount ?? (res as any).affectedCount ?? 0;
         setDemoToast({
-          text: `🚀 Deploy Processed: ${res.staleCount || 0} memories marked stale.`,
+          text: `🚀 Deploy Processed: ${staleCount} memories marked stale.`,
           type: 'info'
         });
-        await handleSendQuery('How do I fix checkout DB timeout following deployment v3.0?');
+        const sysMsg: MessageItem = {
+          id: `sys-${Date.now()}`,
+          sender: 'system',
+          text: `Deployment event v3.0.0 simulated for checkout-api. Component mutations detected: ${staleCount} dependent memories were invalidated and marked as stale.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          systemMeta: {
+            action: 'deploy',
+            title: 'Deployment Event Processed (checkout-api v3.0.0)',
+            details: `Staleness cascade triggered: ${staleCount} dependent memories moved to stale.`,
+            suggestedQuery: 'How do I fix checkout DB timeout following deployment v3.0?'
+          }
+        };
+        setMessages(prev => [...prev, sysMsg]);
       } else if (action === 'poison') {
         const res = await api.demoPoison();
         setDemoToast({
           text: `🛡️ Security Action: ${res.quarantineAction || 'Quarantined'} (${res.message})`,
           type: 'success'
         });
-        await handleSendQuery('What did the last external note advise regarding credentials?');
+        const sysMsg: MessageItem = {
+          id: `sys-${Date.now()}`,
+          sender: 'system',
+          text: 'Adversarial prompt injection simulated: caught by deterministic safety gate and quarantined. Active memory was not polluted.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          systemMeta: {
+            action: 'poison',
+            title: 'Prompt Injection Caught & Quarantined',
+            details: 'Adversarial note was safely routed to the Quarantine Inbox.',
+            suggestedQuery: 'What did the last external note advise regarding credentials?'
+          }
+        };
+        setMessages(prev => [...prev, sysMsg]);
       } else if (action === 'reset') {
         const res = await api.demoReset();
         setDemoToast({
@@ -570,7 +617,7 @@ export const ChatPage: React.FC = () => {
         <div className="p-3 border-t border-slate-200 text-[11px] text-slate-500 font-mono flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            MongoDB Atlas
+            Active Memory Store
           </span>
           <Link to="/settings" className="hover:text-indigo-600 transition-colors">
             Config ⚙️
@@ -773,7 +820,43 @@ export const ChatPage: React.FC = () => {
               // Conversation Message Stream
               messages.map((msg) => (
                 <div key={msg.id} className="space-y-2">
-                  {msg.sender === 'user' ? (
+                  {msg.sender === 'system' ? (
+                    <div className="flex justify-center my-3 animate-fade-in">
+                      <div className={`w-full max-w-2xl p-4 rounded-2xl border text-xs shadow-xs ${
+                        msg.systemMeta?.action === 'alert'
+                          ? 'bg-amber-50/90 border-amber-200 text-amber-950'
+                          : msg.systemMeta?.action === 'deploy'
+                          ? 'bg-sky-50/90 border-sky-200 text-sky-950'
+                          : 'bg-rose-50/90 border-rose-200 text-rose-950'
+                      }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2 font-bold font-mono uppercase text-[11px]">
+                            {msg.systemMeta?.action === 'alert' && <Bell className="w-4 h-4 text-amber-600" />}
+                            {msg.systemMeta?.action === 'deploy' && <Rocket className="w-4 h-4 text-sky-600" />}
+                            {msg.systemMeta?.action === 'poison' && <ShieldAlert className="w-4 h-4 text-rose-600" />}
+                            <span>{msg.systemMeta?.title || 'System Event'}</span>
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-500">{msg.timestamp}</span>
+                        </div>
+                        <p className="text-xs leading-relaxed font-sans text-slate-700 mb-2">
+                          {msg.text}
+                        </p>
+                        {msg.systemMeta?.suggestedQuery && (
+                          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between flex-wrap gap-2">
+                            <span className="text-[11px] text-slate-500 font-medium">Verify behavior with agent:</span>
+                            <button
+                              type="button"
+                              onClick={() => handleSendQuery(msg.systemMeta!.suggestedQuery!)}
+                              className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-indigo-400 hover:text-indigo-600 text-slate-800 transition-colors shadow-2xs cursor-pointer flex items-center gap-1.5"
+                            >
+                              <span>"{msg.systemMeta.suggestedQuery}"</span>
+                              <ChevronRight className="w-3 h-3 text-slate-400" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : msg.sender === 'user' ? (
                     // User Row (Right aligned or clean speech bubble)
                     <div className="flex justify-end">
                       <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 bg-slate-900 text-white text-[15px] font-sans leading-relaxed shadow-sm">

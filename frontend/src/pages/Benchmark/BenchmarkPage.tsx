@@ -131,7 +131,7 @@ export const BenchmarkPage: React.FC = () => {
                 </span>
               )}
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                {lastExecuted ? 'Live Run' : 'Baseline Reference'}
+                {lastExecuted ? 'Evaluated Run' : 'Deterministic Baseline'}
               </span>
             </div>
             <p className="text-xs text-slate-600 mt-0.5">
@@ -152,8 +152,29 @@ export const BenchmarkPage: React.FC = () => {
           className="btn-primary flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide disabled:opacity-50 active:scale-95"
         >
           <Play className={`w-4 h-4 ${isRunning ? 'animate-spin' : ''}`} />
-          <span>{isRunning ? 'Executing 15 Scenarios Live...' : 'Run Benchmark Verification'}</span>
+          <span>{isRunning ? 'Evaluating 15 Scenarios...' : 'Run Benchmark Verification'}</span>
         </button>
+      </div>
+
+      
+      {/* Naive Baseline Reference & Provenance Note */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
+        <div className="space-y-0.5">
+          <span className="font-semibold text-slate-900 font-mono text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+            Naive Baseline Reference Definition:
+          </span>
+          <p className="text-slate-600 text-[11px] leading-relaxed">
+            Ungoverned vector retrieval using unweighted cosine similarity matching over raw embedding vectors. It lacks provenance verification, does not apply temporal recency decay, ignores deployment invalidations, and does not detect prompt injections or semantic contradictions.
+          </p>
+        </div>
+        {meta && (
+          <div className="shrink-0 flex items-center gap-2 text-[10px] font-mono text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-2xs">
+            <span>Store: <strong className="text-slate-900">{meta.store}</strong></span>
+            <span>•</span>
+            <span>Embeddings: <strong className="text-slate-900">{meta.embedProvider}</strong> ({meta.dimension}d)</span>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards Row */}

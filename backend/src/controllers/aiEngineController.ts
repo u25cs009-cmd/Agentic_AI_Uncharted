@@ -495,7 +495,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       const llmRes = await LLMService.complete(llmPrompt, {
         systemPrompt: 'You are an AI assistant with NO memory recall. Do not invent company-specific or personal internal facts.'
       });
-      answer = `[NONE MODE - NO MEMORY RETRIEVAL]\n${llmRes.content}`;
+      answer = llmRes.content;
       structuredAnswer = {
         diagnosis: 'General query without memory context',
         proposedFix: llmRes.content,

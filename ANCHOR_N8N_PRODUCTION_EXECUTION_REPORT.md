@@ -33,7 +33,7 @@ A complete static and architectural inspection of the four workflow definitions 
   - `POST https://agentic-ai-uncharted.onrender.com/api/retrieve`
   - `POST https://agentic-ai-uncharted.onrender.com/api/ingest`
   - `PATCH https://agentic-ai-uncharted.onrender.com/api/memories/{{ $json.target_memory_id }}`
-- **Authentication:** `x-internal-key: {{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}`
+- **Authentication:** `x-internal-key: {{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}`
 
 ### 2. `WF2_memory_retrieval.json`
 - **Trigger:** Webhook (`POST /webhook/memory-retrieve`)
@@ -43,7 +43,7 @@ A complete static and architectural inspection of the four workflow definitions 
   - `Google Gemini Model - Re-ranker` (`models/gemini-3.5-flash-lite`)
 - **Backend Endpoints Called:**
   - `POST https://agentic-ai-uncharted.onrender.com/api/retrieve`
-- **Authentication:** `x-internal-key: {{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}`
+- **Authentication:** `x-internal-key: {{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}`
 
 ### 3. `WF3_memory_management.json`
 - **Trigger:** Webhook (`POST /webhook/memory-manage`)
@@ -206,5 +206,5 @@ All 4 workflow definitions are **100% production-ready for n8n Cloud import**:
 2. In **Credentials**, ensure your Google Gemini API key is linked to the Gemini Model nodes.
 3. In **Settings $\to$ Environment Variables**, set:
    - `BACKEND_BASE_URL`: `https://agentic-ai-uncharted.onrender.com`
-   - `INTERNAL_API_KEY`: `shakti2_internal_key_for_n8n_webhooks`
+   - `INTERNAL_API_KEY`: `{{ $vars.ENGRAM_SHARED_SECRET }}`
 4. Toggle all 4 workflows to **Active**.
