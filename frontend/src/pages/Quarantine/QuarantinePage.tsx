@@ -50,7 +50,7 @@ export const QuarantinePage: React.FC = () => {
   const handleRelease = async (id: string) => {
     try {
       await api.releaseQuarantine(id);
-      setActionNotice(`Memory ${id} verified and released from quarantine to active memory!`);
+      setActionNotice(`quarantine_release logged: Memory ${id} verified and restored to active store`);
       setTimeout(() => setActionNotice(null), 4000);
       loadData();
     } catch (err: any) {
@@ -61,7 +61,7 @@ export const QuarantinePage: React.FC = () => {
   const handleReject = async (id: string) => {
     try {
       await api.rejectQuarantine(id);
-      setActionNotice(`Adversarial memory ${id} permanently purged & logged to security audit.`);
+      setActionNotice(`quarantine_reject logged: Memory ${id} permanently purged & recorded to security audit`);
       setTimeout(() => setActionNotice(null), 4000);
       loadData();
     } catch (err: any) {

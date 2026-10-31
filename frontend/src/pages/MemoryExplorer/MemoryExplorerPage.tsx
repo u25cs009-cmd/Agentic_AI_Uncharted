@@ -98,7 +98,7 @@ export const MemoryExplorerPage: React.FC = () => {
         if (selectedMemory?._id === id || selectedMemory?.id === id) {
           setSelectedMemory(null);
         }
-        setNotice(`Memory ${id} permanently deleted.`);
+        setNotice(`cascade_purge logged: Memory ${id} and derived records purged with tombstone.`);
         setTimeout(() => setNotice(null), 3000);
         loadMemories();
       } catch (err: any) {
