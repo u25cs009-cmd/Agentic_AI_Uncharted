@@ -44,7 +44,9 @@ export const TimelinePage: React.FC = () => {
     setLoading(true);
     try {
       const data = await api.getEvents();
-      setEvents(data);
+      setEvents(Array.isArray(data) ? data : []);
+    } catch {
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,9 @@ export const TimelinePage: React.FC = () => {
     setCurrentTimeTarget(isoDate);
     try {
       const snapshot = await api.getTimeTravelState(isoDate);
-      setHistoricalState(snapshot);
+      setHistoricalState(Array.isArray(snapshot) ? snapshot : []);
+    } catch {
+      setHistoricalState([]);
     } finally {
       setLoadingHistorical(false);
     }
@@ -66,8 +70,9 @@ export const TimelinePage: React.FC = () => {
     const unsubscribe = api.subscribeToEventStream(
       (newEvent) => {
         setEvents((prev) => {
-          if (prev.some((e) => e.id === newEvent.id)) return prev;
-          return [newEvent, ...prev];
+          const list = Array.isArray(prev) ? prev : [];
+          if (list.some((e) => e.id === newEvent.id)) return list;
+          return [newEvent, ...list];
         });
       },
       (err) => {
@@ -252,13 +257,13 @@ export const TimelinePage: React.FC = () => {
             <div className="p-8 text-center text-xs font-mono text-slate-500">
               Reconstructing historical state from append-only commit logs...
             </div>
-          ) : historicalState.length === 0 ? (
+          ) : (!Array.isArray(historicalState) || historicalState.length === 0) ? (
             <div className="p-8 text-center text-xs font-mono text-slate-500 bg-slate-950/60 rounded-xl border border-slate-800">
               No active memories existed at target timestamp ({new Date(currentTimeTarget).toLocaleString()}).
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-1">
-              {historicalState.map((m) => (
+              {(Array.isArray(historicalState) ? historicalState : []).map((m) => (
                 <div
                   key={m._id || m.id}
                   className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300 flex flex-col justify-between hover:border-slate-700 transition-colors"
@@ -297,11 +302,11 @@ export const TimelinePage: React.FC = () => {
             </span>
           </div>
           <span className="text-xs font-mono text-slate-400">
-            {events.length} Events Logged
+            {Array.isArray(events) ? events.length : 0} Events Logged
           </span>
         </div>
 
-        {events.length === 0 ? (
+        {(!Array.isArray(events) || events.length === 0) ? (
           <EmptyState
             icon={<Clock className="w-8 h-8 text-cyan-400" />}
             title="No events recorded yet"
@@ -309,7 +314,7 @@ export const TimelinePage: React.FC = () => {
           />
         ) : (
           <div className="relative border-l-2 border-slate-800 ml-4 pl-6 space-y-4">
-            {events.map((evt) => (
+            {(Array.isArray(events) ? events : []).map((evt) => (
               <div key={evt.id} className="relative group">
                 {/* Dot Icon on timeline line */}
                 <div className="absolute -left-[35px] top-0.5 w-7 h-7 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center shadow-md">
