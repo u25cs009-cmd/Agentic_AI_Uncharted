@@ -486,7 +486,7 @@ export const ChatPage: React.FC = () => {
         {targetMemoryId && (
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-medium">Was this fix effective?</span>
+              <span className="text-xs text-slate-500 font-medium">Was this response accurate?</span>
               {msg.feedback ? (
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-mono">
                   Feedback recorded: {msg.feedback.action} ({msg.feedback.delta >= 0 ? '+' : ''}{msg.feedback.delta.toFixed(2)})
