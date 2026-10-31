@@ -19,7 +19,7 @@ for (const envPath of potentialEnvPaths) {
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
-  store: (process.env.STORE || 'memory').toLowerCase() as 'memory' | 'mongo',
+  store: ((process.env.STORE || 'memory').toLowerCase().includes('mongo') ? 'mongo' : 'memory') as 'memory' | 'mongo',
   
   jwtSecret: process.env.JWT_SECRET || 'anchor_dev_jwt_secret_change_in_production_key_2026',
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
