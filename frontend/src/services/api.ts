@@ -863,7 +863,9 @@ export const api = {
   subscribeToEventStream(onEvent: (event: MemoryEvent) => void): () => void {
     let es: EventSource | null = null;
     try {
-      es = new EventSource(`${BASE_URL}/api/stream`);
+      const token = localStorage.getItem("anchor_token");
+      const streamUrl = token ? `${BASE_URL}/api/stream?token=${encodeURIComponent(token)}` : `${BASE_URL}/api/stream`;
+      es = new EventSource(streamUrl);
       es.onmessage = (e) => {
         try {
           const parsed = JSON.parse(e.data);

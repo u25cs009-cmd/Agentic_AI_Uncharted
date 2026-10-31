@@ -46,17 +46,23 @@ import {
   getBenchmarkResults
 } from '../controllers/benchmarkController.js';
 import { consolidateMemories } from '../controllers/lifecycleController.js';
-import { authenticateUser, requireAuth, requireInternalKey } from '../middleware/auth.js';
+import {
+  authenticateUser,
+  requireAuth,
+  requireWebhookSecret,
+  authenticateUserOrWebhook
+} from '../middleware/auth.js';
 import { config } from '../config/index.js';
 
 export const apiRouter = Router();
 
-// 1. Health check
+// 1. Health check (Public)
 apiRouter.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     system: 'ANCHOR AI Memory Engine Backend',
     store_mode: config.store,
+    embed_provider: config.embedProvider,
     timestamp: new Date().toISOString(),
     uptime_seconds: Math.floor(process.uptime())
   });
@@ -72,48 +78,51 @@ apiRouter.patch('/auth/profile', requireAuth, updateProfile);
 apiRouter.post('/auth/change-password', requireAuth, changePassword);
 apiRouter.post('/auth/forgot-password', forgotPassword);
 apiRouter.post('/auth/reset-password', resetPassword);
-apiRouter.get('/export', authenticateUser, exportData);
+apiRouter.get('/export', requireAuth, exportData);
 apiRouter.delete('/account', requireAuth, deleteAccount);
 
-// 3. User Conversations & Chat Sessions
-apiRouter.get('/conversations', authenticateUser, listConversations);
-apiRouter.post('/conversations', authenticateUser, createConversation);
-apiRouter.get('/conversations/:id', authenticateUser, getConversation);
-apiRouter.post('/conversations/:id/messages', authenticateUser, appendMessage);
-apiRouter.delete('/conversations/:id', authenticateUser, deleteConversation);
+// 3. User Conversations & Chat Sessions (User Scoped)
+apiRouter.get('/conversations', requireAuth, listConversations);
+apiRouter.post('/conversations', requireAuth, createConversation);
+apiRouter.get('/conversations/:id', requireAuth, getConversation);
+apiRouter.post('/conversations/:id/messages', requireAuth, appendMessage);
+apiRouter.delete('/conversations/:id', requireAuth, deleteConversation);
 
-// 4. Real-Time Server-Sent Events (SSE)
-apiRouter.get('/stream', sseStream);
+// 4. Real-Time Server-Sent Events (SSE) (Requires valid JWT or Webhook Secret)
+apiRouter.get('/stream', authenticateUserOrWebhook, sseStream);
 
-// 5. Memory CRUD & Audit Trail
-apiRouter.get('/memories', authenticateUser, getMemories);
-apiRouter.get('/memories/events', authenticateUser, getEvents);
-apiRouter.get('/memories/:id', authenticateUser, getMemoryById);
-apiRouter.patch('/memories/:id', authenticateUser, updateMemory);
-apiRouter.delete('/memories/:id', authenticateUser, deleteMemory);
-apiRouter.get('/memories/:id/events', authenticateUser, getMemoryEvents);
+// 5. Memory CRUD & Audit Trail (User/Workspace Scoped)
+apiRouter.get('/memories', requireAuth, getMemories);
+apiRouter.get('/memories/events', requireAuth, getEvents);
+apiRouter.get('/memories/:id', requireAuth, getMemoryById);
+apiRouter.patch('/memories/:id', requireAuth, updateMemory);
+apiRouter.delete('/memories/:id', requireAuth, deleteMemory);
+apiRouter.get('/memories/:id/events', requireAuth, getMemoryEvents);
 
-// 6. Quarantine Management
-apiRouter.get('/quarantine', authenticateUser, getQuarantinedMemories);
-apiRouter.post('/quarantine/:id/release', authenticateUser, releaseQuarantine);
-apiRouter.post('/quarantine/:id/reject', authenticateUser, rejectQuarantine);
+// 6. Quarantine Management (User/Workspace Scoped)
+apiRouter.get('/quarantine', requireAuth, getQuarantinedMemories);
+apiRouter.post('/quarantine/:id/release', requireAuth, releaseQuarantine);
+apiRouter.post('/quarantine/:id/reject', requireAuth, rejectQuarantine);
 
-// 7. External Event Triggers (n8n & Deploy hooks)
-apiRouter.post('/events/deploy', requireInternalKey, handleDeployEvent);
-apiRouter.post('/outcomes', requireInternalKey, handleOutcomeFeedback);
+// 7. External Event Triggers & Webhooks (Protected by x-engram-secret)
+apiRouter.post('/events/deploy', requireWebhookSecret, handleDeployEvent);
+apiRouter.post('/hooks/deploy', requireWebhookSecret, handleDeployEvent);
+apiRouter.post('/outcomes', requireWebhookSecret, handleOutcomeFeedback);
+apiRouter.post('/hooks/outcome', requireWebhookSecret, handleOutcomeFeedback);
+apiRouter.post('/agent/triage', requireWebhookSecret, agentTriage);
+apiRouter.post('/hooks/alert', requireWebhookSecret, agentTriage);
 
-// 8. Temporal Time Travel
-apiRouter.get('/timetravel', authenticateUser, timeTravel);
+// 8. Temporal Time Travel (User/Workspace Scoped)
+apiRouter.get('/timetravel', requireAuth, timeTravel);
 
-// 9. AI Engine Interaction Routes
-apiRouter.post('/chat', authenticateUser, chat);
-apiRouter.post('/ingest', authenticateUser, ingestObservation);
-apiRouter.post('/retrieve', authenticateUser, retrieveMemories);
-apiRouter.post('/agent/triage', requireInternalKey, agentTriage);
+// 9. AI Engine Interaction Routes (User JWT or External Automation Secret)
+apiRouter.post('/chat', authenticateUserOrWebhook, chat);
+apiRouter.post('/ingest', authenticateUserOrWebhook, ingestObservation);
+apiRouter.post('/retrieve', authenticateUserOrWebhook, retrieveMemories);
 
 // 10. 15-Scenario Empirical Benchmark Matrix
-apiRouter.post('/benchmark/run', authenticateUser, runBenchmark);
-apiRouter.get('/benchmark/results', authenticateUser, getBenchmarkResults);
+apiRouter.post('/benchmark/run', requireAuth, runBenchmark);
+apiRouter.get('/benchmark/results', requireAuth, getBenchmarkResults);
 
 // 11. Automated Memory Lifecycle & Consolidation (W4)
-apiRouter.post('/lifecycle/consolidate', authenticateUser, consolidateMemories);
+apiRouter.post('/lifecycle/consolidate', authenticateUserOrWebhook, consolidateMemories);

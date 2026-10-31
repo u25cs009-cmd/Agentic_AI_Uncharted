@@ -14,6 +14,11 @@ import { Repository } from './types.js';
 import { INITIAL_MEMORIES, INITIAL_EVENTS } from '../data/seedData.js';
 import { generateEmbedding } from '../services/embedding.js';
 import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
+import {
+  ScopedAccessContext,
+  filterScopedInMemoryMemories,
+  filterScopedInMemoryEvents
+} from './scopedAccess.js';
 import { logger } from '../utils/logger.js';
 
 export class InMemoryRepository implements Repository {
@@ -33,11 +38,39 @@ export class InMemoryRepository implements Repository {
 
   async init(): Promise<void> {
     logger.info('Initializing InMemoryRepository with seed memories and events...');
-    // Load initial seeds
-    INITIAL_MEMORIES.forEach(m => {
-      this.memories.set(m._id, { ...m });
-    });
-    this.events = [...INITIAL_EVENTS];
+    this.memories.clear();
+    this.events = [];
+    this.users.clear();
+    this.conversations.clear();
+
+    // Populate initial memories with embeddings and normalized scoping
+    for (const mem of INITIAL_MEMORIES) {
+      const memEmbedding = mem.embedding || generateEmbedding(mem.content);
+      const ws = mem.workspaceId || mem.workspace || 'ws-primary';
+      const own = mem.ownerId || mem.owner || 'usr-shakti2';
+      const vis = mem.visibility || 'workspace';
+      this.memories.set(mem._id, {
+        ...mem,
+        owner: own,
+        ownerId: own,
+        workspace: ws,
+        workspaceId: ws,
+        visibility: vis,
+        embedding: memEmbedding
+      });
+    }
+
+    // Populate initial events with scoping
+    for (const evt of INITIAL_EVENTS) {
+      this.events.push({
+        ...evt,
+        workspaceId: (evt as any).workspaceId || 'ws-primary',
+        workspace: (evt as any).workspace || 'ws-primary',
+        ownerId: (evt as any).ownerId || 'usr-shakti2',
+        owner: (evt as any).owner || 'usr-shakti2',
+        visibility: (evt as any).visibility || 'workspace'
+      });
+    }
 
     // Seed default admin user
     const defaultUser: User = {
@@ -45,40 +78,10 @@ export class InMemoryRepository implements Repository {
       email: 'team@shakti2.io',
       name: 'Team Shakti-2 Lead',
       passwordHash: '$2a$10$wN1iN6aY2n648gQ4yC1P.u53fK76k8u30/4p9v/t/Vf54b4/j9QfK', // bcrypt hash for 'password123'
-      authProviders: ['local'],
-      workspace: 'ws-primary',
-      createdAt: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      isActive: true,
-      lastLoginAt: new Date().toISOString()
-    };
-    this.users.set(defaultUser.id, defaultUser);
-
-    // Seed sample conversation for the default user
-    const defaultConvo: Conversation = {
-      id: 'conv-sample-1',
-      userId: defaultUser.id,
-      title: 'Database & Architecture Overview',
-      messages: [
-        {
-          id: 'msg-1',
-          sender: 'user',
-          text: 'Which database are we currently using in production?',
-          timestamp: '10:00 AM',
-          mode: 'governed'
-        },
-        {
-          id: 'msg-2',
-          sender: 'agent',
-          text: 'The primary production database is MongoDB Atlas (cluster shakti2-primary), configured via Terraform Deploy.',
-          timestamp: '10:00 AM',
-          mode: 'governed'
-        }
-      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    this.conversations.set(defaultConvo.id, defaultConvo);
+    this.users.set(defaultUser.id, defaultUser);
 
     logger.info({ memoryCount: this.memories.size, eventCount: this.events.length }, 'InMemoryRepository initialized');
   }
@@ -91,10 +94,19 @@ export class InMemoryRepository implements Repository {
 
   async saveMemory(memory: Memory): Promise<Memory> {
     const memId = memory._id || memory.id || `mem-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const ws = memory.workspaceId || memory.workspace || 'ws-primary';
+    const own = memory.ownerId || memory.owner || 'usr-shakti2';
+    const vis = memory.visibility || 'workspace';
+
     const fullMemory: Memory = {
       ...memory,
       _id: memId,
       id: memId,
+      owner: own,
+      ownerId: own,
+      workspace: ws,
+      workspaceId: ws,
+      visibility: vis,
       created_at: memory.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -105,49 +117,25 @@ export class InMemoryRepository implements Repository {
   async getMemoryById(id: string, owner?: string, workspace?: string): Promise<Memory | null> {
     const mem = this.memories.get(id);
     if (!mem) return null;
-    if (owner && mem.owner !== owner) return null;
-    if (workspace && mem.workspace !== workspace) return null;
+
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const scoped = filterScopedInMemoryMemories([mem], ctx);
+    if (scoped.length === 0) return null;
+
     return { ...mem };
   }
 
   async findMemories(filter?: MemoryFilter): Promise<Memory[]> {
-    let result = Array.from(this.memories.values());
+    const ctx: ScopedAccessContext = {
+      userId: filter?.ownerId || filter?.owner || '',
+      workspaceId: filter?.workspaceId || filter?.workspace || 'ws-primary'
+    };
 
-    if (filter?.owner) {
-      result = result.filter(m => m.owner === filter.owner);
-    }
-    if (filter?.workspace) {
-      result = result.filter(m => m.workspace === filter.workspace);
-    }
-    if (filter?.status && filter.status !== 'all') {
-      result = result.filter(m => m.status === filter.status);
-    }
-    if (filter?.type && filter.type !== 'all') {
-      result = result.filter(m => m.type === filter.type);
-    }
-    if (filter?.tier && filter.tier !== 'all') {
-      result = result.filter(m => m.tier === filter.tier);
-    }
-    if (filter?.source && filter.source !== 'all') {
-      result = result.filter(m => m.source?.kind === filter.source);
-    }
-    if (filter?.attribute_key) {
-      result = result.filter(m => m.attribute_key === filter.attribute_key);
-    }
-    if (filter?.entity) {
-      const ent = filter.entity.toLowerCase();
-      result = result.filter(m => m.entities.some(e => e.toLowerCase() === ent));
-    }
-    if (filter?.search) {
-      const q = filter.search.toLowerCase();
-      result = result.filter(m =>
-        m.content.toLowerCase().includes(q) ||
-        m.attribute_key.toLowerCase().includes(q) ||
-        m.value.toLowerCase().includes(q) ||
-        m.entities.some(e => e.toLowerCase().includes(q))
-      );
-    }
-
+    const all = Array.from(this.memories.values());
+    const result = filterScopedInMemoryMemories(all, ctx, filter);
     return result.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   }
 
@@ -177,9 +165,15 @@ export class InMemoryRepository implements Repository {
 
   async deleteDerivedMemories(parentId: string, owner?: string, workspace?: string): Promise<number> {
     let deletedCount = 0;
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+
     for (const [id, mem] of this.memories.entries()) {
       if (mem.derived_from && mem.derived_from.includes(parentId)) {
-        if (!owner || mem.owner === owner) {
+        const allowed = filterScopedInMemoryMemories([mem], ctx);
+        if (allowed.length > 0) {
           this.memories.delete(id);
           deletedCount++;
         }
@@ -191,9 +185,18 @@ export class InMemoryRepository implements Repository {
   // --- Events ---
 
   async appendEvent(event: MemoryEvent): Promise<void> {
+    const ws = event.workspaceId || event.workspace || 'ws-primary';
+    const own = event.ownerId || event.owner || 'usr-shakti2';
+    const vis = event.visibility || 'workspace';
+
     const fullEvent: MemoryEvent = {
       ...event,
       id: event.id || `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      workspaceId: ws,
+      workspace: ws,
+      ownerId: own,
+      owner: own,
+      visibility: vis,
       timestamp: event.timestamp || new Date().toISOString()
     };
     this.events.unshift(fullEvent);
@@ -201,23 +204,20 @@ export class InMemoryRepository implements Repository {
   }
 
   async getEvents(limit: number = 100, owner?: string, workspace?: string): Promise<MemoryEvent[]> {
-    let list = [...this.events];
-    if (owner || workspace) {
-      list = list.filter(e => {
-        const mem = this.memories.get(e.memory_id);
-        if (!mem) return true;
-        if (owner && mem.owner !== owner) return false;
-        if (workspace && mem.workspace !== workspace) return false;
-        return true;
-      });
-    }
-    return list.slice(0, limit);
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const scoped = filterScopedInMemoryEvents(this.events, ctx);
+    return scoped.slice(0, limit);
   }
 
   async getEventsForMemory(memoryId: string, owner?: string, workspace?: string): Promise<MemoryEvent[]> {
-    const mem = await this.getMemoryById(memoryId, owner, workspace);
-    if (!mem) return [];
-    return this.events.filter(e => e.memory_id === memoryId);
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    return filterScopedInMemoryEvents(this.events, ctx, memoryId);
   }
 
   // --- Search (Vector & Keyword) ---
@@ -252,11 +252,11 @@ export class InMemoryRepository implements Repository {
   async searchKeyword(query: string, topK: number = 20, filter?: MemoryFilter): Promise<ScoredMemory[]> {
     const candidateMemories = await this.findMemories(filter);
     const scored: ScoredMemory[] = [];
-    const qTokens = query.toLowerCase().split(/\W+/).filter(t => t.length > 2);
+    const qTokens = query.toLowerCase().split(/\W+/).filter((t) => t.length > 2);
 
     for (const mem of candidateMemories) {
       const contentTokens = mem.content.toLowerCase().split(/\W+/);
-      const matches = qTokens.filter(t => contentTokens.includes(t));
+      const matches = qTokens.filter((t) => contentTokens.includes(t));
       const keywordOverlap = qTokens.length > 0 ? matches.length / qTokens.length : 0.1;
       const similarity = Math.min(0.98, Math.max(0.1, keywordOverlap));
 
@@ -283,7 +283,7 @@ export class InMemoryRepository implements Repository {
 
   async getOutcomes(memoryId?: string): Promise<Outcome[]> {
     if (memoryId) {
-      return this.outcomes.filter(o => o.memory_id === memoryId);
+      return this.outcomes.filter((o) => o.memory_id === memoryId);
     }
     return [...this.outcomes];
   }
@@ -310,8 +310,8 @@ export class InMemoryRepository implements Repository {
     const compLower = componentName.toLowerCase();
     const affected: Memory[] = [];
     for (const mem of this.memories.values()) {
-      const matchesDep = mem.depends_on.some(d => d.toLowerCase() === compLower);
-      const matchesEnt = mem.entities.some(e => e.toLowerCase() === compLower);
+      const matchesDep = mem.depends_on.some((d) => d.toLowerCase() === compLower);
+      const matchesEnt = mem.entities.some((e) => e.toLowerCase() === compLower);
       if (matchesDep || matchesEnt) {
         affected.push({ ...mem });
       }
@@ -325,18 +325,15 @@ export class InMemoryRepository implements Repository {
     const now = new Date().toISOString();
     const updated: User = {
       ...user,
-      createdAt: user.createdAt || user.created_at || now,
-      created_at: user.created_at || user.createdAt || now,
-      updatedAt: now,
-      authProviders: user.authProviders || ['local'],
-      isActive: user.isActive !== undefined ? user.isActive : true
+      createdAt: user.createdAt || now,
+      updatedAt: now
     };
     this.users.set(user.id, updated);
     return { ...updated };
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    const found = Array.from(this.users.values()).find(u => u.email.toLowerCase() === email.toLowerCase());
+    const found = Array.from(this.users.values()).find((u) => u.email.toLowerCase() === email.toLowerCase());
     return found ? { ...found } : null;
   }
 
@@ -346,7 +343,7 @@ export class InMemoryRepository implements Repository {
   }
 
   async findUserByGoogleId(googleId: string): Promise<User | null> {
-    const found = Array.from(this.users.values()).find(u => u.googleId === googleId);
+    const found = Array.from(this.users.values()).find((u) => u.googleId === googleId);
     return found ? { ...found } : null;
   }
 
@@ -364,7 +361,7 @@ export class InMemoryRepository implements Repository {
 
   async deleteUserAccount(userId: string): Promise<boolean> {
     for (const [id, mem] of this.memories.entries()) {
-      if (mem.owner === userId) {
+      if (mem.owner === userId || mem.ownerId === userId) {
         this.memories.delete(id);
       }
     }
@@ -393,7 +390,7 @@ export class InMemoryRepository implements Repository {
   }
 
   async findConversationsByUser(userId: string): Promise<Conversation[]> {
-    const convos = Array.from(this.conversations.values()).filter(c => c.userId === userId);
+    const convos = Array.from(this.conversations.values()).filter((c) => c.userId === userId);
     return convos.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }
 

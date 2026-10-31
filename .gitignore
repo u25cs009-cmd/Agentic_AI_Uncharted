@@ -41,12 +41,14 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variable files
+# dotenv environment variable files (NEVER commit secrets)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+*.env
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
 
 # Stores VSCode versions used for testing
 .vscode-test
@@ -60,7 +62,6 @@ out/
 # OS metadata
 .DS_Store
 Thumbs.db
-
 
 # Python cache
 __pycache__/

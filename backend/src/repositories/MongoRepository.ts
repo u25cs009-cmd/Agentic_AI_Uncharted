@@ -16,6 +16,11 @@ import {
 import { Repository } from './types.js';
 import { generateEmbedding } from '../services/embedding.js';
 import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
+import {
+  ScopedAccessContext,
+  buildScopedMongoMemoryFilter,
+  buildScopedMongoEventFilter
+} from './scopedAccess.js';
 import { logger } from '../utils/logger.js';
 
 export class MongoRepository implements Repository {
@@ -56,10 +61,13 @@ export class MongoRepository implements Repository {
       this.conversationsCol = this.db.collection<Conversation>('conversations');
 
       // Create compound & attribute indexes
+      await this.memoriesCol.createIndex({ workspaceId: 1, status: 1, type: 1 });
       await this.memoriesCol.createIndex({ owner: 1, workspace: 1, status: 1 });
       await this.memoriesCol.createIndex({ attribute_key: 1 });
+      await this.memoriesCol.createIndex({ purgeAt: 1 }, { expireAfterSeconds: 0 });
       await this.memoriesCol.createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 });
       await this.eventsCol.createIndex({ memory_id: 1, timestamp: -1 });
+      await this.eventsCol.createIndex({ workspaceId: 1, timestamp: -1 });
       await this.conversationsCol.createIndex({ userId: 1, updatedAt: -1 });
 
       logger.info('MongoDB Atlas indexes verified successfully.');
@@ -67,8 +75,27 @@ export class MongoRepository implements Repository {
       const memCount = await this.memoriesCol.countDocuments();
       if (memCount === 0) {
         logger.info('Empty MongoDB database detected. Auto-seeding initial memories and events...');
-        await this.memoriesCol.insertMany(INITIAL_MEMORIES.map(m => ({ ...m, embedding: m.embedding || generateEmbedding(m.content) })) as any);
-        await this.eventsCol.insertMany(INITIAL_EVENTS.map(e => ({ ...e })) as any);
+        await this.memoriesCol.insertMany(INITIAL_MEMORIES.map(m => {
+          const ws = m.workspaceId || m.workspace || 'ws-primary';
+          const own = m.ownerId || m.owner || 'usr-shakti2';
+          return {
+            ...m,
+            owner: own,
+            ownerId: own,
+            workspace: ws,
+            workspaceId: ws,
+            visibility: m.visibility || 'workspace',
+            embedding: m.embedding || generateEmbedding(m.content)
+          };
+        }) as any);
+        await this.eventsCol.insertMany(INITIAL_EVENTS.map(e => ({
+          ...e,
+          workspaceId: (e as any).workspaceId || 'ws-primary',
+          workspace: (e as any).workspace || 'ws-primary',
+          ownerId: (e as any).ownerId || 'usr-shakti2',
+          owner: (e as any).owner || 'usr-shakti2',
+          visibility: (e as any).visibility || 'workspace'
+        })) as any);
       }
       this.initChangeStreamOrPolling();
     } catch (err) {
@@ -123,10 +150,19 @@ export class MongoRepository implements Repository {
 
   async saveMemory(memory: Memory): Promise<Memory> {
     const memId = memory._id || memory.id || `mem-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const ws = memory.workspaceId || memory.workspace || 'ws-primary';
+    const own = memory.ownerId || memory.owner || 'usr-shakti2';
+    const vis = memory.visibility || 'workspace';
+
     const doc: Memory = {
       ...memory,
       _id: memId,
       id: memId,
+      owner: own,
+      ownerId: own,
+      workspace: ws,
+      workspaceId: ws,
+      visibility: vis,
       created_at: memory.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -135,29 +171,25 @@ export class MongoRepository implements Repository {
   }
 
   async getMemoryById(id: string, owner?: string, workspace?: string): Promise<Memory | null> {
-    const query: any = { _id: id };
-    if (owner) query.owner = owner;
-    if (workspace) query.workspace = workspace;
-    return await this.memoriesCol.findOne(query);
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const scopedFilter = buildScopedMongoMemoryFilter(ctx);
+    return await this.memoriesCol.findOne({
+      $and: [
+        { $or: [{ _id: id }, { id }] },
+        scopedFilter
+      ]
+    });
   }
 
   async findMemories(filter?: MemoryFilter): Promise<Memory[]> {
-    const query: any = {};
-    if (filter?.owner) query.owner = filter.owner;
-    if (filter?.workspace) query.workspace = filter.workspace;
-    if (filter?.status && filter.status !== 'all') query.status = filter.status;
-    if (filter?.type && filter.type !== 'all') query.type = filter.type;
-    if (filter?.tier && filter.tier !== 'all') query.tier = filter.tier;
-    if (filter?.source && filter.source !== 'all') query['source.kind'] = filter.source;
-    if (filter?.attribute_key) query.attribute_key = filter.attribute_key;
-    if (filter?.entity) query.entities = filter.entity;
-    if (filter?.search) {
-      query.$or = [
-        { content: { $regex: filter.search, $options: 'i' } },
-        { attribute_key: { $regex: filter.search, $options: 'i' } },
-        { entities: { $regex: filter.search, $options: 'i' } }
-      ];
-    }
+    const ctx: ScopedAccessContext = {
+      userId: filter?.ownerId || filter?.owner || '',
+      workspaceId: filter?.workspaceId || filter?.workspace || 'ws-primary'
+    };
+    const query = buildScopedMongoMemoryFilter(ctx, filter);
     return await this.memoriesCol.find(query).sort({ created_at: -1 }).toArray();
   }
 
@@ -167,9 +199,16 @@ export class MongoRepository implements Repository {
     owner?: string,
     workspace?: string
   ): Promise<Memory | null> {
-    const query: any = { _id: id };
-    if (owner) query.owner = owner;
-    if (workspace) query.workspace = workspace;
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const query = {
+      $and: [
+        { $or: [{ _id: id }, { id }] },
+        buildScopedMongoMemoryFilter(ctx)
+      ]
+    };
 
     const res = await this.memoriesCol.findOneAndUpdate(
       query,
@@ -180,17 +219,31 @@ export class MongoRepository implements Repository {
   }
 
   async deleteMemory(id: string, owner?: string, workspace?: string): Promise<boolean> {
-    const query: any = { _id: id };
-    if (owner) query.owner = owner;
-    if (workspace) query.workspace = workspace;
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const query = {
+      $and: [
+        { $or: [{ _id: id }, { id }] },
+        buildScopedMongoMemoryFilter(ctx)
+      ]
+    };
     const res = await this.memoriesCol.deleteOne(query);
     return res.deletedCount > 0;
   }
 
   async deleteDerivedMemories(parentId: string, owner?: string, workspace?: string): Promise<number> {
-    const query: any = { derived_from: parentId };
-    if (owner) query.owner = owner;
-    if (workspace) query.workspace = workspace;
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const query = {
+      $and: [
+        { derived_from: parentId },
+        buildScopedMongoMemoryFilter(ctx)
+      ]
+    };
     const res = await this.memoriesCol.deleteMany(query);
     return res.deletedCount;
   }
@@ -198,9 +251,18 @@ export class MongoRepository implements Repository {
   // --- Events ---
 
   async appendEvent(event: MemoryEvent): Promise<void> {
+    const ws = event.workspaceId || event.workspace || 'ws-primary';
+    const own = event.ownerId || event.owner || 'usr-shakti2';
+    const vis = event.visibility || 'workspace';
+
     const fullEvent: MemoryEvent = {
       ...event,
       id: event.id || `evt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      workspaceId: ws,
+      workspace: ws,
+      ownerId: own,
+      owner: own,
+      visibility: vis,
       timestamp: event.timestamp || new Date().toISOString()
     };
     await this.eventsCol.insertOne(fullEvent as any);
@@ -208,11 +270,21 @@ export class MongoRepository implements Repository {
   }
 
   async getEvents(limit: number = 100, owner?: string, workspace?: string): Promise<MemoryEvent[]> {
-    return await this.eventsCol.find().sort({ timestamp: -1 }).limit(limit).toArray();
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const query = buildScopedMongoEventFilter(ctx);
+    return await this.eventsCol.find(query).sort({ timestamp: -1 }).limit(limit).toArray();
   }
 
   async getEventsForMemory(memoryId: string, owner?: string, workspace?: string): Promise<MemoryEvent[]> {
-    return await this.eventsCol.find({ memory_id: memoryId }).sort({ timestamp: -1 }).toArray();
+    const ctx: ScopedAccessContext = {
+      userId: owner || '',
+      workspaceId: workspace || 'ws-primary'
+    };
+    const query = buildScopedMongoEventFilter(ctx, memoryId);
+    return await this.eventsCol.find(query).sort({ timestamp: -1 }).toArray();
   }
 
   // --- Search ---
@@ -336,7 +408,7 @@ export class MongoRepository implements Repository {
   }
 
   async deleteUserAccount(userId: string): Promise<boolean> {
-    await this.memoriesCol.deleteMany({ owner: userId });
+    await this.memoriesCol.deleteMany({ $or: [{ owner: userId }, { ownerId: userId }] });
     await this.conversationsCol.deleteMany({ userId });
     const res = await this.usersCol.deleteOne({ id: userId });
     return res.deletedCount > 0;
