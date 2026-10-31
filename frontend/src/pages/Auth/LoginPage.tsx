@@ -55,7 +55,18 @@ export const LoginPage: React.FC = () => {
           (window as any).google.accounts.id.initialize({
             client_id: googleClientId,
             callback: handleGoogleCredentialResponse,
+            auto_select: false,
           });
+          const container = document.getElementById('google-btn-container');
+          if (container) {
+            (window as any).google.accounts.id.renderButton(container, {
+              theme: 'outline',
+              size: 'large',
+              width: 350,
+              text: 'continue_with',
+              shape: 'rectangular'
+            });
+          }
         }
       };
       document.body.appendChild(script);
@@ -240,6 +251,7 @@ export const LoginPage: React.FC = () => {
         )}
 
         {/* Google Sign In Button */}
+        <div id="google-btn-container" className="w-full flex justify-center mb-1"></div>
         <button
           type="button"
           onClick={handleGoogleClick}
