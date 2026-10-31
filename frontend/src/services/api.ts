@@ -953,36 +953,65 @@ export const api = {
     return { success: true, affectedCount: count };
   },
 
-  // SSE Stream Support
-  subscribeToEventStream(onEvent: (event: MemoryEvent) => void): () => void {
+  // SSE Stream Support with Exponential Backoff and Error Termination
+  subscribeToEventStream(
+    onEvent: (event: MemoryEvent) => void,
+    onError?: (errMessage: string) => void
+  ): () => void {
     let es: EventSource | null = null;
-    try {
-      const token = localStorage.getItem("anchor_token");
-      const streamUrl = token ? `${BASE_URL}/api/stream?token=${encodeURIComponent(token)}` : `${BASE_URL}/api/stream`;
-      es = new EventSource(streamUrl);
-      es.onmessage = (e) => {
-        try {
-          const parsed = JSON.parse(e.data);
-          onEvent(parsed);
-        } catch (err) {}
-      };
-      es.onerror = () => {
-        if (es) {
-          es.close();
-          es = null;
-        }
-      };
-    } catch (e) {}
+    let retryTimeout: any = null;
+    let retryCount = 0;
+    const maxRetries = 5;
+    let backoffDelay = 2000;
+    let isClosed = false;
 
-    const interval = setInterval(() => {
-      if (Math.random() > 0.75 && eventStore.length > 0) {
-        onEvent(eventStore[0]);
+    function connect() {
+      if (isClosed) return;
+      const token = localStorage.getItem("anchor_token");
+      if (!token) {
+        onError?.("Session expired, log in again.");
+        return;
       }
-    }, 12000);
+      const streamUrl = `${BASE_URL}/api/stream?token=${encodeURIComponent(token)}`;
+      try {
+        es = new EventSource(streamUrl);
+        es.onmessage = (e) => {
+          try {
+            retryCount = 0;
+            backoffDelay = 2000;
+            const parsed = JSON.parse(e.data);
+            onEvent(parsed);
+          } catch {}
+        };
+        es.onerror = () => {
+          if (es) {
+            es.close();
+            es = null;
+          }
+          if (isClosed) return;
+
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            onError?.("Session expired, log in again.");
+            return;
+          }
+
+          retryTimeout = setTimeout(() => {
+            backoffDelay = Math.min(30000, backoffDelay * 1.5);
+            connect();
+          }, backoffDelay);
+        };
+      } catch (err: any) {
+        onError?.(err?.message || "Stream connection failed");
+      }
+    }
+
+    connect();
 
     return () => {
+      isClosed = true;
       if (es) es.close();
-      clearInterval(interval);
+      if (retryTimeout) clearTimeout(retryTimeout);
     };
   },
 
