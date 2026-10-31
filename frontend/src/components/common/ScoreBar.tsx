@@ -13,7 +13,8 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
   color = 'cyan',
   showPercentage = false,
 }) => {
-  const percentage = Math.min(100, Math.max(0, Math.round(value * 100)));
+  const num = typeof value === 'number' && !isNaN(value) ? value : 0;
+  const percentage = Math.min(100, Math.max(0, Math.round(num * 100)));
 
   const colorStyles = {
     indigo: 'bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_8px_rgba(99,102,241,0.4)]',
@@ -29,7 +30,7 @@ export const ScoreBar: React.FC<ScoreBarProps> = ({
       <div className="flex justify-between items-center mb-1">
         <span className="text-slate-400 font-medium">{label}</span>
         <span className="text-white font-mono font-semibold">
-          {showPercentage ? `${percentage}%` : value.toFixed(2)}
+          {showPercentage ? `${percentage}%` : num.toFixed(2)}
         </span>
       </div>
       <div className="h-1.5 w-full bg-slate-900/80 rounded-full overflow-hidden border border-slate-800">
