@@ -8,17 +8,13 @@ let hasCheckedBackend = false;
 
 // Check backend health silently to determine live vs demo mode
 export async function checkBackendConnection(): Promise<boolean> {
-  if (!BASE_URL) {
-    isLiveBackend = false;
-    hasCheckedBackend = true;
-    return false;
-  }
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1500);
-    const res = await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
+    const healthUrl = BASE_URL ? `${BASE_URL}/api/health` : '/api/health';
+    const res = await fetch(healthUrl, { signal: controller.signal });
     clearTimeout(timeoutId);
-    isLiveBackend = res.ok;
+    isLiveBackend = res.ok && (res.headers.get('content-type')?.includes('application/json') ?? false);
   } catch {
     isLiveBackend = false;
   }
@@ -31,12 +27,11 @@ async function safeFetch(url: string, options?: RequestInit): Promise<Response |
   if (!hasCheckedBackend) {
     await checkBackendConnection();
   }
-  if (!isLiveBackend && !BASE_URL) {
+  if (!isLiveBackend) {
     return null;
   }
   try {
     const res = await fetch(url, options);
-    if (!isLiveBackend && res.ok) isLiveBackend = true;
     return res;
   } catch {
     isLiveBackend = false;
@@ -93,178 +88,259 @@ export const api = {
 
   // Authentication & Profile Services
   async login(email: string, password?: string): Promise<{ token: string; user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to sign in. Please verify your credentials.');
-      }
-      localStorage.setItem('anchor_token', data.token);
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      if (err.message && !err.message.includes('fetch')) {
-        throw err;
-      }
-      // Demo / simulation offline fallback
-      const token = `jwt_mock_${Date.now()}`;
-      const user = {
-        id: `usr-demo-${Date.now()}`,
-        email,
-        name: email.split('@')[0] || 'ANCHOR Operator',
-        workspace: 'ws-primary',
-        authProviders: ['local'],
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('anchor_token', token);
-      localStorage.setItem('anchor_user', JSON.stringify(user));
-      return { token, user };
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to sign in. Please verify your credentials.');
+          }
+          localStorage.setItem('anchor_token', data.token);
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        if (err.message && !err.message.includes('fetch') && err.name !== 'SyntaxError') {
+          throw err;
+        }
+      }
+    }
+    // Demo / simulation offline fallback
+    const token = `jwt_mock_${Date.now()}`;
+    const user = {
+      id: `usr-demo-${Date.now()}`,
+      email,
+      name: email.split('@')[0] || 'ANCHOR Operator',
+      workspace: 'ws-primary',
+      authProviders: ['local'],
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('anchor_token', token);
+    localStorage.setItem('anchor_user', JSON.stringify(user));
+    return { token, user };
   },
 
   async register(email: string, password?: string, name?: string): Promise<{ token: string; user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Registration failed.');
-      }
-      localStorage.setItem('anchor_token', data.token);
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      if (err.message && !err.message.includes('fetch')) {
-        throw err;
-      }
-      const token = `jwt_mock_${Date.now()}`;
-      const user = {
-        id: `usr-reg-${Date.now()}`,
-        email,
-        name: name || email.split('@')[0] || 'New Operator',
-        workspace: 'ws-primary',
-        authProviders: ['local'],
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('anchor_token', token);
-      localStorage.setItem('anchor_user', JSON.stringify(user));
-      return { token, user };
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, name }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Registration failed.');
+          }
+          localStorage.setItem('anchor_token', data.token);
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        if (err.message && !err.message.includes('fetch') && err.name !== 'SyntaxError') {
+          throw err;
+        }
+      }
+    }
+    const token = `jwt_mock_${Date.now()}`;
+    const user = {
+      id: `usr-reg-${Date.now()}`,
+      email,
+      name: name || email.split('@')[0] || 'New Operator',
+      workspace: 'ws-primary',
+      authProviders: ['local'],
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('anchor_token', token);
+    localStorage.setItem('anchor_user', JSON.stringify(user));
+    return { token, user };
   },
 
   async googleLogin(credential: string): Promise<{ token: string; user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential, idToken: credential }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Google authentication failed.');
-      }
-      localStorage.setItem('anchor_token', data.token);
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      if (err.message && !err.message.includes('fetch')) {
-        throw err;
-      }
-      // Demo Google session fallback
-      const token = `jwt_mock_google_${Date.now()}`;
-      const user = {
-        id: `usr-google-${Date.now()}`,
-        email: 'alex.chen@anchor.ai',
-        name: 'Alex Chen',
-        profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        workspace: 'ws-primary',
-        authProviders: ['google'],
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('anchor_token', token);
-      localStorage.setItem('anchor_user', JSON.stringify(user));
-      return { token, user };
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential, idToken: credential }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Google authentication failed.');
+          }
+          localStorage.setItem('anchor_token', data.token);
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        if (err.message && !err.message.includes('fetch') && err.name !== 'SyntaxError') {
+          throw err;
+        }
+      }
+    }
+    // Demo Google session fallback
+    const token = `jwt_mock_google_${Date.now()}`;
+    const user = {
+      id: `usr-google-${Date.now()}`,
+      email: 'alex.chen@anchor.ai',
+      name: 'Alex Chen',
+      profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      workspace: 'ws-primary',
+      authProviders: ['google'],
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('anchor_token', token);
+    localStorage.setItem('anchor_user', JSON.stringify(user));
+    return { token, user };
   },
 
   async me(): Promise<{ user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/me`, {
-        headers: getAuthHeaders(),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Session expired. Please sign in again.');
-      }
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      const local = localStorage.getItem('anchor_user');
-      if (local) {
-        return { user: JSON.parse(local) };
-      }
-      throw err;
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/me`, {
+          headers: getAuthHeaders(),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Session expired. Please sign in again.');
+          }
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        // Fall back to local storage user
+      }
+    }
+    const local = localStorage.getItem('anchor_user');
+    if (local) {
+      return { user: JSON.parse(local) };
+    }
+    throw new Error('No active user session');
   },
 
   async updateProfile(updates: { name?: string; profilePicture?: string }): Promise<{ user: any; message: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-      method: 'PATCH',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(updates),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to update user profile.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    localStorage.setItem('anchor_user', JSON.stringify(data.user));
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/profile`, {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(updates),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to update user profile.');
+          }
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch {}
+    }
+    const local = localStorage.getItem('anchor_user');
+    const user = local ? JSON.parse(local) : { id: 'usr-demo', email: 'demo@anchor.io' };
+    const updated = { ...user, ...updates };
+    localStorage.setItem('anchor_user', JSON.stringify(updated));
+    return { user: updated, message: 'Profile updated successfully (Demo Mode).' };
   },
 
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/change-password`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ currentPassword, newPassword }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to change password.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/change-password`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ currentPassword, newPassword }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to change password.');
+          }
+          return data;
+        }
+      } catch {}
+    }
+    return { success: true, message: 'Password changed successfully (Demo Mode).' };
   },
 
   async forgotPassword(email: string): Promise<{ success: boolean; message: string; resetToken?: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to process password reset request.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to process password reset request.');
+          }
+          return data;
+        }
+      } catch {}
+    }
+    return { success: true, message: `Password reset link sent to ${email} (Demo Mode).` };
   },
 
   async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, newPassword }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to reset password.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, newPassword }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to reset password.');
+          }
+          return data;
+        }
+      } catch {}
+    }
+    return { success: true, message: 'Password reset successfully (Demo Mode).' };
   },
 
   async logout(): Promise<void> {
@@ -741,8 +817,8 @@ export const api = {
     return BENCHMARK_SCENARIOS;
   },
 
-  // Ingest observation
-  async ingestObservation(text: string, sourceKind: string = 'user_stated'): Promise<{ success: boolean; action: string; reason: string; memory?: Memory }> {
+  // Ingest observation (WF1 or local engine)
+  async ingestObservation(text: string, sourceKind: string = 'user_stated'): Promise<{ success: boolean; action: string; reason: string; memory?: Memory; executed_by?: string }> {
     try {
       const res = await safeFetch(`${BASE_URL}/api/ingest`, {
         method: 'POST',
@@ -833,6 +909,32 @@ export const api = {
     });
     persist();
     return { success: true, action: 'ADD', reason: 'New valid memory added to active store', memory: newMem };
+  },
+
+  // Retrieve memories (WF2 or local engine)
+  async retrieveMemories(query: string): Promise<any> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/retrieve`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ query }),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return { query, retrieved: [], excluded: [], total: 0, executed_by: 'local_engine' };
+  },
+
+  // Manage memory via natural language command (WF3 or local engine)
+  async manageMemories(instruction: string): Promise<any> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/memories/manage`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ instruction }),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return { executed_by: 'local_engine', message: 'Command received', instruction };
   },
 
   // Simulators for demo

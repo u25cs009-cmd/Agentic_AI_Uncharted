@@ -91,7 +91,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "temperature": 0.1
         }
@@ -127,7 +127,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -231,7 +231,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "temperature": 0.1
         }
@@ -436,7 +436,7 @@
       "name": "Memory Retrieval"
     },
     {
-      "name": "Gemini-2.5"
+      "name": "Gemini-3.5-Lite"
     }
   ]
 }

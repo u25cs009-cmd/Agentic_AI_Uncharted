@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { config } from '../config/index.js';
 
 export interface AuthenticatedUser {
@@ -13,6 +14,17 @@ declare global {
     interface Request {
       user?: AuthenticatedUser;
     }
+  }
+}
+
+export function timingSafeCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a);
+    const bufB = Buffer.from(b);
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
   }
 }
 
@@ -72,12 +84,15 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireInternalKey(req: Request, res: Response, next: NextFunction) {
+  const configuredKey = config.internalApiKey;
+  if (!configuredKey) {
+    return res.status(503).json({
+      error: 'Service Unavailable: Internal automation authentication is not configured on this server.'
+    });
+  }
+
   const internalKey = req.headers['x-internal-key'];
-  if (!internalKey || internalKey !== config.internalApiKey) {
-    // In dev mode allow bypass if not configured
-    if (config.nodeEnv === 'development' && !internalKey) {
-      return next();
-    }
+  if (!internalKey || typeof internalKey !== 'string' || !timingSafeCompare(internalKey, configuredKey)) {
     return res.status(403).json({ error: 'Forbidden: Missing or invalid x-internal-key header' });
   }
   next();

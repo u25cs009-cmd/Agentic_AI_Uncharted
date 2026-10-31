@@ -118,7 +118,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "temperature": 0.1
         }
@@ -154,7 +154,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -214,7 +214,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "temperature": 0.1
         }
@@ -371,7 +371,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/ingest",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/ingest",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -412,7 +412,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -453,7 +453,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/ingest",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/ingest",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -494,7 +494,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id || 'quarantine-item' }}",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id || 'quarantine-item' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -835,7 +835,7 @@
       "name": "Memory Creation"
     },
     {
-      "name": "Gemini-2.5"
+      "name": "Gemini-3.5-Lite"
     }
   ]
 }

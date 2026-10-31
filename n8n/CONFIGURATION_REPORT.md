@@ -4,7 +4,7 @@
 
 This report documents the completion, reconfiguration, and backend integration of all four **ANCHOR** n8n automation workflows. 
 
-The workflows have been aligned with the completed ANCHOR backend routes, models, and authentication middleware. All OpenAI nodes have been replaced with **Google Gemini (`models/gemini-2.5-flash`)**, known bugs in multi-chunk aggregation and patch generation have been resolved, and all database interactions are routed strictly through authenticated backend REST APIs.
+The workflows have been aligned with the completed ANCHOR backend routes, models, and authentication middleware. All OpenAI nodes have been replaced with **Google Gemini (`models/gemini-3.5-flash-lite`)**, known bugs in multi-chunk aggregation and patch generation have been resolved, and all database interactions are routed strictly through authenticated backend REST APIs.
 
 ---
 
@@ -24,8 +24,8 @@ The workflows have been aligned with the completed ANCHOR backend routes, models
 ## 3. Node Configuration & Corrections Summary
 
 ### WF1 — Intelligent Memory Creation (`WF1_memory_creation.json`)
-- **Node `Google Gemini Model - Extractor`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` set to `models/gemini-2.5-flash`.
-- **Node `Google Gemini Model - Governance`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` set to `models/gemini-2.5-flash`.
+- **Node `Google Gemini Model - Extractor`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` set to `models/gemini-3.5-flash-lite`.
+- **Node `Google Gemini Model - Governance`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` set to `models/gemini-3.5-flash-lite`.
 - **Node `Search Similar Memories`**: Updated destination route to `POST /api/retrieve` passing `{ "query": "..." }` with headers `Authorization: Bearer <token>` and `x-internal-key`.
 - **Node `Commit New Memory (ADD)`**: Configured to `POST /api/ingest` with payload `{ "text": "...", "source": { "kind": "user_stated", "actor": "..." } }`.
 - **Node `Patch Existing Memory (UPDATE)`**: Configured to `PATCH /api/memories/:id` with payload `{ "content": "...", "value": "...", "expires_at": "...", "reason": "..." }`.
@@ -36,14 +36,14 @@ The workflows have been aligned with the completed ANCHOR backend routes, models
   - **Correction**: Replaced with item-scoped evaluation (`$('Parse Governance Decision').item.json`), preserving distinct governance actions, chunk indices, and memory IDs across all iterations.
 
 ### WF2 — Intelligent Memory Retrieval (`WF2_memory_retrieval.json`)
-- **Node `Google Gemini Model - Query Parser`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-2.5-flash`).
-- **Node `Google Gemini Model - Re-ranker`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-2.5-flash`).
+- **Node `Google Gemini Model - Query Parser`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-3.5-flash-lite`).
+- **Node `Google Gemini Model - Re-ranker`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-3.5-flash-lite`).
 - **Node `Backend Hybrid Retrieval`**: Connected to `POST /api/retrieve` with payload `{ "query": "{{ $json.extracted_keywords.join(' ') || $json.query_text }}" }`.
 - **Node `Candidates Found?`**: Evaluates `{{ ($json.retrieved || []).length > 0 }}`. If empty, routes to `Build Empty Context` with zero hallucinations.
 
 ### WF3 — Memory Update and Deletion (`WF3_memory_management.json`)
-- **Node `Google Gemini Model - Command Classifier`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-2.5-flash`).
-- **Node `Google Gemini Model - Patch Generator`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-2.5-flash`).
+- **Node `Google Gemini Model - Command Classifier`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-3.5-flash-lite`).
+- **Node `Google Gemini Model - Patch Generator`**: Replaced OpenAI with `@n8n/n8n-nodes-langchain.lmChatGoogleGemini` (`models/gemini-3.5-flash-lite`).
 - **Node `Search Target Memory in Backend`**: Connected to `POST /api/retrieve` to search active memories using semantic tokens.
 - **Node `Parse & Sanitize Patch` (New Sanitization Node - Bug Fix)**:
   - **Issue Resolved**: Previously, raw LLM output `{{ $json.text }}` was inserted directly into the HTTP body, which risked failing backend JSON validation if Markdown fences (```` ```json ````) were returned.
@@ -82,8 +82,8 @@ All requests point to the backend route tree mounted under `/api/`:
 > [!IMPORTANT]
 > **No API keys, database connection strings, passwords, or JWT secrets are embedded in the workflow JSON files.**
 
-- **Backend Base URL**: Defaults to `https://anchor-backend.onrender.com` via expression:
-  `{{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}`
+- **Backend Base URL**: Defaults to `https://agentic-ai-uncharted.onrender.com` via expression:
+  `{{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}`
 - **Backend Service Token**:
   `Authorization: Bearer {{ $env.BACKEND_API_KEY || '' }}`
 - **Internal API Key Header**:
@@ -103,7 +103,7 @@ Once you import the JSON files into n8n Cloud:
 2. **Configure Environment Variables in n8n Cloud**:
    - In your n8n Cloud dashboard, go to **Settings** $\to$ **Environment Variables**.
    - Ensure the following variables are present:
-     - `BACKEND_BASE_URL`: `https://anchor-backend.onrender.com` (or your live Render backend URL).
+     - `BACKEND_BASE_URL`: `https://agentic-ai-uncharted.onrender.com` (or your live Render backend URL).
      - `BACKEND_API_KEY`: Your JWT bearer service token (if auth enforcement is enabled).
      - `INTERNAL_API_KEY`: `shakti2_internal_key_for_n8n_webhooks`.
 3. **Webhook URLs**:

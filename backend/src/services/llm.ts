@@ -59,89 +59,41 @@ export class LLMService {
       };
     }
 
-    // 2. Provider Cascade: Google Gemini (Primary) -> Groq -> OpenAI -> OpenRouter -> Deterministic Fallback
-    // Provider A: Google Gemini (ANCHOR Adaptive Memory LLM)
-    if (config.ai.geminiKey) {
-      try {
-        const res = await this.callGemini(prompt, systemPrompt, options);
-        if (res) {
-          responseCache.set(cacheKey, { content: res, timestamp: Date.now() });
-          return {
-            content: res,
-            provider: 'gemini',
-            model: 'gemini-3.5-flash',
-            cached: false,
-            latencyMs: Date.now() - startTime
-          };
-        }
-      } catch (err: any) {
-        logger.warn({ err: err.message }, 'Gemini API failed, attempting next provider in cascade');
-      }
+    // 2. Provider Selection: Google Gemini is the EXCLUSIVE Primary Provider
+    // (OpenAI, Groq, and OpenRouter fallbacks are disabled in ANCHOR model-selection path)
+    if (!config.ai.geminiKey) {
+      logger.error('GEMINI_API_KEY is missing from environment. Google Gemini is the exclusive enabled model provider.');
+      return {
+        content: 'Error: Google Gemini is configured as the exclusive provider, but GEMINI_API_KEY is not set in the environment.',
+        provider: 'gemini',
+        model: 'gemini-3.5-flash-lite',
+        cached: false,
+        latencyMs: Date.now() - startTime
+      };
     }
 
-    // Provider B: Groq (Ultra-fast Llama 3)
-    if (config.ai.groqKey) {
-      try {
-        const res = await this.callGroq(prompt, systemPrompt, options);
-        if (res) {
-          responseCache.set(cacheKey, { content: res, timestamp: Date.now() });
-          return {
-            content: res,
-            provider: 'groq',
-            model: 'llama-3.3-70b-versatile',
-            cached: false,
-            latencyMs: Date.now() - startTime
-          };
-        }
-      } catch (err: any) {
-        logger.warn({ err: err.message }, 'Groq API failed, attempting next provider in cascade');
+    try {
+      const geminiRes = await this.callGemini(prompt, systemPrompt, options);
+      if (geminiRes) {
+        responseCache.set(cacheKey, { content: geminiRes.content, timestamp: Date.now() });
+        return {
+          content: geminiRes.content,
+          provider: 'gemini',
+          model: geminiRes.model,
+          cached: false,
+          latencyMs: Date.now() - startTime
+        };
       }
+    } catch (err: any) {
+      logger.error({ err: err.message }, 'Google Gemini API request failed.');
     }
 
-    // Provider C: OpenAI
-    if (config.ai.openaiKey) {
-      try {
-        const res = await this.callOpenAI(prompt, systemPrompt, options);
-        if (res) {
-          responseCache.set(cacheKey, { content: res, timestamp: Date.now() });
-          return {
-            content: res,
-            provider: 'openai',
-            model: 'gpt-4o-mini',
-            cached: false,
-            latencyMs: Date.now() - startTime
-          };
-        }
-      } catch (err: any) {
-        logger.warn({ err: err.message }, 'OpenAI API failed, attempting next provider in cascade');
-      }
-    }
-
-    // Provider D: OpenRouter
-    if (config.ai.openRouterKey) {
-      try {
-        const res = await this.callOpenRouter(prompt, systemPrompt, options);
-        if (res) {
-          responseCache.set(cacheKey, { content: res, timestamp: Date.now() });
-          return {
-            content: res,
-            provider: 'openrouter',
-            model: 'google/gemini-flash-1.5',
-            cached: false,
-            latencyMs: Date.now() - startTime
-          };
-        }
-      } catch (err: any) {
-        logger.warn({ err: err.message }, 'OpenRouter API failed, resorting to local fallback');
-      }
-    }
-
-    // Fallback: Deterministic local rule engine
-    const localContent = this.generateLocalFallback(prompt, jsonMode);
+    // Explicit Provider Failure: Refuse silent fallback to OpenAI or other providers
+    logger.error('Google Gemini API request failed. Refusing silent fallback to OpenAI or secondary providers.');
     return {
-      content: localContent,
-      provider: 'local_fallback',
-      model: 'xyro101-rule-engine',
+      content: 'Error: Google Gemini (gemini-3.5-flash-lite) failed to generate a response. Silent fallback to OpenAI is disabled.',
+      provider: 'gemini',
+      model: 'gemini-3.5-flash-lite',
       cached: false,
       latencyMs: Date.now() - startTime
     };
@@ -187,13 +139,22 @@ export class LLMService {
     }
   }
 
-  private static async callGemini(prompt: string, systemPrompt: string, options: LLMRequestOptions): Promise<string | null> {
+  private static async callGemini(prompt: string, systemPrompt: string, options: LLMRequestOptions): Promise<{ content: string; model: string } | null> {
+    if (!config.ai.geminiKey) {
+      logger.error('GEMINI_API_KEY is not configured in environment. Cannot invoke Google Gemini.');
+      return null;
+    }
+
     const fullPrompt = `${systemPrompt}\n\n${prompt}`;
-    const candidateModels = ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
+    const candidateModels = [
+      'gemini-3.5-flash-lite',
+      'gemini-3.5-flash',
+      'gemini-flash-latest'
+    ];
 
     for (const model of candidateModels) {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 25000);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.ai.geminiKey}`;
 
       try {
@@ -220,7 +181,7 @@ export class LLMService {
         const data = (await res.json()) as any;
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          return text;
+          return { content: text, model };
         }
       } catch (err: any) {
         clearTimeout(timeout);

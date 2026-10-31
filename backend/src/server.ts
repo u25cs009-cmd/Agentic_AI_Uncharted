@@ -44,6 +44,11 @@ app.use((req, res, next) => {
 // API Routes
 app.use('/api', apiRouter);
 
+// Root Health Check Route
+app.get('/health', (req, res) => {
+  res.redirect(307, '/api/health');
+});
+
 // Serve frontend static assets if built
 const candidateDistPaths = [
   path.resolve(process.cwd(), 'frontend', 'dist'),

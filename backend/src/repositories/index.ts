@@ -18,8 +18,12 @@ export async function getRepository(): Promise<Repository> {
       await mongoRepo.init();
       repositoryInstance = mongoRepo;
       return repositoryInstance;
-    } catch (err) {
-      logger.error({ err }, 'Failed to connect to MongoDB Atlas. Falling back to InMemoryRepository.');
+    } catch (err: any) {
+      if (config.nodeEnv === 'production') {
+        logger.error({ err: err.message }, 'Fatal: MongoDB Atlas cluster is unavailable. Silent fallback to InMemoryRepository is disabled in production.');
+        throw new Error('Fatal: MongoDB Atlas cluster is unavailable in production. Refusing silent fallback to in-memory mode.');
+      }
+      logger.error({ err }, 'Failed to connect to MongoDB Atlas. Falling back to InMemoryRepository in development.');
     }
   }
 
@@ -28,5 +32,9 @@ export async function getRepository(): Promise<Repository> {
   await inMemoryRepo.init();
   repositoryInstance = inMemoryRepo;
   return repositoryInstance;
+}
+
+export function resetRepository(): void {
+  repositoryInstance = null;
 }
 

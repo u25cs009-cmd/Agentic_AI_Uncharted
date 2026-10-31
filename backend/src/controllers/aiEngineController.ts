@@ -6,6 +6,10 @@ import { LLMService } from '../services/llm.js';
 import { CandidateFactExtractor, TRUST_LADDER } from '../engine/extractor.js';
 import { SourceKind } from '../engine/types.js';
 import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
+import { config } from '../config/index.js';
+import { logger } from '../utils/logger.js';
+import { n8nService } from '../services/n8nService.js';
+import { timingSafeCompare } from '../middleware/auth.js';
 
 export const ANCHOR_SYSTEM_PROMPT = `You are the intelligence layer of ANCHOR, an AI assistant equipped with persistent user memory.
 
@@ -252,21 +256,70 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
 
     const query = (message || '').trim();
 
-    // Check if message is a direct memory save command
-    const isSaveCommand =
-      saveMemory === true ||
-      /^save:\s*/i.test(query) ||
-      /^remember:\s*/i.test(query) ||
-      /^note:\s*/i.test(query);
+    // Loop Prevention & Internal Authentication Context (Timing-Safe)
+    const configuredKey = config.internalApiKey;
+    const internalHeader = req.headers['x-internal-key'];
+    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isN8nOrigin = req.headers['x-execution-context'] === 'n8n-dispatch';
 
-    if (isSaveCommand) {
-      const memoryText = query.replace(/^(save:|remember:|note:)\s*/i, '').trim();
-      const ingestResult = await processIngestion(memoryText, source, owner, workspace, userEmail, repo);
-      return res.status(ingestResult.status).json({
+    // 1. Conversational & Explicit Memory Ingestion
+    // Check if message contains explicit remember commands OR declarative user facts to persist
+    const isExplicitSave =
+      saveMemory === true ||
+      /^(save:|remember:|note:|remember\s+that|please\s+remember|keep\s+in\s+mind)\b/i.test(query);
+
+    const isQuestion = query.includes('?') ||
+      /^(what|who|which|how|where|when|why|can\s+you|do\s+you|tell\s+me|is\s+there)\b/i.test(query.trim());
+
+    const memorySource = source || { kind: 'user_stated', actor: userEmail };
+
+    // Extract any candidate facts from the input (supports compound multi-sentence statements)
+    const candidateFacts = CandidateFactExtractor.extractCandidateFacts(query, memorySource);
+    const validFactsToIngest = candidateFacts.filter(
+      f => f.attribute_key !== 'general.fact' && f.attribute_key !== 'general.query'
+    );
+
+    const newlyIngestedMemories: Memory[] = [];
+
+    // Ingest candidate facts if explicitly requested OR if natural declarative facts are identified (and NOT an interrogative question)
+    if (isExplicitSave || (!isQuestion && validFactsToIngest.length > 0)) {
+      for (const fact of validFactsToIngest) {
+        if (!isInternal && !isN8nOrigin && config.n8n.wf1WebhookUrl) {
+          const n8nRes = await n8nService.dispatchWF1({
+            user_id: owner,
+            conversation_text: fact.content,
+            session_id: req.body.session_id || null,
+            source_timestamp: new Date().toISOString(),
+            workspace
+          });
+          if (n8nRes.success && n8nRes.data) {
+            newlyIngestedMemories.push(n8nRes.data.memory || n8nRes.data);
+            continue;
+          }
+        }
+
+        const ingestRes = await processIngestion(
+          fact.content,
+          memorySource,
+          owner,
+          workspace,
+          userEmail,
+          repo
+        );
+        if (ingestRes.memory) {
+          newlyIngestedMemories.push(ingestRes.memory);
+        }
+      }
+    }
+
+    // If pure explicit save command without conversational query, return confirmation immediately
+    if (isExplicitSave && validFactsToIngest.length > 0 && !query.includes('?') && query.split(/\s+/).length < 20) {
+      const summaryFact = validFactsToIngest.map(f => `${f.attribute_key}: ${f.value}`).join('; ');
+      return res.status(201).json({
         mode: activeMode,
-        answer: `🛡️ [ANCHOR MEMORY SAVED]\nAction: **${ingestResult.action}**\nReason: ${ingestResult.reason}\nSaved Fact: "${memoryText}"`,
-        ingest_result: ingestResult,
-        retrieved_memories: ingestResult.memory ? [ingestResult.memory] : [],
+        answer: `🛡️ [ANCHOR MEMORY SAVED]\nAction: **RECORDED**\nSaved Fact: "${summaryFact}"`,
+        ingest_result: { action: 'RECORDED', count: validFactsToIngest.length },
+        retrieved_memories: newlyIngestedMemories,
         excluded_memories: [],
         abstention: false,
         abstention_reason: '',
@@ -275,14 +328,26 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    // 1. Fetch User Memories (Strict User Isolation)
+    // 2. Fetch User Memories (Strict User Isolation)
     const allMemories = await repo.findMemories({ owner, workspace });
 
-    // 2. Scoring & Retrieval Decomposition
+    // 3. Scoring & Retrieval Decomposition (WF2 Integration when configured)
     const retrieved: ScoredMemory[] = [];
     const excluded: ScoredMemory[] = [];
     let abstention = false;
     let abstentionReason = '';
+
+    // If WF2 is configured and not internal, dispatch query to WF2
+    if (!isInternal && !isN8nOrigin && config.n8n.wf2WebhookUrl) {
+      const wf2Res = await n8nService.dispatchWF2({
+        user_id: owner,
+        query_text: query,
+        workspace
+      });
+      if (wf2Res.success && wf2Res.data && Array.isArray(wf2Res.data.retrieved_memories) && wf2Res.data.retrieved_memories.length > 0) {
+        retrieved.push(...wf2Res.data.retrieved_memories);
+      }
+    }
 
     const queryTokens = query.toLowerCase().split(/\W+/).filter((w: string) => w.length > 2);
 
@@ -294,22 +359,34 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
 
       // Intent & domain keyword boosts for natural language questions
       const qLower = query.toLowerCase();
-      if ((qLower.includes('project') || qLower.includes('called') || qLower.includes('name')) && mem.attribute_key === 'project.name') {
-        overlap = Math.max(overlap, 0.85);
+      if ((qLower.includes('my name') || qLower.includes('who am i') || qLower.includes('what is my name')) && mem.attribute_key === 'user.profile.name') {
+        overlap = Math.max(overlap, 0.95);
+      }
+      if ((qLower.includes('studying') || qLower.includes('what am i studying') || qLower.includes('study') || qLower.includes('major')) && mem.attribute_key === 'user.profile.occupation') {
+        overlap = Math.max(overlap, 0.95);
+      }
+      if ((qLower.includes('project') || qLower.includes('called') || qLower.includes('what project am i building') || qLower.includes('building')) && mem.attribute_key === 'project.name') {
+        overlap = Math.max(overlap, 0.90);
+      }
+      if ((qLower.includes('goal') || qLower.includes('main goal') || qLower.includes('objective')) && mem.attribute_key === 'project.goal') {
+        overlap = Math.max(overlap, 0.95);
+      }
+      if ((qLower.includes('deadline') || qLower.includes('project deadline') || qLower.includes('due date')) && mem.attribute_key === 'project.planning.deadline') {
+        overlap = Math.max(overlap, 0.95);
+      }
+      if ((qLower.includes('technologies') || qLower.includes('tech stack') || qLower.includes('using') || qLower.includes('stack') || qLower.includes('tools') || qLower.includes('framework')) && (mem.attribute_key.includes('architecture') || mem.attribute_key.includes('stack') || mem.attribute_key.includes('frontend'))) {
+        overlap = Math.max(overlap, 0.90);
       }
       if ((qLower.includes('completed') || qLower.includes('finished') || qLower.includes('parts') || qLower.includes('progress')) && mem.attribute_key.includes('progress')) {
         overlap = Math.max(overlap, 0.85);
       }
-      if ((qLower.includes('auth') || qLower.includes('authentication')) && (mem.attribute_key.includes('architecture') || mem.attribute_key.includes('stack') || mem.attribute_key.includes('feedback'))) {
-        overlap = Math.max(overlap, 0.75);
+      if ((qLower.includes('preference') || qLower.includes('how do i prefer') || qLower.includes('explanations') || qLower.includes('explain') || qLower.includes('step-by-step')) && mem.attribute_key.includes('user.pref')) {
+        overlap = Math.max(overlap, 0.90);
       }
-      if ((qLower.includes('session') || qLower.includes('storage') || qLower.includes('redis')) && (mem.attribute_key.includes('feedback') || mem.attribute_key.includes('session'))) {
+      if ((qLower.includes('database') || qLower.includes('mongodb') || qLower.includes('postgres')) && (mem.attribute_key.includes('db') || mem.attribute_key.includes('database') || mem.entities.includes('mongodb'))) {
         overlap = Math.max(overlap, 0.85);
       }
-      if ((qLower.includes('preference') || qLower.includes('step-by-step') || qLower.includes('how should') || qLower.includes('explain')) && mem.attribute_key.includes('user.pref')) {
-        overlap = Math.max(overlap, 0.70);
-      }
-      if ((qLower.includes('framework') || qLower.includes('frontend') || qLower.includes('next.js') || qLower.includes('react')) && mem.attribute_key.includes('architecture')) {
+      if (qLower.includes('n8n') && (mem.content.toLowerCase().includes('n8n') || mem.entities.includes('n8n'))) {
         overlap = Math.max(overlap, 0.85);
       }
 
@@ -412,7 +489,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
         // A. Current User Input
         // B. Relevant Previous Memories
         const relevantMemoriesText = topRetrieved
-          .map(m => `• [${m.attribute_key}] ${m.content} (Trust: ${m.trust.toFixed(2)}, Confidence: ${m.confidence.toFixed(2)}, Score: ${m.final_score.toFixed(2)})`)
+          .map(m => `• [${m.attribute_key}] Value: "${m.value}" (Detail: ${m.content}, Trust: ${m.trust.toFixed(2)}, Confidence: ${m.confidence.toFixed(2)}, Score: ${m.final_score.toFixed(2)})`)
           .join('\n');
 
         // C. Previous Actions and Outcomes
@@ -514,11 +591,42 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
     const workspace = req.user?.workspace || 'ws-primary';
     const userEmail = req.user?.email || 'user';
 
+    // Loop Prevention & Internal Authentication Check (Timing-Safe)
+    const configuredKey = config.internalApiKey;
+    const internalHeader = req.headers['x-internal-key'];
+    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isN8nOrigin = req.headers['x-execution-context'] === 'n8n-dispatch' || (source && source.kind === 'n8n_workflow');
+
+    // If caller is NOT an internal callback, and WF1 webhook is configured on server:
+    if (!isInternal && !isN8nOrigin && config.n8n.wf1WebhookUrl) {
+      const n8nRes = await n8nService.dispatchWF1({
+        user_id: owner,
+        conversation_text: text,
+        session_id: req.body.session_id || null,
+        source_timestamp: new Date().toISOString(),
+        workspace
+      });
+
+      if (n8nRes.success) {
+        return res.status(201).json({
+          success: true,
+          action: n8nRes.data?.action || 'ADD',
+          reason: n8nRes.data?.reason || 'Processed via n8n WF1 Intelligent Memory Creation',
+          executed_by: 'n8n_workflow',
+          workflow_id: 'WF1',
+          memory: n8nRes.data?.memory || n8nRes.data
+        });
+      }
+      logger.warn({ error: n8nRes.error }, 'WF1 dispatch did not succeed, falling back to local engine');
+    }
+
+    // Direct Local Engine Execution
     const result = await processIngestion(text, source, owner, workspace, userEmail, repo);
     return res.status(result.status).json({
       success: true,
       action: result.action,
       reason: result.reason,
+      executed_by: 'local_engine',
       memory: result.memory
     });
   } catch (err) {
@@ -529,17 +637,88 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
 export async function retrieveMemories(req: Request, res: Response, next: NextFunction) {
   try {
     const { query } = req.body;
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ error: 'Search query string is required' });
+    }
+
     const repo = await getRepository();
     const owner = req.user?.id || 'usr-shakti2';
     const workspace = req.user?.workspace || 'ws-primary';
+
+    // Loop Prevention & Internal Authentication Check (Timing-Safe)
+    const configuredKey = config.internalApiKey;
+    const internalHeader = req.headers['x-internal-key'];
+    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isN8nOrigin = req.headers['x-execution-context'] === 'n8n-dispatch';
+
+    // If caller is NOT an internal callback, and WF2 webhook is configured on server:
+    if (!isInternal && !isN8nOrigin && config.n8n.wf2WebhookUrl) {
+      const n8nRes = await n8nService.dispatchWF2({
+        user_id: owner,
+        query_text: query,
+        workspace
+      });
+
+      if (n8nRes.success) {
+        return res.json({
+          query,
+          executed_by: 'n8n_workflow',
+          workflow_id: 'WF2',
+          ...n8nRes.data
+        });
+      }
+      logger.warn({ error: n8nRes.error }, 'WF2 dispatch did not succeed, falling back to local engine');
+    }
 
     const results = await repo.searchKeyword(query || '', 20, { owner, workspace });
 
     return res.json({
       query: query || '',
+      executed_by: 'local_engine',
       retrieved: results.filter(r => r.status === 'active'),
       excluded: results.filter(r => r.status !== 'active'),
       total: results.length
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function manageMemories(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { instruction } = req.body;
+    if (!instruction || typeof instruction !== 'string' || instruction.trim().length < 3) {
+      return res.status(400).json({ error: 'Instruction string of at least 3 characters is required' });
+    }
+
+    const owner = req.user?.id || 'usr-shakti2';
+    const workspace = req.user?.workspace || 'ws-primary';
+
+    const configuredKey = config.internalApiKey;
+    const internalHeader = req.headers['x-internal-key'];
+    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+
+    if (!isInternal && config.n8n.wf3WebhookUrl) {
+      const n8nRes = await n8nService.dispatchWF3({
+        user_id: owner,
+        instruction_text: instruction.trim(),
+        workspace
+      });
+
+      if (n8nRes.success) {
+        return res.json({
+          executed_by: 'n8n_workflow',
+          workflow_id: 'WF3',
+          ...n8nRes.data
+        });
+      }
+      logger.warn({ error: n8nRes.error }, 'WF3 dispatch did not succeed, falling back to local engine');
+    }
+
+    return res.json({
+      executed_by: 'local_engine',
+      message: 'WF3 webhook is not configured or offline. Command received.',
+      instruction
     });
   } catch (err) {
     next(err);

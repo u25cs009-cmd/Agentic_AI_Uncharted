@@ -11,11 +11,19 @@ services:
       - key: NODE_ENV
         value: production
       - key: STORE
-        value: mongodb
-      - key: JWT_SECRET
-        generateValue: true
+        value: mongo
       - key: PORT
         value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: INTERNAL_API_KEY
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: anchor
+      - key: GEMINI_API_KEY
+        sync: false
 
   # ANCHOR Frontend Static Site
   - type: web

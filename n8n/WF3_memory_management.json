@@ -91,7 +91,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "temperature": 0.1
         }
@@ -114,7 +114,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -307,7 +307,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
+        "modelName": "models/gemini-3.5-flash-lite",
         "options": {
           "temperature": 0.1
         }
@@ -343,7 +343,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -384,7 +384,7 @@
     {
       "parameters": {
         "method": "DELETE",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -422,7 +422,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/outcomes",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/outcomes",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -717,7 +717,7 @@
       "name": "Memory Deletion"
     },
     {
-      "name": "Gemini-2.5"
+      "name": "Gemini-3.5-Lite"
     }
   ]
 }

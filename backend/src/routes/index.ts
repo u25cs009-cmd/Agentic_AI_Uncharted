@@ -39,7 +39,8 @@ import {
   chat,
   ingestObservation,
   retrieveMemories,
-  agentTriage
+  agentTriage,
+  manageMemories
 } from '../controllers/aiEngineController.js';
 import {
   runBenchmark,
@@ -56,18 +57,30 @@ export const apiRouter = Router();
 apiRouter.get('/health', async (req, res) => {
   try {
     const repo = await getRepository();
+    const isFallback = config.store === 'mongo' && repo.name !== 'MongoRepository';
+    
+    if (config.nodeEnv === 'production' && isFallback) {
+      return res.status(503).json({
+        status: 'unhealthy',
+        error: 'MongoDB Atlas is unavailable in production',
+        configured_store: config.store,
+        active_repository: repo.name,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     res.json({
       status: 'healthy',
       system: 'ANCHOR AI Memory Engine Backend',
       store_mode: repo.name === 'MongoRepository' ? 'mongo' : 'memory',
       configured_store: config.store,
       active_repository: repo.name,
-      is_fallback: config.store === 'mongo' && repo.name !== 'MongoRepository',
+      is_fallback: isFallback,
       timestamp: new Date().toISOString(),
       uptime_seconds: Math.floor(process.uptime())
     });
   } catch (err: any) {
-    res.status(500).json({ status: 'error', error: err.message });
+    res.status(503).json({ status: 'error', error: err.message });
   }
 });
 
@@ -97,6 +110,7 @@ apiRouter.get('/stream', sseStream);
 // 5. Memory CRUD & Audit Trail
 apiRouter.get('/memories', authenticateUser, getMemories);
 apiRouter.get('/memories/events', authenticateUser, getEvents);
+apiRouter.post('/memories/manage', authenticateUser, manageMemories);
 apiRouter.get('/memories/:id', authenticateUser, getMemoryById);
 apiRouter.patch('/memories/:id', authenticateUser, updateMemory);
 apiRouter.delete('/memories/:id', authenticateUser, deleteMemory);

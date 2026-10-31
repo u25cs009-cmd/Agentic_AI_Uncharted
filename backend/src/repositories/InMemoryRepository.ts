@@ -335,7 +335,9 @@ export class InMemoryRepository implements Repository {
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    const found = Array.from(this.users.values()).find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (!email || typeof email !== 'string') return null;
+    const clean = email.toLowerCase().trim();
+    const found = Array.from(this.users.values()).find(u => u.email.toLowerCase() === clean);
     return found ? { ...found } : null;
   }
 
