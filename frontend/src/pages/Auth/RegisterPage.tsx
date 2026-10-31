@@ -127,12 +127,12 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
       {/* Ambient Celestial Aurora Glows */}
       <div className="fixed top-[-10%] right-[-10%] w-[550px] h-[550px] rounded-full bg-indigo-600/15 blur-[140px] pointer-events-none" />
       <div className="fixed bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-500/15 blur-[150px] pointer-events-none" />
 
-      <div className="w-full max-w-md glass-panel border border-cyan-500/25 rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] relative z-10 bg-slate-950/80 backdrop-blur-2xl">
+      <div className="w-full max-w-md glass-panel border border-slate-200/90 rounded-3xl p-8 shadow-xl relative z-10 bg-white backdrop-blur-2xl">
         {/* Brand Header */}
         <div className="text-center mb-6">
           <img
@@ -140,7 +140,7 @@ export const RegisterPage: React.FC = () => {
             alt="XYRO101 Logo"
             className="w-16 h-16 rounded-full object-cover mx-auto mb-4 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
           />
-          <h1 className="text-2xl font-bold tracking-tight text-white">Create Your Account</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create Your Account</h1>
           <p className="text-xs text-slate-400 mt-1.5 font-medium">
             Deploy an isolated ANCHOR memory instance for XYRO101
           </p>
@@ -159,7 +159,7 @@ export const RegisterPage: React.FC = () => {
           type="button"
           onClick={handleGoogleClick}
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-white transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-98 disabled:opacity-50 cursor-pointer"
+          className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 shadow-xs transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-98 disabled:opacity-50 cursor-pointer"
         >
           <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
@@ -183,17 +183,17 @@ export const RegisterPage: React.FC = () => {
         </button>
 
         <div className="flex items-center my-4">
-          <div className="flex-1 border-t border-slate-800" />
+          <div className="flex-1 border-t border-slate-200" />
           <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-slate-500">
             or register with email
           </span>
-          <div className="flex-1 border-t border-slate-800" />
+          <div className="flex-1 border-t border-slate-200" />
         </div>
 
         {/* Registration Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
-            <label className="text-xs font-mono text-slate-300 block mb-1">Full name</label>
+            <label className="text-xs font-mono text-slate-700 block mb-1">Full name</label>
             <div className="relative">
               <UserIcon className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
@@ -204,9 +204,9 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.name) setValidationErrors(prev => ({ ...prev, name: undefined }));
                 }}
                 placeholder="Yashi Aadarsh"
-                className={`w-full bg-slate-950/80 border ${
-                  validationErrors.name ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
+                className={`w-full bg-white border ${
+                  validationErrors.name ? 'border-rose-500' : 'border-slate-200'
+                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all`}
               />
             </div>
             {validationErrors.name && (
@@ -215,7 +215,7 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-slate-300 block mb-1">Email address</label>
+            <label className="text-xs font-mono text-slate-700 block mb-1">Email address</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
@@ -226,9 +226,9 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.email) setValidationErrors(prev => ({ ...prev, email: undefined }));
                 }}
                 placeholder="yashi@company.io"
-                className={`w-full bg-slate-950/80 border ${
-                  validationErrors.email ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
+                className={`w-full bg-white border ${
+                  validationErrors.email ? 'border-rose-500' : 'border-slate-200'
+                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all`}
               />
             </div>
             {validationErrors.email && (
@@ -237,7 +237,7 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-slate-300 block mb-1">Password</label>
+            <label className="text-xs font-mono text-slate-700 block mb-1">Password</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
@@ -248,14 +248,14 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.password) setValidationErrors(prev => ({ ...prev, password: undefined }));
                 }}
                 placeholder="At least 6 characters"
-                className={`w-full bg-slate-950/80 border ${
-                  validationErrors.password ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
+                className={`w-full bg-white border ${
+                  validationErrors.password ? 'border-rose-500' : 'border-slate-200'
+                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -266,7 +266,7 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="text-xs font-mono text-slate-300 block mb-1">Confirm password</label>
+            <label className="text-xs font-mono text-slate-700 block mb-1">Confirm password</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
@@ -277,14 +277,14 @@ export const RegisterPage: React.FC = () => {
                   if (validationErrors.confirmPassword) setValidationErrors(prev => ({ ...prev, confirmPassword: undefined }));
                 }}
                 placeholder="Re-enter password"
-                className={`w-full bg-slate-950/80 border ${
-                  validationErrors.confirmPassword ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
+                className={`w-full bg-white border ${
+                  validationErrors.confirmPassword ? 'border-rose-500' : 'border-slate-200'
+                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-900 transition-colors cursor-pointer"
               >
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -307,7 +307,7 @@ export const RegisterPage: React.FC = () => {
         {/* Link to Login */}
         <div className="mt-5 text-center text-xs text-slate-400">
           <span>Already have an account? </span>
-          <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
+          <Link to="/login" className="text-indigo-600 hover:text-indigo-500 font-semibold underline underline-offset-2">
             Sign In
           </Link>
         </div>

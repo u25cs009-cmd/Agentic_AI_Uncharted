@@ -27,20 +27,20 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-[400px] flex items-center justify-center p-6">
-          <div className="card max-w-lg w-full p-8 rounded-2xl border-rose-500/40 text-center space-y-4 shadow-2xl bg-slate-950/95 backdrop-blur-md">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400">
+          <div className="card max-w-lg w-full p-8 rounded-2xl border-rose-200 text-center space-y-4 shadow-xl bg-white">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
               <AlertTriangle className="w-7 h-7" />
             </div>
 
             <div className="space-y-1.5">
-              <h2 className="text-lg font-bold text-white tracking-tight">Something went wrong</h2>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">Something went wrong</h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
                 An unexpected interface error occurred. Your governed memory and session state remain completely secure in the backend.
               </p>
             </div>
 
             {this.state.error?.message && (
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-[11px] font-mono text-rose-300 text-left overflow-x-auto">
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] font-mono text-rose-700 text-left overflow-x-auto">
                 {this.state.error.message}
               </div>
             )}
@@ -58,7 +58,7 @@ export class ErrorBoundary extends Component<Props, State> {
                   this.setState({ hasError: false });
                   window.location.href = '/';
                 }}
-                className="btn-ghost flex items-center space-x-2 text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-white cursor-pointer"
+                className="btn-ghost flex items-center space-x-2 text-xs font-semibold px-4 py-2.5 rounded-xl cursor-pointer"
               >
                 <Home className="w-3.5 h-3.5" />
                 <span>Return to Home</span>

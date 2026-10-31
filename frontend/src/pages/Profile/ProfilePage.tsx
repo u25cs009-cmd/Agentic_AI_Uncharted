@@ -142,7 +142,7 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
       {/* Top Banner Card */}
-      <div className="relative overflow-hidden rounded-3xl glass-panel p-6 sm:p-8 shadow-2xl border-cyan-500/25 bg-slate-950/80">
+      <div className="relative overflow-hidden rounded-3xl glass-panel p-6 sm:p-8 shadow-2xl border-cyan-500/25 bg-white">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center space-x-4 sm:space-x-5">
             <div className="relative">
@@ -153,7 +153,7 @@ export const ProfilePage: React.FC = () => {
                   className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.4)]"
                 />
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-extrabold shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/40 uppercase">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-slate-900 text-3xl font-extrabold shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/40 uppercase">
                   {user?.name ? user.name[0] : 'U'}
                 </div>
               )}
@@ -162,7 +162,7 @@ export const ProfilePage: React.FC = () => {
 
             <div>
               <div className="flex items-center space-x-2.5">
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                   {user?.name || 'ANCHOR Operator'}
                 </h1>
                 <Badge variant="cyan" size="sm" glow>
@@ -170,12 +170,12 @@ export const ProfilePage: React.FC = () => {
                 </Badge>
               </div>
               <p className="text-xs text-slate-400 mt-1 flex items-center space-x-1.5 font-medium">
-                <Mail className="w-3.5 h-3.5 text-cyan-400" />
+                <Mail className="w-3.5 h-3.5 text-indigo-600" />
                 <span>{user?.email}</span>
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-slate-900/80 text-slate-300 border border-slate-800 flex items-center space-x-1">
-                  <Layers className="w-3 h-3 text-cyan-400" />
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-white text-slate-700 border border-slate-200 flex items-center space-x-1">
+                  <Layers className="w-3 h-3 text-indigo-600" />
                   <span>Workspace: {user?.workspace || 'ws-primary'}</span>
                 </span>
                 {user?.authProviders?.includes('google') ? (
@@ -183,11 +183,11 @@ export const ProfilePage: React.FC = () => {
                     <span>Google OAuth</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/35 flex items-center space-x-1">
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-cyan-500/15 text-indigo-700 border border-cyan-500/35 flex items-center space-x-1">
                     <span>Email &amp; Password</span>
                   </span>
                 )}
-                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-slate-900/80 text-slate-400 border border-slate-800 flex items-center space-x-1">
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-lg bg-white text-slate-400 border border-slate-200 flex items-center space-x-1">
                   <Calendar className="w-3 h-3 text-slate-500" />
                   <span>Joined {new Date(user?.createdAt || Date.now()).toLocaleDateString([], { month: 'short', year: 'numeric' })}</span>
                 </span>
@@ -211,12 +211,12 @@ export const ProfilePage: React.FC = () => {
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass-panel p-4 flex items-center space-x-3.5 shadow-xl border-cyan-500/20">
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-indigo-600 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
             <MessageSquare className="w-5 h-5" />
           </div>
           <div>
             <p className="text-[11px] font-mono text-slate-400">Chat Conversations</p>
-            <p className="text-xl font-bold text-white font-mono">{conversationCount} Sessions</p>
+            <p className="text-xl font-bold text-slate-900 font-mono">{conversationCount} Sessions</p>
           </div>
         </div>
 
@@ -226,7 +226,7 @@ export const ProfilePage: React.FC = () => {
           </div>
           <div>
             <p className="text-[11px] font-mono text-slate-400">Active Memories</p>
-            <p className="text-xl font-bold text-white font-mono">{memoryCount} Records</p>
+            <p className="text-xl font-bold text-slate-900 font-mono">{memoryCount} Records</p>
           </div>
         </div>
 
@@ -242,14 +242,14 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-800 space-x-6 text-xs font-semibold">
+      <div className="flex border-b border-slate-200 space-x-6 text-xs font-semibold">
         <button
           type="button"
           onClick={() => setSearchParams({ tab: 'profile' })}
           className={`pb-3 flex items-center space-x-2 transition-all relative ${
             activeTab === 'profile'
-              ? 'text-cyan-400 border-b-2 border-cyan-400 font-bold'
-              : 'text-slate-400 hover:text-white'
+              ? 'text-indigo-600 border-b-2 border-cyan-400 font-bold'
+              : 'text-slate-400 hover:text-slate-900'
           }`}
         >
           <UserIcon className="w-4 h-4" />
@@ -261,8 +261,8 @@ export const ProfilePage: React.FC = () => {
           onClick={() => setSearchParams({ tab: 'security' })}
           className={`pb-3 flex items-center space-x-2 transition-all relative ${
             activeTab === 'security'
-              ? 'text-cyan-400 border-b-2 border-cyan-400 font-bold'
-              : 'text-slate-400 hover:text-white'
+              ? 'text-indigo-600 border-b-2 border-cyan-400 font-bold'
+              : 'text-slate-400 hover:text-slate-900'
           }`}
         >
           <Key className="w-4 h-4" />
@@ -274,8 +274,8 @@ export const ProfilePage: React.FC = () => {
           onClick={() => setSearchParams({ tab: 'workspace' })}
           className={`pb-3 flex items-center space-x-2 transition-all relative ${
             activeTab === 'workspace'
-              ? 'text-cyan-400 border-b-2 border-cyan-400 font-bold'
-              : 'text-slate-400 hover:text-white'
+              ? 'text-indigo-600 border-b-2 border-cyan-400 font-bold'
+              : 'text-slate-400 hover:text-slate-900'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -285,9 +285,9 @@ export const ProfilePage: React.FC = () => {
 
       {/* Tab 1: Profile Information */}
       {activeTab === 'profile' && (
-        <div className="glass-panel p-6 shadow-xl space-y-6 rounded-2xl border-slate-800">
+        <div className="glass-panel p-6 shadow-xl space-y-6 rounded-2xl border-slate-200">
           <div>
-            <h2 className="text-base font-bold text-white">Edit Profile Details</h2>
+            <h2 className="text-base font-bold text-slate-900">Edit Profile Details</h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Update your display name and profile avatar across ANCHOR and XYRO101.
             </p>
@@ -312,37 +312,37 @@ export const ProfilePage: React.FC = () => {
 
           <form onSubmit={handleUpdateProfile} className="space-y-5">
             <div>
-              <label className="text-xs font-mono text-slate-300 block mb-1.5">Full Name</label>
+              <label className="text-xs font-mono text-slate-700 block mb-1.5">Full Name</label>
               <input
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Operator Name"
                 required
-                className="w-full max-w-lg bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all"
+                className="w-full max-w-lg bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all"
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-slate-300 block mb-1.5">Email Address</label>
+              <label className="text-xs font-mono text-slate-700 block mb-1.5">Email Address</label>
               <input
                 type="email"
                 value={user?.email || ''}
                 disabled
-                className="w-full max-w-lg bg-slate-900/50 border border-slate-800/80 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed opacity-75"
+                className="w-full max-w-lg bg-white/50 border border-slate-200/80 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed opacity-75"
               />
               <p className="text-[11px] text-slate-500 mt-1 font-mono">Email is verified and linked to your workspace identity.</p>
             </div>
 
             <div>
-              <label className="text-xs font-mono text-slate-300 block mb-1.5">Avatar Image URL</label>
+              <label className="text-xs font-mono text-slate-700 block mb-1.5">Avatar Image URL</label>
               <div className="flex items-center space-x-3 max-w-lg">
                 <input
                   type="url"
                   value={profilePicture}
                   onChange={(e) => setProfilePicture(e.target.value)}
                   placeholder="https://example.com/photo.jpg"
-                  className="flex-1 bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-cyan-400"
+                  className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-900 focus:outline-none focus:border-cyan-400"
                 />
                 {profilePicture && (
                   <button
@@ -365,7 +365,7 @@ export const ProfilePage: React.FC = () => {
                       type="button"
                       onClick={() => setProfilePicture(url)}
                       className={`w-10 h-10 rounded-xl overflow-hidden border-2 transition-all active:scale-95 cursor-pointer ${
-                        profilePicture === url ? 'border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.4)]' : 'border-slate-800 hover:border-slate-600'
+                        profilePicture === url ? 'border-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.4)]' : 'border-slate-200 hover:border-slate-600'
                       }`}
                     >
                       <img src={url} alt={`Preset ${idx}`} className="w-full h-full object-cover" />
@@ -390,9 +390,9 @@ export const ProfilePage: React.FC = () => {
 
       {/* Tab 2: Security & Password */}
       {activeTab === 'security' && (
-        <div className="glass-panel p-6 shadow-xl space-y-6 rounded-2xl border-slate-800">
+        <div className="glass-panel p-6 shadow-xl space-y-6 rounded-2xl border-slate-200">
           <div>
-            <h2 className="text-base font-bold text-white">Password &amp; Authentication Security</h2>
+            <h2 className="text-base font-bold text-slate-900">Password &amp; Authentication Security</h2>
             <p className="text-xs text-slate-400 mt-0.5">
               Manage your password and authentication methods for this account.
             </p>
@@ -418,9 +418,9 @@ export const ProfilePage: React.FC = () => {
           {user?.authProviders?.includes('google') && !user?.authProviders?.includes('local') ? (
             <div className="p-4 rounded-2xl bg-cyan-950/20 border border-cyan-500/30 max-w-lg">
               <div className="flex items-start space-x-3">
-                <Sparkles className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
+                <Sparkles className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-xs font-bold text-white">Google OAuth Managed Account</h4>
+                  <h4 className="text-xs font-bold text-slate-900">Google OAuth Managed Account</h4>
                   <p className="text-xs text-slate-400 mt-1">
                     Your account is securely managed via Google OAuth. To set a standalone password for email sign-in, enter your desired password below.
                   </p>
@@ -432,38 +432,38 @@ export const ProfilePage: React.FC = () => {
           <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
             {(!user?.authProviders?.includes('google') || user?.authProviders?.includes('local')) && (
               <div>
-                <label className="text-xs font-mono text-slate-300 block mb-1">Current Password</label>
+                <label className="text-xs font-mono text-slate-700 block mb-1">Current Password</label>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-cyan-400"
                 />
               </div>
             )}
 
             <div>
-              <label className="text-xs font-mono text-slate-300 block mb-1">New Password</label>
+              <label className="text-xs font-mono text-slate-700 block mb-1">New Password</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 6 characters"
                 required
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-cyan-400"
               />
             </div>
 
             <div>
-              <label className="text-xs font-mono text-slate-300 block mb-1">Confirm New Password</label>
+              <label className="text-xs font-mono text-slate-700 block mb-1">Confirm New Password</label>
               <input
                 type="password"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
                 placeholder="Re-enter new password"
                 required
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-400"
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-cyan-400"
               />
             </div>
 
@@ -482,33 +482,33 @@ export const ProfilePage: React.FC = () => {
 
       {/* Tab 3: Workspace & Isolation */}
       {activeTab === 'workspace' && (
-        <div className="glass-panel p-6 shadow-xl space-y-6 rounded-2xl border-slate-800">
+        <div className="glass-panel p-6 shadow-xl space-y-6 rounded-2xl border-slate-200">
           <div>
-            <h2 className="text-base font-bold text-white">Tenant &amp; Data Isolation</h2>
+            <h2 className="text-base font-bold text-slate-900">Tenant &amp; Data Isolation</h2>
             <p className="text-xs text-slate-400 mt-0.5">
               ANCHOR enforces multi-tenant isolation across all memory vectors and audit events.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <div className="p-4 rounded-2xl bg-white border border-slate-200">
               <p className="text-[11px] font-mono text-slate-400">User Identification</p>
-              <p className="text-sm font-mono text-white mt-1 font-bold">{user?.id || 'usr-shakti2'}</p>
+              <p className="text-sm font-mono text-slate-900 mt-1 font-bold">{user?.id || 'usr-shakti2'}</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <div className="p-4 rounded-2xl bg-white border border-slate-200">
               <p className="text-[11px] font-mono text-slate-400">Isolated Workspace Bucket</p>
-              <p className="text-sm font-mono text-cyan-300 mt-1 font-bold">{user?.workspace || 'ws-primary'}</p>
+              <p className="text-sm font-mono text-indigo-700 mt-1 font-bold">{user?.workspace || 'ws-primary'}</p>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800 flex flex-wrap gap-4">
+          <div className="pt-4 border-t border-slate-200 flex flex-wrap gap-4">
             <button
               type="button"
               onClick={handleExportData}
               className="btn-ghost flex items-center space-x-2"
             >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <Download className="w-3.5 h-3.5 text-indigo-600" />
               <span>Export User Profile &amp; Records (JSON)</span>
             </button>
           </div>

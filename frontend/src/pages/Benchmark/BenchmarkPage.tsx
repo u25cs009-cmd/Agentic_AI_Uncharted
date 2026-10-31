@@ -126,11 +126,11 @@ export const BenchmarkPage: React.FC = () => {
               <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">15-Scenario Benchmark Arena</h1>
               <Badge variant="primary" size="sm">Official Evaluation</Badge>
               {meta && (
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/35">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-50 text-indigo-700 border border-cyan-500/35">
                   Embeddings: {meta.embedProvider} ({meta.dimension}d) | Store: {meta.store}
                 </span>
               )}
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-700 border border-slate-200">
                 {lastExecuted ? 'Live Run' : 'Baseline Reference'}
               </span>
             </div>

@@ -173,12 +173,12 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center items-center p-4 relative overflow-hidden select-none">
       {/* Ambient Celestial Aurora Glows */}
       <div className="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] rounded-full bg-indigo-600/15 blur-[140px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-500/15 blur-[150px] pointer-events-none" />
 
-      <div className="w-full max-w-md glass-panel border border-cyan-500/25 rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.7)] relative z-10 bg-slate-950/80 backdrop-blur-2xl">
+      <div className="w-full max-w-md glass-panel border border-slate-200/90 rounded-3xl p-8 shadow-xl relative z-10 bg-white backdrop-blur-2xl">
         {/* Brand Header */}
         <div className="text-center mb-5">
           <img
@@ -186,39 +186,39 @@ export const LoginPage: React.FC = () => {
             alt="XYRO101 Logo"
             className="w-16 h-16 rounded-full object-cover mx-auto mb-3 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
           />
-          <h1 className="text-2xl font-bold tracking-tight text-white">Welcome Back</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome Back</h1>
           <p className="text-xs text-slate-400 mt-1 font-medium">
             Sign in to access your governed ANCHOR workspace.
           </p>
         </div>
 
         {/* D1: Judge Demo Account Card */}
-        <div className="mb-5 p-3.5 rounded-2xl bg-gradient-to-r from-cyan-950/40 to-indigo-950/40 border border-cyan-500/35 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+        <div className="mb-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-300 font-bold flex items-center gap-1.5">
-              <Key className="w-3.5 h-3.5 text-cyan-400" /> Judge Demo Account
+            <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-700 font-bold flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-indigo-600" /> Judge Demo Account
             </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
               One-Click
             </span>
           </div>
-          <div className="space-y-1 text-xs font-mono text-slate-300 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
+          <div className="space-y-1 text-xs font-mono text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200">
             <div className="flex justify-between">
               <span className="text-slate-500">Email:</span>
-              <span className="text-slate-200 font-semibold">demo@anchor.io</span>
+              <span className="text-slate-900 font-semibold">demo@anchor.io</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Password:</span>
-              <span className="text-slate-200 font-semibold">password123</span>
+              <span className="text-slate-900 font-semibold">password123</span>
             </div>
           </div>
           <button
             type="button"
             onClick={handleFillDemoLogin}
             disabled={isLoading}
-            className="w-full mt-2.5 py-2 px-3 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 rounded-xl text-xs font-semibold font-mono transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.25)]"
+            className="w-full mt-2.5 py-2 px-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-semibold font-mono transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.25)]"
           >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
             <span>Fill Demo Login &amp; Sign In</span>
           </button>
         </div>
@@ -244,7 +244,7 @@ export const LoginPage: React.FC = () => {
           type="button"
           onClick={handleGoogleClick}
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-white transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-98 disabled:opacity-50 cursor-pointer"
+          className="w-full py-2.5 px-4 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-900 transition-all flex items-center justify-center space-x-3 shadow-sm active:scale-98 disabled:opacity-50 cursor-pointer"
         >
           <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
             <path
@@ -268,17 +268,17 @@ export const LoginPage: React.FC = () => {
         </button>
 
         <div className="flex items-center my-4">
-          <div className="flex-1 border-t border-slate-800" />
+          <div className="flex-1 border-t border-slate-200" />
           <span className="px-3 text-[10px] uppercase font-mono tracking-wider text-slate-500">
             or sign in with email
           </span>
-          <div className="flex-1 border-t border-slate-800" />
+          <div className="flex-1 border-t border-slate-200" />
         </div>
 
         {/* Credentials Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-xs font-mono text-slate-300 block mb-1">Email address</label>
+            <label className="text-xs font-mono text-slate-700 block mb-1">Email address</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
               <input
@@ -289,9 +289,9 @@ export const LoginPage: React.FC = () => {
                   if (validationErrors.email) setValidationErrors(prev => ({ ...prev, email: undefined }));
                 }}
                 placeholder="name@company.com"
-                className={`w-full bg-slate-950/80 border ${
-                  validationErrors.email ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
+                className={`w-full bg-white border ${
+                  validationErrors.email ? 'border-rose-500' : 'border-slate-200'
+                } rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all`}
               />
             </div>
             {validationErrors.email && (
@@ -301,7 +301,7 @@ export const LoginPage: React.FC = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-mono text-slate-300">Password</label>
+              <label className="text-xs font-mono text-slate-700">Password</label>
               <button
                 type="button"
                 onClick={() => {
@@ -309,7 +309,7 @@ export const LoginPage: React.FC = () => {
                   setForgotStatus(null);
                   setForgotModalOpen(true);
                 }}
-                className="text-[11px] text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                className="text-[11px] text-indigo-600 hover:text-cyan-300 transition-colors cursor-pointer"
               >
                 Forgot Password?
               </button>
@@ -324,14 +324,14 @@ export const LoginPage: React.FC = () => {
                   if (validationErrors.password) setValidationErrors(prev => ({ ...prev, password: undefined }));
                 }}
                 placeholder="••••••••"
-                className={`w-full bg-slate-950/80 border ${
-                  validationErrors.password ? 'border-rose-500' : 'border-slate-800'
-                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:shadow-[0_0_15px_rgba(6,182,212,0.2)] transition-all`}
+                className={`w-full bg-white border ${
+                  validationErrors.password ? 'border-rose-500' : 'border-slate-200'
+                } rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                className="absolute right-3 top-3 text-slate-400 hover:text-slate-900 transition-colors cursor-pointer"
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -367,7 +367,7 @@ export const LoginPage: React.FC = () => {
         {/* Link to Register */}
         <div className="mt-5 text-center text-xs text-slate-400">
           <span>Don't have an account? </span>
-          <Link to="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2">
+          <Link to="/register" className="text-indigo-600 hover:text-cyan-300 font-semibold underline underline-offset-2">
             Create an account
           </Link>
         </div>
@@ -376,15 +376,15 @@ export const LoginPage: React.FC = () => {
       {/* Forgot Password Modal */}
       {forgotModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="w-full max-w-sm glass-panel border border-cyan-500/30 rounded-2xl p-6 shadow-2xl relative bg-slate-950/95">
+          <div className="w-full max-w-sm glass-panel border border-cyan-500/30 rounded-2xl p-6 shadow-2xl relative bg-white/95">
             <button
               type="button"
               onClick={() => setForgotModalOpen(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-white p-1 rounded-lg"
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-900 p-1 rounded-lg"
             >
               <X className="w-4 h-4" />
             </button>
-            <h3 className="text-base font-bold text-white mb-1">Reset Your Password</h3>
+            <h3 className="text-base font-bold text-slate-900 mb-1">Reset Your Password</h3>
             <p className="text-xs text-slate-400 mb-4">
               Enter your email and we'll send you instructions to reset your password.
             </p>
@@ -408,14 +408,14 @@ export const LoginPage: React.FC = () => {
 
             <form onSubmit={handleForgotPassword} className="space-y-3">
               <div>
-                <label className="text-xs font-mono text-slate-300 block mb-1">Email address</label>
+                <label className="text-xs font-mono text-slate-700 block mb-1">Email address</label>
                 <input
                   type="email"
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
                   placeholder="name@company.com"
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-slate-900 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
                 />
               </div>
 

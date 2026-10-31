@@ -238,7 +238,7 @@ export const EntityGraphPage: React.FC = () => {
         borderColor = '#475569';
         bgColor = '#0f172a';
         statusColor = 'text-slate-500';
-        badgeBg = 'bg-slate-800/40 text-slate-500 border border-slate-700/30';
+        badgeBg = 'bg-slate-800/40 text-slate-500 border border-slate-200/30';
       }
 
       memoryNodes.push({

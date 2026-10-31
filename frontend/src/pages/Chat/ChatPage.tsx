@@ -415,7 +415,7 @@ export const ChatPage: React.FC = () => {
     // Fallback if no structured output exists
     if (!structured) {
       return (
-        <div className="text-sm text-slate-200 whitespace-pre-wrap leading-relaxed font-sans">
+        <div className="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed font-sans">
           {cleanText(msg.text)}
         </div>
       );
@@ -444,14 +444,14 @@ export const ChatPage: React.FC = () => {
     return (
       <div className="space-y-3.5">
         {/* Diagnosis Header */}
-        <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-2">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-cyan-400 shrink-0" />
-            <h4 className="text-sm font-bold text-white tracking-wide font-sans">
+            <Shield className="w-4 h-4 text-indigo-600 shrink-0" />
+            <h4 className="text-sm font-bold text-slate-900 tracking-wide font-sans">
               {cleanText(structured.diagnosis)}
             </h4>
           </div>
-          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+          <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-medium">
             {msg.mode || 'governed'} mode
           </span>
         </div>
@@ -460,15 +460,15 @@ export const ChatPage: React.FC = () => {
         <div className="space-y-1">
           <div className="flex justify-between items-center text-xs font-mono">
             <span className="text-slate-400 font-semibold text-[11px]">Confidence Rating:</span>
-            <span className={`font-bold ${isHighConf ? 'text-cyan-300' : 'text-amber-400'}`}>
+            <span className={`font-bold ${isHighConf ? 'text-indigo-600' : 'text-amber-400'}`}>
               {confPct}%
             </span>
           </div>
-          <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-800">
+          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 isHighConf
-                  ? 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]'
+                  ? 'bg-indigo-600'
                   : 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.6)]'
               }`}
               style={{ width: `${Math.max(5, Math.min(100, confPct))}%` }}
@@ -478,11 +478,11 @@ export const ChatPage: React.FC = () => {
 
         {/* Distinct Abstention Card */}
         {isAbstained && (
-          <div className="p-3.5 rounded-xl bg-amber-950/25 border border-amber-500/40 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.15)] animate-fade-in">
+          <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 shadow-xs animate-fade-in">
             <div className="flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <div className="font-bold text-xs font-mono text-amber-300">
+                <div className="font-bold text-xs font-mono text-amber-800">
                   Abstained: {cleanText(structured.abstainReason || res?.abstention_reason || 'Query refrained under governance policies')}
                 </div>
                 <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
@@ -495,17 +495,17 @@ export const ChatPage: React.FC = () => {
 
         {/* Proposed Fix Action Card (Hidden if abstained) */}
         {!isAbstained && structured.proposedFix && (
-          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)] space-y-2">
-            <div className="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-bold flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Proposed Remediation Plan
+          <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-200/90 shadow-sm shadow-[0_0_15px_rgba(6,182,212,0.1)] space-y-2">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-indigo-700 font-bold flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Proposed Remediation Plan
             </div>
-            <div className="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed bg-slate-900/70 p-2.5 rounded-lg border border-slate-800">
+            <div className="text-xs font-mono text-slate-800 whitespace-pre-wrap leading-relaxed bg-white p-3 rounded-lg border border-slate-200 text-slate-800">
               {cleanText(structured.proposedFix)}
             </div>
 
             {/* C4: Human-in-the-Loop Proposal Approval */}
             {msg.mode === 'governed' && targetMemoryId && (
-              <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-2 flex-wrap">
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                 <span className="text-[11px] font-mono text-slate-400">Human-in-the-Loop Verification:</span>
                 {msg.feedback ? (
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 ${
@@ -522,7 +522,7 @@ export const ChatPage: React.FC = () => {
                       type="button"
                       disabled={submittingOutcomeId === msg.id}
                       onClick={() => handleProposalOutcome(msg.id, targetMemoryId, 'APPROVED')}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
                     >
                       <Check className="w-3.5 h-3.5" /> Approve this fix
                     </button>
@@ -530,7 +530,7 @@ export const ChatPage: React.FC = () => {
                       type="button"
                       disabled={submittingOutcomeId === msg.id}
                       onClick={() => handleProposalOutcome(msg.id, targetMemoryId, 'REJECTED')}
-                      className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
+                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 font-semibold text-xs transition-all flex items-center gap-1 cursor-pointer disabled:opacity-40"
                     >
                       <X className="w-3.5 h-3.5" /> Reject this fix
                     </button>
@@ -543,8 +543,8 @@ export const ChatPage: React.FC = () => {
 
         {/* Warnings Callout Box (Omit if empty) */}
         {structured.warnings && structured.warnings.length > 0 && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
-            <div className="flex items-center gap-1.5 font-bold text-amber-400 font-mono text-[11px]">
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs space-y-1">
+            <div className="flex items-center gap-1.5 font-bold text-amber-800 font-mono font-bold text-[11px]">
               <AlertTriangle className="w-3.5 h-3.5" /> Operational Warnings &amp; Governance Guardrails:
             </div>
             <ul className="list-disc list-inside space-y-0.5 pl-1 text-[11px] text-slate-300">
@@ -557,14 +557,14 @@ export const ChatPage: React.FC = () => {
 
         {/* Cited Memory Chips */}
         {citedChips.length > 0 && (
-          <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-mono text-slate-400 text-[11px] font-semibold">Citations:</span>
               {citedChips.map((chip) => (
                 <Link
                   key={chip.id}
                   to={`/inspector?id=${encodeURIComponent(chip.id)}`}
-                  className="px-2 py-0.5 rounded-lg bg-cyan-500/15 text-cyan-300 hover:text-white hover:bg-cyan-500/30 border border-cyan-500/30 font-mono text-[10px] font-semibold transition-all shadow-sm"
+                  className="px-2 py-0.5 rounded-lg bg-cyan-500/15 text-indigo-600 hover:text-white hover:bg-cyan-500/30 border border-slate-200/90 shadow-sm font-mono text-[10px] font-semibold transition-all shadow-sm"
                   title={`Inspect memory ${chip.id}`}
                 >
                   [{chip.id}] (Score: {chip.score.toFixed(2)})
@@ -573,7 +573,7 @@ export const ChatPage: React.FC = () => {
             </div>
             <Link
               to="/inspector"
-              className="text-cyan-400 hover:text-cyan-300 font-semibold font-mono text-[11px] flex items-center gap-0.5"
+              className="text-indigo-600 hover:text-indigo-600 font-semibold font-mono text-[11px] flex items-center gap-0.5"
             >
               Decompose Formula <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -581,13 +581,13 @@ export const ChatPage: React.FC = () => {
         )}
 
         {/* Footer Badges: RetrievalPath, Latency, Tokens, Fallback */}
-        <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] font-mono text-slate-500">
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono text-slate-500">
           <div className="flex items-center gap-2">
-            <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
-              Path: <strong className="text-cyan-400">{res?.retrievalPath || 'memory'}</strong>
+            <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-medium">
+              Path: <strong className="text-indigo-600">{res?.retrievalPath || 'memory'}</strong>
             </span>
             {res?.llmFallback && (
-              <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
+              <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-800 border border-amber-500/40 font-bold">
                 RULE FALLBACK
               </span>
             )}
@@ -605,7 +605,7 @@ export const ChatPage: React.FC = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-6.5rem)] max-w-6xl mx-auto space-y-3.5 px-2 sm:px-0">
       {/* ── Top Mission Control HUD Bar ── */}
-      <div className="glass-panel p-3.5 shadow-2xl relative overflow-hidden border-cyan-500/20 rounded-2xl">
+      <div className="glass-panel p-3.5 shadow-2xl relative overflow-hidden border-slate-200/90 rounded-2xl shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* C2: Three Clearly-Labelled Mode Cards with Subtitles */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 w-full lg:max-w-2xl">
@@ -615,8 +615,8 @@ export const ChatPage: React.FC = () => {
               onClick={() => { setActiveMode('none'); setCompareMode(false); }}
               className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                 !compareMode && activeMode === 'none'
-                  ? 'bg-slate-800/90 border-slate-600 text-white shadow-md'
-                  : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  ? 'bg-slate-100 border-slate-300 text-slate-900 shadow-xs font-semibold'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-200 hover:border-slate-700'
               }`}
               title="Zero memory recall baseline (stateless LLM)"
             >
@@ -632,8 +632,8 @@ export const ChatPage: React.FC = () => {
               onClick={() => { setActiveMode('naive'); setCompareMode(false); }}
               className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                 !compareMode && activeMode === 'naive'
-                  ? 'bg-amber-500/15 border-amber-500/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
-                  : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-amber-300 hover:border-slate-700'
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-xs font-semibold'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-amber-800 hover:border-slate-700'
               }`}
               title="Unchecked vector similarity; vulnerable to stale & poisoned data"
             >
@@ -651,13 +651,13 @@ export const ChatPage: React.FC = () => {
               onClick={() => { setActiveMode('governed'); setCompareMode(false); }}
               className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
                 !compareMode && activeMode === 'governed'
-                  ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-200 shadow-[0_0_16px_rgba(6,182,212,0.25)]'
-                  : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-cyan-300 hover:border-slate-700'
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-900 shadow-xs font-semibold ring-1 ring-indigo-500/20'
+                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 hover:border-slate-700'
               }`}
               title="Full ANCHOR governance: trust ladder, recency decay, dependency invalidation, deterministic gates"
             >
               <div className="text-xs font-bold font-mono flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> 3. Engram / Governed
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" /> 3. Engram / Governed
               </div>
               <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
                 Full ANCHOR governance: trust ladder, recency decay, deterministic gates
@@ -672,7 +672,7 @@ export const ChatPage: React.FC = () => {
               onClick={() => setIsConvSidebarOpen(!isConvSidebarOpen)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
                 isConvSidebarOpen
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_14px_rgba(6,182,212,0.25)]'
+                  ? 'bg-cyan-500/20 text-indigo-600 border-cyan-500/40 shadow-[0_0_14px_rgba(6,182,212,0.25)]'
                   : 'btn-ghost text-slate-300'
               }`}
               title="Toggle chat sessions history"
@@ -697,16 +697,16 @@ export const ChatPage: React.FC = () => {
         </div>
 
         {/* Quick Scenario Chips */}
-        <div className="flex items-center space-x-2 mt-3 pt-3 overflow-x-auto pb-0.5 border-t border-slate-800/80">
+        <div className="flex items-center space-x-2 mt-3 pt-3 overflow-x-auto pb-0.5 border-t border-slate-100">
           <span className="text-[11px] font-mono text-slate-400 shrink-0 flex items-center font-medium">
-            <Zap className="w-3 h-3 text-cyan-400 mr-1" /> Quick Queries:
+            <Zap className="w-3 h-3 text-indigo-600 mr-1" /> Quick Queries:
           </span>
           {presetQueries.map((p) => (
             <button
               key={p.label}
               type="button"
               onClick={() => handleSendQuery(p.query)}
-              className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-900/60 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 transition-all shrink-0 cursor-pointer shadow-sm"
+              className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-50 text-slate-700 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 hover:border-cyan-500/40 transition-all shrink-0 cursor-pointer shadow-sm"
             >
               {p.label}
             </button>
@@ -724,7 +724,7 @@ export const ChatPage: React.FC = () => {
             : 'bg-indigo-950/80 border-indigo-500/40 text-indigo-200'
         }`}>
           <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
+            <Sparkles className="w-4 h-4 text-indigo-600 shrink-0 animate-pulse" />
             <span className="font-mono">{demoToast.text}</span>
           </div>
           <button
@@ -747,11 +747,11 @@ export const ChatPage: React.FC = () => {
               className="fixed inset-0 bg-black/60 backdrop-blur-sm md:hidden"
               onClick={() => setIsConvSidebarOpen(false)}
             />
-            <div className="relative w-80 md:w-72 h-full glass-panel border border-slate-800 p-3.5 rounded-2xl flex flex-col shrink-0 shadow-2xl bg-slate-950/95 backdrop-blur-xl">
+            <div className="relative w-80 md:w-72 h-full card border border-slate-200 p-3.5 rounded-2xl flex flex-col shrink-0 shadow-xl bg-white">
               <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-slate-800">
                 <div className="flex items-center space-x-2">
-                  <MessageSquare className="w-4 h-4 text-cyan-400" />
-                  <span className="text-white font-bold text-xs">Saved Sessions</span>
+                  <MessageSquare className="w-4 h-4 text-indigo-600" />
+                  <span className="text-slate-900 font-bold text-xs">Saved Sessions</span>
                 </div>
                 <button
                   type="button"
@@ -786,12 +786,12 @@ export const ChatPage: React.FC = () => {
                         onClick={() => handleSelectConversation(conv.id)}
                         className={`group p-2.5 rounded-xl cursor-pointer flex items-start justify-between border transition-all ${
                           isActive
-                            ? 'bg-cyan-500/15 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.15)] text-cyan-200'
-                            : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-800/80 text-slate-300'
+                            ? 'bg-indigo-50 border-indigo-200 text-indigo-900 font-semibold'
+                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700'
                         }`}
                       >
                         <div className="min-w-0 flex-1 pr-2">
-                          <p className={`text-xs font-semibold truncate ${isActive ? 'text-cyan-300' : 'text-slate-200'}`}>
+                          <p className={`text-xs font-semibold truncate ${isActive ? 'text-indigo-600' : 'text-slate-200'}`}>
                             {conv.title || 'Untitled Session'}
                           </p>
                           <p className="text-[10px] font-mono text-slate-400 mt-0.5">
@@ -850,13 +850,13 @@ export const ChatPage: React.FC = () => {
                 {/* Message Content Bubble */}
                 {msg.comparison ? (
                   // 3-Mode Comparison Cards
-                  <div className="w-full glass-panel border border-slate-800 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-3 shadow-2xl bg-slate-950/70">
+                  <div className="w-full card border border-slate-200 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-3 gap-3 shadow-md bg-white">
                     {/* None */}
-                    <div className="glass-panel border-slate-800 p-3.5 rounded-xl flex flex-col justify-between bg-slate-900/60">
+                    <div className="card border-slate-200 p-3.5 rounded-xl flex flex-col justify-between bg-slate-50/70">
                       <div>
                         <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
-                          <span className="text-xs font-mono font-bold text-slate-300">1. NONE MODE</span>
-                          <span className="text-[10px] font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded">0 memories</span>
+                          <span className="text-xs font-mono font-bold text-slate-800">1. NONE MODE</span>
+                          <span className="text-[10px] font-mono bg-slate-800 text-slate-600 px-2 py-0.5 rounded bg-slate-200/80">0 memories</span>
                         </div>
                         <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.none.answer)}</p>
                       </div>
@@ -866,17 +866,17 @@ export const ChatPage: React.FC = () => {
                     </div>
 
                     {/* Naive */}
-                    <div className="glass-panel border-amber-500/30 p-3.5 rounded-xl flex flex-col justify-between bg-amber-950/10 shadow-[0_0_15px_rgba(245,158,11,0.08)]">
+                    <div className="card border-amber-200 p-3.5 rounded-xl flex flex-col justify-between bg-amber-50/50 shadow-xs">
                       <div>
                         <div className="flex items-center justify-between pb-2 mb-2 border-b border-amber-500/20">
-                          <span className="text-xs font-mono font-bold text-amber-300 flex items-center gap-1.5">
+                          <span className="text-xs font-mono font-bold text-amber-800 flex items-center gap-1.5 font-bold">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> 2. NAIVE RETRIEVAL
                           </span>
-                          <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-mono bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">
                             {msg.comparison.naive.retrieved_memories.length} matched
                           </span>
                         </div>
-                        <p className="text-xs text-slate-200 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.naive.answer)}</p>
+                        <p className="text-xs text-slate-800 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.naive.answer)}</p>
                       </div>
                       <div className="mt-3 pt-2 border-t border-amber-500/20 text-[10px] font-mono text-amber-400">
                         ⚠️ Stale &amp; unverified data accepted
@@ -884,19 +884,19 @@ export const ChatPage: React.FC = () => {
                     </div>
 
                     {/* Governed */}
-                    <div className="glass-panel border-cyan-500/40 p-3.5 rounded-xl flex flex-col justify-between bg-cyan-950/15 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+                    <div className="card border-indigo-200 p-3.5 rounded-xl flex flex-col justify-between bg-indigo-50/40 shadow-xs ring-1 ring-indigo-500/20">
                       <div>
-                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/30">
-                          <span className="text-xs font-mono font-bold text-cyan-300 flex items-center gap-1.5">
-                            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" /> 3. GOVERNED ANCHOR
+                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/90 shadow-sm">
+                          <span className="text-xs font-mono font-bold text-indigo-900 flex items-center gap-1.5 font-bold">
+                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" /> 3. GOVERNED ANCHOR
                           </span>
-                          <span className="text-[10px] font-mono bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded font-bold">
+                          <span className="text-[10px] font-mono bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded font-bold">
                             {msg.comparison.governed.retrieved_memories.length} verified
                           </span>
                         </div>
                         <p className="text-xs text-slate-100 whitespace-pre-wrap leading-relaxed font-sans">{cleanText(msg.comparison.governed.answer)}</p>
                       </div>
-                      <div className="mt-3 pt-2 border-t border-cyan-500/20 text-[10px] font-mono text-cyan-300 flex items-center justify-between">
+                      <div className="mt-3 pt-2 border-t border-cyan-500/20 text-[10px] font-mono text-indigo-700 flex items-center justify-between font-semibold">
                         <span>🛡️ Governed Decision</span>
                         {msg.comparison.governed.abstention && (
                           <span className="text-amber-400 font-bold">ABSTAINED</span>
@@ -909,8 +909,8 @@ export const ChatPage: React.FC = () => {
                   <div
                     className={`group relative max-w-[90%] md:max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed transition-all shadow-xl ${
                       msg.sender === 'user'
-                        ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white rounded-tr-sm shadow-[0_4px_20px_rgba(6,182,212,0.3)] border border-cyan-400/30 font-sans'
-                        : 'glass-panel text-slate-200 rounded-tl-sm border-slate-800 shadow-[0_4px_24px_rgba(0,0,0,0.4)] w-full'
+                        ? 'bg-slate-900 text-white rounded-tr-sm shadow-md font-sans'
+                        : 'card text-slate-900 rounded-tl-sm border-slate-200 shadow-sm w-full'
                     }`}
                   >
                     {msg.sender === 'user' ? (
@@ -936,9 +936,9 @@ export const ChatPage: React.FC = () => {
             ))}
 
             {loading && (
-              <div className="flex items-center gap-3 p-3 glass-panel rounded-xl border-cyan-500/30 max-w-sm animate-fade-in shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+              <div className="flex items-center gap-3 p-3 glass-panel rounded-xl border-slate-200/90 shadow-sm max-w-sm animate-fade-in shadow-[0_0_15px_rgba(6,182,212,0.15)]">
                 <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
-                <span className="font-mono text-xs text-cyan-300 font-semibold">
+                <span className="font-mono text-xs text-indigo-600 font-semibold">
                   XYRO101 Engine evaluating vector graph &amp; guard rules...
                 </span>
               </div>
@@ -949,7 +949,7 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* ── C3: Quick-Action Demo Buttons (JWT-Protected /api/demo/* endpoints) ── */}
-      <div className="glass-panel p-2.5 rounded-xl border-slate-800 bg-slate-950/70 shadow-lg flex items-center justify-between gap-2 overflow-x-auto">
+      <div className="glass-panel p-2.5 rounded-xl border-slate-200 bg-white shadow-xs flex items-center justify-between gap-2 overflow-x-auto">
         <span className="text-[11px] font-mono text-slate-400 shrink-0 font-semibold flex items-center gap-1 pl-1">
           <Zap className="w-3.5 h-3.5 text-amber-400" /> Scripted Demos:
         </span>
@@ -958,7 +958,7 @@ export const ChatPage: React.FC = () => {
             type="button"
             disabled={quickActionLoading !== null}
             onClick={() => handleQuickAction('alert')}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
           >
             <Bell className={`w-3.5 h-3.5 ${quickActionLoading === 'alert' ? 'animate-spin' : ''}`} />
             <span>Run demo alert</span>
@@ -968,7 +968,7 @@ export const ChatPage: React.FC = () => {
             type="button"
             disabled={quickActionLoading !== null}
             onClick={() => handleQuickAction('deploy')}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
           >
             <Rocket className={`w-3.5 h-3.5 ${quickActionLoading === 'deploy' ? 'animate-bounce' : ''}`} />
             <span>Simulate deploy</span>
@@ -978,7 +978,7 @@ export const ChatPage: React.FC = () => {
             type="button"
             disabled={quickActionLoading !== null}
             onClick={() => handleQuickAction('poison')}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
           >
             <ShieldAlert className={`w-3.5 h-3.5 ${quickActionLoading === 'poison' ? 'animate-pulse' : ''}`} />
             <span>Send poisoned note</span>
@@ -988,7 +988,7 @@ export const ChatPage: React.FC = () => {
             type="button"
             disabled={quickActionLoading !== null}
             onClick={() => handleQuickAction('reset')}
-            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
+            className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${quickActionLoading === 'reset' ? 'animate-spin' : ''}`} />
             <span>Reset demo</span>
@@ -997,9 +997,9 @@ export const ChatPage: React.FC = () => {
       </div>
 
       {/* ── Input Terminal Bar ── */}
-      <div className="glass-panel p-3 shadow-2xl rounded-2xl border-cyan-500/30">
+      <div className="glass-panel p-3 shadow-2xl rounded-2xl border-slate-200/90 shadow-sm">
         <form onSubmit={handleFormSubmit} className="space-y-2">
-          <div className="relative flex items-end bg-slate-950/80 border border-slate-800 focus-within:border-cyan-400 focus-within:shadow-[0_0_25px_rgba(6,182,212,0.25)] rounded-2xl p-2 transition-all">
+          <div className="relative flex items-end bg-white border border-slate-200 shadow-md focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 rounded-2xl p-2 transition-all">
             <textarea
               ref={textareaRef}
               rows={1}
@@ -1022,7 +1022,7 @@ export const ChatPage: React.FC = () => {
                   ? "Ask XYRO101 anything (e.g. 'Which database are we using in prod?', 'How to fix checkout timeout?')..."
                   : `Query agent in ${activeMode.toUpperCase()} mode...`
               }
-              className="flex-1 bg-transparent px-3 py-2 text-sm text-white placeholder-slate-500 outline-none resize-none max-h-40 font-sans leading-relaxed"
+              className="flex-1 bg-transparent px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none resize-none max-h-40 font-sans leading-relaxed"
             />
             <button
               type="submit"
@@ -1042,7 +1042,7 @@ export const ChatPage: React.FC = () => {
               <select
                 value={sourceKind}
                 onChange={(e) => setSourceKind(e.target.value as any)}
-                className="bg-slate-900 border border-slate-800 text-slate-300 rounded-lg px-2.5 py-1 text-xs font-mono outline-none cursor-pointer focus:border-cyan-400"
+                className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2.5 py-1 text-xs font-mono outline-none cursor-pointer focus:border-cyan-400"
               >
                 <option value="user_stated">user_stated (Trust: 0.80)</option>
                 <option value="human_approved">human_approved (Trust: 1.00)</option>
@@ -1054,7 +1054,7 @@ export const ChatPage: React.FC = () => {
             <div className="hidden sm:flex items-center space-x-2 font-mono text-[11px] text-slate-500">
               <span>↵ Enter to send • Shift + ↵ newline</span>
               <span>•</span>
-              <span className="text-cyan-400 font-semibold">
+              <span className="text-indigo-600 font-semibold">
                 {meta ? `${meta.embedProvider.toUpperCase()} ${meta.dimension}-dim • ${meta.store} mode` : '384-dim Vector & Graph Governance'}
               </span>
             </div>
