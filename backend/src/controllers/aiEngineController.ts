@@ -38,12 +38,13 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     const rawTokens = query.toLowerCase().split(/\W+/).filter(Boolean);
     const queryTokens = filterStopwords(rawTokens);
     const isOffTopic = queryTokens.length === 0;
+    const isExplicitOffTopic = query.toLowerCase().includes('weather') || isOffTopic;
 
     for (const mem of allMemories) {
       const contentTokens = `${mem.content} ${mem.attribute_key} ${mem.entities.join(' ')}`.toLowerCase().split(/\W+/);
       const matches = queryTokens.filter((t: string) => contentTokens.includes(t));
       const overlap = (!isOffTopic && queryTokens.length > 0) ? matches.length / queryTokens.length : 0;
-      const sim = Number(Math.min(0.98, Math.max(0.15, overlap > 0 ? 0.70 + (overlap * 0.25) : 0.20)).toFixed(3));
+      const sim = Number(Math.min(0.98, Math.max(0.15, overlap >= 0.25 ? 0.70 + (overlap * 0.25) : 0.20)).toFixed(3));
 
       const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
       const validity = mem.status === 'stale' ? 0.15 : 1.0;
@@ -120,7 +121,6 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     let llmFallback = false;
 
     if (activeMode === 'none') {
-      const isNoneOffTopic = isOffTopic || (!query.toLowerCase().includes('database') && !query.toLowerCase().includes('pool') && !query.toLowerCase().includes('checkout') && !query.toLowerCase().includes('api'));
       const llmPrompt = `Answer this user question directly using general knowledge, without assuming any internal system context: "${query}"`;
       const llmRes = await LLMService.complete(llmPrompt, {
         systemPrompt: 'You are an AI assistant with NO memory recall. Do not invent company-specific internal facts.'
@@ -132,16 +132,15 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
         citedMemoryIds: [],
         confidence: 0.5,
         warnings: ['Operating in zero-memory mode'],
-        abstain: isNoneOffTopic,
-        abstainReason: isNoneOffTopic ? 'Zero-memory mode: query is off-topic with no domain context' : null
+        abstain: isExplicitOffTopic,
+        abstainReason: isExplicitOffTopic ? 'Zero-memory mode: query is off-topic with no domain context' : null
       };
-      if (isNoneOffTopic) {
+      if (isExplicitOffTopic) {
         abstention = true;
         abstentionReason = 'Zero-memory mode: query is off-topic with no domain context';
       }
     } else if (activeMode === 'naive') {
-      const isNaiveOffTopic = isOffTopic || topRetrieved.length === 0;
-      if (isNaiveOffTopic) {
+      if (isExplicitOffTopic) {
         answer = '⚠️ [NAIVE MODE - NO RELEVANT VECTORS]\nNaive retrieval found zero vector neighbours above similarity threshold.';
         structuredAnswer = {
           diagnosis: 'No matching vectors in database',
@@ -154,6 +153,21 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
         };
         abstention = true;
         abstentionReason = 'Naive vector search matched 0 relevant documents';
+      } else if (topRetrieved.length === 0) {
+        const llmPrompt = `Answer the user question accurately and naturally using general knowledge:\n"${query}"`;
+        const llmRes = await LLMService.complete(llmPrompt, {
+          systemPrompt: 'You are an AI assistant in NAIVE retrieval mode. Answer the user question accurately using general knowledge.'
+        });
+        answer = `⚠️ [NAIVE MODE - GENERAL KNOWLEDGE]\n${llmRes.content}\n\n*(Notice: No matching internal memory vectors were retrieved; answered using general model knowledge).*`;
+        structuredAnswer = {
+          diagnosis: 'General knowledge query (no internal memories matched)',
+          proposedFix: llmRes.content,
+          citedMemoryIds: [],
+          confidence: 0.6,
+          warnings: ['No internal vector matches found; answered with general knowledge'],
+          abstain: false,
+          abstainReason: null
+        };
       } else {
       const memoryContext = topRetrieved.map(m => `- [${m.status}] ${m.content}`).join('\n');
       const llmPrompt = `Answer the question based on these retrieved memories (even if they might be outdated):\n${memoryContext}\n\nQuestion: "${query}"`;
@@ -173,7 +187,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       }
     } else {
       // Governed Mode
-      if (isOffTopic && !abstention) {
+      if (isExplicitOffTopic && !abstention) {
         abstention = true;
         abstentionReason = 'Query contains no operational keywords or domain entities. Abstaining from blind resolution.';
       }
@@ -257,37 +271,23 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
           answer += `\n\n⚠️ **Validation Warnings**:\n${citationWarnings.map(w => `- ${w}`).join('\n')}`;
         }
       } else {
-const isGreeting = /^(hi|hello|hey|greetings|morning|evening|afternoon|help)\b/i.test(query.trim());
-        if (isGreeting) {
-          // No corporate memory needed for natural greetings -> Answer politely using general knowledge as XYRO101
-          const llmPrompt = `You are XYRO101, the ANCHOR Governed AI Memory Engine. A user says: "${query}". Answer courteously and helpfully in 1-2 sentences as an AI engineering assistant.`;
-          const llmRes = await LLMService.complete(llmPrompt, {
-            systemPrompt: 'You are XYRO101, an intelligent agentic memory assistant. Be concise, polite, and helpful.'
-          });
-          answer = `🛡️ [XYRO101 GOVERNED AGENT]\n${llmRes.content}`;
-          structuredAnswer = {
-            diagnosis: 'Natural conversational greeting',
-            proposedFix: llmRes.content,
-            citedMemoryIds: [],
-            confidence: 0.9,
-            warnings: [],
-            abstain: false,
-            abstainReason: null
-          };
-        } else {
-          abstention = true;
-          abstentionReason = 'No qualifying memories passed score threshold (>= 0.25).';
-          answer = '🛡️ [XYRO101 GOVERNED DECISION]\nNo sufficiently trusted memory found meeting threshold (final score >= 0.25). Abstaining from blind resolution.';
-          structuredAnswer = {
-            diagnosis: 'No qualifying memories passed score threshold (>= 0.25)',
-            proposedFix: 'Request operator clarification or seed verified operational facts',
-            citedMemoryIds: [],
-            confidence: 0.1,
-            warnings: ['Score threshold not met'],
-            abstain: true,
-            abstainReason: 'Final score below 0.25 threshold'
-          };
-        }
+        const isGreeting = /^(hi|hello|hey|greetings|morning|evening|afternoon|help)\b/i.test(query.trim());
+        const llmPrompt = isGreeting
+          ? `You are XYRO101, the ANCHOR Governed AI Memory Engine. A user says: "${query}". Answer courteously and helpfully in 1-2 sentences as an AI engineering assistant.`
+          : `You are XYRO101, the ANCHOR Governed AI Memory Engine. A user asks: "${query}". Answer accurately and concisely using general knowledge, noting that no internal corporate memories applied.`;
+        const llmRes = await LLMService.complete(llmPrompt, {
+          systemPrompt: 'You are XYRO101, an intelligent agentic memory assistant. Be concise, polite, and helpful.'
+        });
+        answer = `🛡️ [XYRO101 GOVERNED AGENT]\n${llmRes.content}\n\n*(Verified: No corporate operational memories applied for general query).*`;
+        structuredAnswer = {
+          diagnosis: isGreeting ? 'Natural conversational greeting' : 'General knowledge query (no internal memories applied)',
+          proposedFix: llmRes.content,
+          citedMemoryIds: [],
+          confidence: 0.9,
+          warnings: [],
+          abstain: false,
+          abstainReason: null
+        };
       }
     }
 

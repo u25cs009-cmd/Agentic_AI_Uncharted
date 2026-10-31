@@ -625,12 +625,14 @@ export const api = {
     const retrieved: RetrievalScoring[] = [];
     const excluded: RetrievalScoring[] = [];
 
+    const stopwords = new Set(['the', 'and', 'for', 'with', 'are', 'is', 'was', 'were', 'what', 'when', 'where', 'which', 'who', 'how', 'why', 'this', 'that', 'these', 'those', 'from', 'into', 'under', 'over', 'about', 'some', 'any', 'all', 'can', 'could', 'will', 'would', 'should', 'have', 'has', 'had', 'not', 'our', 'out', 'you', 'your', 'top']);
     for (const mem of memoryStore) {
       // Compute mock cosine similarity based on keyword overlap
       const contentWords = mem.content.toLowerCase().split(/\W+/);
-      const queryWords = query.split(/\W+/).filter(w => w.length > 2);
+      const queryWords = query.split(/\W+/).filter(w => w.length > 2 && !stopwords.has(w));
       const matches = queryWords.filter(w => contentWords.includes(w));
-      let rawSim = matches.length > 0 ? 0.70 + (matches.length * 0.08) : 0.20;
+      const overlap = queryWords.length > 0 ? matches.length / queryWords.length : 0;
+      let rawSim = overlap >= 0.25 ? 0.70 + (overlap * 0.25) : 0.20;
       if (rawSim > 0.98) rawSim = 0.98;
 
       const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type);
@@ -709,18 +711,26 @@ export const api = {
     // Generate response text
     let answer = "";
     if (mode === 'none') {
-      if (query.includes('database')) {
+      if (query.includes('country') || query.includes('countries')) {
+        answer = "[NONE MODE - NO MEMORY RETRIEVAL]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)";
+      } else if (query.includes('database')) {
         answer = "As XYRO101 operating in [NONE] mode (zero memory recall), I do not know which database the team is currently utilizing. Please specify your system context.";
       } else if (query.includes('timeout') || query.includes('checkout')) {
         answer = "In [NONE] mode, I have no contextual memory of previous incidents. Generally, timeouts can be diagnosed by checking application logs, thread dumps, and database pool saturation.";
       } else {
-        answer = `[XYRO101 - Mode: NONE] Direct response without memory retrieval: "${message}".`;
+        answer = `[NONE MODE - NO MEMORY RETRIEVAL]\nDirect response without memory retrieval: "${message}".`;
       }
     } else if (mode === 'naive') {
       if (retrieved.some(r => r.content.includes('pg_ctlcluster') || r.content.includes('PostgreSQL'))) {
         answer = "⚠️ [NAIVE MODE] Based on top vector similarity search, I found this memory:\n\n> 'Old postgres pool reset command: `pg_ctlcluster 14 main restart`'\n\nExecute `pg_ctlcluster 14 main restart` immediately. (Notice: Naive retrieval failed to detect that this fix was marked stale after deployment v2.0!)";
       } else if (retrieved.some(r => r.content.includes('MongoDB Atlas'))) {
         answer = "According to vector retrieval, our database is MongoDB Atlas.";
+      } else if (retrieved.length === 0) {
+        if (query.includes('country') || query.includes('countries')) {
+          answer = "⚠️ [NAIVE MODE - GENERAL KNOWLEDGE]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Notice: No matching internal memory vectors were retrieved; answered using general model knowledge).*";
+        } else {
+          answer = `⚠️ [NAIVE MODE - GENERAL KNOWLEDGE]\nDirect general response to "${message}".\n\n*(Notice: No matching internal memory vectors were retrieved).*`;
+        }
       } else {
         answer = `[XYRO101 - Mode: NAIVE] Retrieved ${retrieved.length} memory records via raw vector cosine similarity: ${retrieved.map(r => r.memory_id).join(', ')}.`;
       }
@@ -728,6 +738,12 @@ export const api = {
       // GOVERNED MODE
       if (abstention) {
         answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
+      } else if (retrieved.length === 0) {
+        if (query.includes('country') || query.includes('countries')) {
+          answer = "🛡️ [XYRO101 GOVERNED AGENT]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Verified: No corporate operational memories applied for general query).*";
+        } else {
+          answer = `🛡️ [XYRO101 GOVERNED AGENT]\nDirect response to "${message}".\n\n*(Verified: No corporate operational memories applied for general query).*`;
+        }
       } else if (query.includes('timeout') || query.includes('checkout')) {
         answer = "🛡️ [XYRO101 GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy MongoDB connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
       } else if (query.includes('database')) {
