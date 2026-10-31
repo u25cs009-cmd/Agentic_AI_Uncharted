@@ -1,0 +1,398 @@
+{
+  "name": "WF4 \u2014 Automatic Temporary Memory Expiration",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "wf4-node-01",
+      "name": "Daily Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF4 Node 2: Compute Sweep Timestamps\nconst now = new Date();\nreturn {\n  json: {\n    sweep_reference_time: now.toISOString(),\n    sweep_date: now.toISOString().split('T')[0],\n    execution_id: $execution.id || `cron_${Date.now()}`\n  }\n};"
+      },
+      "id": "wf4-node-02",
+      "name": "Compute Sweep Timestamps",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/expired-candidates",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "reference_timestamp",
+              "value": "={{ $json.sweep_reference_time }}"
+            },
+            {
+              "name": "limit",
+              "value": "500"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Workflow-ID",
+              "value": "WF4-EXPIRATION"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "retry": {
+            "retry": {
+              "maxTries": 3,
+              "waitBetweenTries": 2000
+            }
+          }
+        }
+      },
+      "id": "wf4-node-03",
+      "name": "Query Expired Candidates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ ($json.candidates || []).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf4-node-04",
+      "name": "Has Candidates to Expire?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF4 Node 5a: Log Clean Run Summary\nreturn {\n  json: {\n    status: \"COMPLETED\",\n    items_expired: 0,\n    message: \"No candidate memories required expiration in this sweep.\",\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf4-node-05a",
+      "name": "Log Clean Run Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF4 Node 5b: Filter Verified Expired & Exclude Permanent\nconst candidates = $input.item.json.candidates || [];\nconst refTime = new Date($('Compute Sweep Timestamps').first().json.sweep_reference_time).getTime();\n\nconst verifiedExpired = candidates.filter(mem => {\n  // 1. Guard against permanent memories\n  if (!mem.is_temporary || mem.is_temporary === false) return false;\n  // 2. Guard against missing expiration timestamps\n  if (!mem.expiration_date) return false;\n  // 3. Confirm date has passed\n  const expTime = new Date(mem.expiration_date).getTime();\n  return !isNaN(expTime) && expTime <= refTime;\n});\n\nreturn {\n  json: {\n    total_candidates_scanned: candidates.length,\n    verified_expired_count: verifiedExpired.length,\n    expired_memory_ids: verifiedExpired.map(m => m.memory_id),\n    expired_items: verifiedExpired.map(m => ({\n      memory_id: m.memory_id,\n      user_id: m.user_id,\n      topic: m.topic,\n      expiration_date: m.expiration_date\n    }))\n  }\n};"
+      },
+      "id": "wf4-node-05b",
+      "name": "Verify Expiration & Filter Permanent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.verified_expired_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf4-node-06",
+      "name": "Any Valid Expired Items?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/lifecycle/expire-batch",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Workflow-ID",
+              "value": "WF4-EXPIRATION"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"memory_ids\": {{ JSON.stringify($json.expired_memory_ids) }},\n  \"target_status\": \"EXPIRED\",\n  \"system_caller\": \"WF4_SCHEDULED_MAINTENANCE\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf4-node-07",
+      "name": "Batch Lifecycle Deprecation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/audit/logs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"workflow\": \"WF4-EXPIRATION\",\n  \"event\": \"DAILY_EXPIRATION_SWEEP\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"summary\": {{ JSON.stringify($json) }}\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf4-node-08",
+      "name": "Record Batch Audit Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF4 Node 9: Compile Final Execution Summary\nconst batchRes = $('Batch Lifecycle Deprecation').first().json || {};\nconst verifiedData = $('Verify Expiration & Filter Permanent').first().json || {};\n\nreturn {\n  json: {\n    status: \"SUCCESS\",\n    sweep_timestamp: new Date().toISOString(),\n    candidates_scanned: verifiedData.total_candidates_scanned || 0,\n    memories_expired: verifiedData.verified_expired_count || 0,\n    backend_updated_count: batchRes.updated_count || verifiedData.verified_expired_count || 0,\n    failed_ids: batchRes.failed_ids || [],\n    idempotent_sweep: true\n  }\n};"
+      },
+      "id": "wf4-node-09",
+      "name": "Compile Final Execution Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        420
+      ]
+    }
+  ],
+  "connections": {
+    "Daily Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Compute Sweep Timestamps",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Sweep Timestamps": {
+      "main": [
+        [
+          {
+            "node": "Query Expired Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Expired Candidates": {
+      "main": [
+        [
+          {
+            "node": "Has Candidates to Expire?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Candidates to Expire?": {
+      "main": [
+        [
+          {
+            "node": "Verify Expiration & Filter Permanent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Clean Run Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Expiration & Filter Permanent": {
+      "main": [
+        [
+          {
+            "node": "Any Valid Expired Items?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Valid Expired Items?": {
+      "main": [
+        [
+          {
+            "node": "Batch Lifecycle Deprecation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Clean Run Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Lifecycle Deprecation": {
+      "main": [
+        [
+          {
+            "node": "Record Batch Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Batch Audit Log": {
+      "main": [
+        [
+          {
+            "node": "Compile Final Execution Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "anchor-automation-instance"
+  },
+  "tags": [
+    {
+      "name": "ANCHOR"
+    },
+    {
+      "name": "Lifecycle"
+    },
+    {
+      "name": "Memory Expiration"
+    }
+  ]
+}

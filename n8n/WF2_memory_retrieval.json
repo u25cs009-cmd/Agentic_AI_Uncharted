@@ -1,0 +1,442 @@
+{
+  "name": "WF2 \u2014 Intelligent Memory Retrieval",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "memory-retrieve",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf2-node-01",
+      "name": "Retrieval Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        300
+      ],
+      "webhookId": "anchor-memory-retrieve-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.body.user_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ ($json.body.query_text || '').trim().length }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf2-node-02",
+      "name": "Validate Query Payload",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Missing user_id or query_text must be at least 2 characters.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "wf2-node-02b",
+      "name": "Respond 400 Bad Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        540,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Query Decomposition Engine for ANCHOR, an Autonomous AI Memory Management System.\nAnalyze the user's natural language question and extract structured retrieval parameters.\n\nCurrent Timestamp: {{ new Date().toISOString() }}\nUser Query:\n\"\"\"\n{{ $json.body.query_text }}\n\"\"\"\n\nTask:\n1. Identify the user's core intent (e.g. schedule_lookup, preference_query, fact_recall).\n2. Extract semantic search topics, keywords, and named entities.\n3. If the query refers to relative dates (e.g. 'tomorrow', 'next week', 'Tuesday'), resolve them into explicit ISO8601 UTC start_date and end_date.\n\nReturn JSON ONLY:\n{\n  \"intent\": \"string\",\n  \"search_topics\": [\"string\"],\n  \"keywords\": [\"string\"],\n  \"named_entities\": [\"string\"],\n  \"time_window\": {\n    \"start_date\": \"ISO8601 string or null\",\n    \"end_date\": \"ISO8601 string or null\"\n  }\n}"
+      },
+      "id": "wf2-node-03",
+      "name": "Query Understanding & Decomposition",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "wf2-node-03b",
+      "name": "Google Gemini Model - Query Parser",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        540,
+        500
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "googlePalmApiCredential",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF2 Node 4: Parse Retrieval Parameters & Build Search Payload\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    intent: 'general_recall',\n    search_topics: [],\n    keywords: [],\n    named_entities: [],\n    time_window: null\n  };\n}\n\nconst originalReq = $('Retrieval Webhook').first().json.body || {};\n\nreturn {\n  json: {\n    user_id: originalReq.user_id,\n    query_text: originalReq.query_text,\n    search_intent: parsed.intent || 'general_recall',\n    extracted_keywords: parsed.keywords || [],\n    extracted_entities: parsed.named_entities || [],\n    temporal_window: parsed.time_window || null,\n    limit: originalReq.max_results || 10\n  }\n};"
+      },
+      "id": "wf2-node-04",
+      "name": "Parse Retrieval Parameters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $json.extracted_keywords.join(' ') || $json.query_text }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "retry": {
+            "retry": {
+              "maxTries": 3,
+              "waitBetweenTries": 1500
+            }
+          }
+        }
+      },
+      "id": "wf2-node-05",
+      "name": "Backend Hybrid Retrieval",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ ($json.retrieved || []).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf2-node-06",
+      "name": "Candidates Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF2 Node 7a: Build Empty Context When No Memories Found\nconst origQuery = $('Parse Retrieval Parameters').first().json.query_text;\n\nreturn {\n  json: {\n    success: true,\n    has_relevant_memory: false,\n    query: origQuery,\n    synthesized_context: \"\",\n    memory_citations: [],\n    reason: \"No active memory records matched the search criteria.\"\n  }\n};"
+      },
+      "id": "wf2-node-07a",
+      "name": "Build Empty Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Memory Context Re-ranking and Synthesis Engine for ANCHOR.\nEvaluate the candidate memories retrieved from hybrid search against the user's original query.\n\nUser Query:\n\"\"\"\n{{ $('Parse Retrieval Parameters').first().json.query_text }}\n\"\"\"\n\nRetrieved Active Candidates from Backend:\n{{ JSON.stringify($json.retrieved || []) }}\n\nReference Timestamp: {{ new Date().toISOString() }}\n\nRules:\n1. NEVER INVENT OR EXTRAPOLATE FACTS. If the candidate memories do not clearly contain the facts to answer the query, set has_relevant_memory: false and synthesized_context: \"\".\n2. Exclude any candidate memories whose stated expiration date (expires_at) has passed.\n3. If valid matching memories exist, synthesize a concise 1-2 sentence verified answer based ONLY on the memories.\n4. Rank memory citations by relevance.\n\nReturn JSON ONLY:\n{\n  \"has_relevant_memory\": true,\n  \"synthesized_context\": \"string\",\n  \"memory_citations\": [\n    {\n      \"memory_id\": \"string\",\n      \"attribute_key\": \"string\",\n      \"relevance_rank\": 1\n    }\n  ],\n  \"reason\": \"Clear justification\"\n}"
+      },
+      "id": "wf2-node-07b",
+      "name": "Context Re-ranking & Synthesis",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1420,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "wf2-node-07c",
+      "name": "Google Gemini Model - Re-ranker",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1420,
+        620
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "googlePalmApiCredential",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF2 Node 8: Validate & Structure Context Output\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    has_relevant_memory: false,\n    synthesized_context: \"\",\n    memory_citations: [],\n    reason: \"Failed to parse re-ranking Gemini output.\"\n  };\n}\n\nconst origQuery = $('Parse Retrieval Parameters').first().json.query_text;\n\nreturn {\n  json: {\n    success: true,\n    has_relevant_memory: Boolean(parsed.has_relevant_memory),\n    query: origQuery,\n    synthesized_context: parsed.synthesized_context || \"\",\n    memory_citations: parsed.memory_citations || [],\n    reason: parsed.reason || \"Re-ranking completed.\"\n  }\n};"
+      },
+      "id": "wf2-node-08",
+      "name": "Validate & Structure Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1640,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "wf2-node-09",
+      "name": "Respond With Context",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1860,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Retrieval Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Query Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Query Payload": {
+      "main": [
+        [
+          {
+            "node": "Query Understanding & Decomposition",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 Bad Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Model - Query Parser": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Query Understanding & Decomposition",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Understanding & Decomposition": {
+      "main": [
+        [
+          {
+            "node": "Parse Retrieval Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Retrieval Parameters": {
+      "main": [
+        [
+          {
+            "node": "Backend Hybrid Retrieval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Backend Hybrid Retrieval": {
+      "main": [
+        [
+          {
+            "node": "Candidates Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidates Found?": {
+      "main": [
+        [
+          {
+            "node": "Context Re-ranking & Synthesis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Empty Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Model - Re-ranker": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Context Re-ranking & Synthesis",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context Re-ranking & Synthesis": {
+      "main": [
+        [
+          {
+            "node": "Validate & Structure Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Empty Context": {
+      "main": [
+        [
+          {
+            "node": "Respond With Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Structure Context": {
+      "main": [
+        [
+          {
+            "node": "Respond With Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.1.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "anchor-automation-instance"
+  },
+  "tags": [
+    {
+      "name": "ANCHOR"
+    },
+    {
+      "name": "Memory Retrieval"
+    },
+    {
+      "name": "Gemini-2.5"
+    }
+  ]
+}
