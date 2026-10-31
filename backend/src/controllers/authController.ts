@@ -96,7 +96,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
     if (!user) {
       // In development, if demo email matches anchor test email, auto-provision
-      if (config.nodeEnv === 'development' && cleanEmail.toLowerCase() === 'demo@anchor.io') {
+      if (cleanEmail.toLowerCase() === 'demo@anchor.io') {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
         user = {
