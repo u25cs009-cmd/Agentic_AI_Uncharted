@@ -19,6 +19,7 @@ import {
 import { api } from '../../services/api';
 import { RetrievalScoring, AgentRun } from '../../types/memory';
 import { Badge } from '../../components/common/Badge';
+import { EmptyState } from '../../components/common/EmptyState';
 import { MEMORY_HALF_LIVES, HalfLifeType } from '../../config/halfLives';
 
 /** Large, high-contrast score bar component (>= 4.5:1 contrast) */
@@ -194,6 +195,38 @@ export const InspectorPage: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Past Retrieval Runs Selector */}
+      {recentRuns.length > 0 && (
+        <div className="glass-panel rounded-2xl p-3 shadow-lg border-slate-800 flex items-center gap-2 overflow-x-auto">
+          <span className="text-[11px] font-mono text-slate-400 shrink-0 font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            Select Past Run:
+          </span>
+          <div className="flex items-center gap-2 flex-nowrap">
+            {recentRuns.slice(0, 5).map((run) => (
+              <button
+                key={run._id || run.id}
+                type="button"
+                onClick={() => {
+                  setTestQuery(run.input);
+                  setResults({
+                    retrieved: run.candidates?.retrieved || [],
+                    excluded: run.candidates?.excluded || [],
+                    abstention: run.structuredOutput?.abstain ?? false,
+                    abstentionReason: run.structuredOutput?.abstainReason || undefined,
+                    retrievalPath: run.retrievalPath || 'memory'
+                  });
+                }}
+                className="text-[11px] font-mono bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-3 py-1 rounded-lg shrink-0 transition-colors truncate max-w-[220px] cursor-pointer"
+                title={run.input}
+              >
+                {run.input}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Query Search Console */}
       <div className="glass-panel rounded-2xl p-4 shadow-xl border-slate-800">

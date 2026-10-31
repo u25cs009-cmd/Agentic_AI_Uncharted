@@ -18,6 +18,7 @@ import {
 import { api } from '../../services/api';
 import { MemoryEvent, Memory } from '../../types/memory';
 import { Badge } from '../../components/common/Badge';
+import { EmptyState } from '../../components/common/EmptyState';
 
 export const TimelinePage: React.FC = () => {
   const [events, setEvents] = useState<MemoryEvent[]>([]);
@@ -301,9 +302,11 @@ export const TimelinePage: React.FC = () => {
         </div>
 
         {events.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-500 font-mono">
-            No events recorded in append-only log yet.
-          </div>
+          <EmptyState
+            icon={<Clock className="w-8 h-8 text-cyan-400" />}
+            title="No events recorded yet"
+            description="The immutable audit log is waiting for its first activity. Ingest an alert, trigger a deployment invalidation, or chat with the agent to record governed audit events."
+          />
         ) : (
           <div className="relative border-l-2 border-slate-800 ml-4 pl-6 space-y-4">
             {events.map((evt) => (

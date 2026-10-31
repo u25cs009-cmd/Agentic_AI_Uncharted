@@ -151,9 +151,9 @@ export const QuarantinePage: React.FC = () => {
           </div>
         ) : quarantined.length === 0 ? (
           <EmptyState
-            icon={<ShieldCheck className="w-8 h-8 text-[#60d49a]" />}
+            icon={<ShieldCheck className="w-8 h-8 text-[#22c55e]" />}
             title="All clear! No quarantined items pending review."
-            description="The quarantine vault is clean. You can simulate an adversarial attack by entering a prompt injection in the Chat console or testing with benchmark scenario P1."
+            description="Zero isolated threats in the vault. This confirms that all active memories comply with operational invariants, with no prompt injections, untrusted policy overrides, or conflicting mutations threatening downstream reasoning."
           />
         ) : (
           quarantined.map((item) => {

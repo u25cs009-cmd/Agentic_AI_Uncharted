@@ -17,11 +17,14 @@ import {
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Badge } from '../../components/common/Badge';
+import { MEMORY_HALF_LIVES } from '../../config/halfLives';
 
 export const SettingsPage: React.FC = () => {
-  const [semanticHalfLife, setSemanticHalfLife] = useState(60);
-  const [episodicHalfLife, setEpisodicHalfLife] = useState(7);
-  const [proceduralHalfLife, setProceduralHalfLife] = useState(90);
+  const [semanticHalfLife, setSemanticHalfLife] = useState(MEMORY_HALF_LIVES.semantic);
+  const [episodicHalfLife, setEpisodicHalfLife] = useState(MEMORY_HALF_LIVES.episodic);
+  const [proceduralHalfLife, setProceduralHalfLife] = useState(MEMORY_HALF_LIVES.procedural);
+  const [preferenceHalfLife, setPreferenceHalfLife] = useState(MEMORY_HALF_LIVES.preference);
+  const [ephemeralHalfLife, setEphemeralHalfLife] = useState(MEMORY_HALF_LIVES.ephemeral);
   const [notice, setNotice] = useState<string | null>(null);
 
   const handleExportData = async () => {
@@ -48,10 +51,10 @@ export const SettingsPage: React.FC = () => {
     setTimeout(() => setNotice(null), 4000);
   };
 
-  const handleClearAccount = () => {
+  const handleClearAccount = async () => {
     if (confirm("Are you sure you want to trigger Cascade Forgetting (GDPR Right to Be Forgotten)? This will wipe all user memories and derived artifacts.")) {
-      api.resetDemoData();
-      setNotice("Cascade Forgetting executed: user memory workspace safely purged and re-initialized.");
+      const res = await api.deleteAccount();
+      setNotice(res.message || "Cascade Forgetting executed: user memory workspace safely purged and re-initialized.");
       setTimeout(() => setNotice(null), 4000);
     }
   };
@@ -197,31 +200,15 @@ export const SettingsPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           <div className="card p-4 rounded-xl border-[#1e293b]">
-            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Episodic Memories</span>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xl font-bold text-[#ffffff] font-mono">{episodicHalfLife} Days</span>
-              <Badge variant="purple" size="sm">Rapid Decay</Badge>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="30"
-              value={episodicHalfLife}
-              onChange={(e) => setEpisodicHalfLife(parseInt(e.target.value))}
-              className="w-full accent-[#a855f7] cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
-            />
-          </div>
-
-          <div className="card p-4 rounded-xl border-[#1e293b]">
-            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Semantic Memories</span>
+            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Semantic Knowledge</span>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xl font-bold text-[#ffffff] font-mono">{semanticHalfLife} Days</span>
-              <Badge variant="primary" size="sm">Standard</Badge>
+              <Badge variant="primary" size="sm">Standard (180d)</Badge>
             </div>
             <input
               type="range"
-              min="10"
-              max="180"
+              min="30"
+              max="365"
               value={semanticHalfLife}
               onChange={(e) => setSemanticHalfLife(parseInt(e.target.value))}
               className="w-full accent-[#06b6d4] cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
@@ -229,19 +216,78 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div className="card p-4 rounded-xl border-[#1e293b]">
-            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Procedural Fixes</span>
+            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Episodic Logs</span>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xl font-bold text-[#ffffff] font-mono">{proceduralHalfLife} Days</span>
-              <Badge variant="warning" size="sm">Long-Lived</Badge>
+              <span className="text-xl font-bold text-[#ffffff] font-mono">{episodicHalfLife} Days</span>
+              <Badge variant="purple" size="sm">Fast (30d)</Badge>
             </div>
             <input
               type="range"
-              min="30"
-              max="365"
+              min="1"
+              max="90"
+              value={episodicHalfLife}
+              onChange={(e) => setEpisodicHalfLife(parseInt(e.target.value))}
+              className="w-full accent-[#a855f7] cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
+            />
+          </div>
+
+          <div className="card p-4 rounded-xl border-[#1e293b]">
+            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Procedural Runbooks</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xl font-bold text-[#ffffff] font-mono">{proceduralHalfLife} Days</span>
+              <Badge variant="warning" size="sm">Operational (90d)</Badge>
+            </div>
+            <input
+              type="range"
+              min="15"
+              max="180"
               value={proceduralHalfLife}
               onChange={(e) => setProceduralHalfLife(parseInt(e.target.value))}
               className="w-full accent-[#38bdf8] cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
             />
+          </div>
+
+          <div className="card p-4 rounded-xl border-[#1e293b]">
+            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Operator Preferences</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xl font-bold text-[#ffffff] font-mono">{preferenceHalfLife} Days</span>
+              <Badge variant="success" size="sm">Medium (120d)</Badge>
+            </div>
+            <input
+              type="range"
+              min="30"
+              max="240"
+              value={preferenceHalfLife}
+              onChange={(e) => setPreferenceHalfLife(parseInt(e.target.value))}
+              className="w-full accent-emerald-400 cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
+            />
+          </div>
+
+          <div className="card p-4 rounded-xl border-[#1e293b]">
+            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Ephemeral Context</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xl font-bold text-[#ffffff] font-mono">{ephemeralHalfLife} Days</span>
+              <Badge variant="danger" size="sm">Transient (7d)</Badge>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="30"
+              value={ephemeralHalfLife}
+              onChange={(e) => setEphemeralHalfLife(parseInt(e.target.value))}
+              className="w-full accent-rose-400 cursor-pointer h-1.5 bg-[#080d1a] rounded-lg"
+            />
+          </div>
+
+          <div className="card p-4 rounded-xl border-[#1e293b]">
+            <span className="text-[11px] text-[#888] font-mono block mb-1 uppercase tracking-wider">Hard Invariant Constraints</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xl font-bold text-[#ffffff] font-mono">Permanent</span>
+              <Badge variant="neutral" size="sm">No Decay (Infinity)</Badge>
+            </div>
+            <div className="text-[10px] text-slate-400 font-mono pt-1">
+              Deterministic security rules never decay over time.
+            </div>
           </div>
         </div>
       </div>
