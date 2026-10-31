@@ -80,7 +80,8 @@ class N8nService {
       return res;
     };
 
-    if (!webhookUrl || !webhookUrl.startsWith('http')) {
+    const targetUrl = (webhookUrl || '').trim();
+    if (!targetUrl || !targetUrl.startsWith('http')) {
       return recordResult({
         success: false,
         executed_by: 'local_engine',
@@ -125,7 +126,7 @@ class N8nService {
         headers['x-internal-key'] = config.internalApiKey;
       }
 
-      const res = await fetch(webhookUrl, {
+      const res = await fetch(targetUrl, {
         method: 'POST',
         headers,
         body: payloadStr,

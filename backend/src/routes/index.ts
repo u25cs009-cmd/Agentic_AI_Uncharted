@@ -100,9 +100,10 @@ apiRouter.get('/health', async (req, res) => {
     }
 
     const maskUrl = (url?: string) => {
-      if (!url) return 'unconfigured';
+      const clean = (url || '').trim();
+      if (!clean) return 'unconfigured';
       try {
-        const u = new URL(url);
+        const u = new URL(clean);
         return `${u.protocol}//${u.host.replace(/^([^.]+)\./, '***.')}${u.pathname}`;
       } catch {
         return 'configured_invalid_url';
