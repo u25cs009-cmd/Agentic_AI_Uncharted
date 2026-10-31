@@ -47,19 +47,28 @@ import {
 } from '../controllers/benchmarkController.js';
 import { consolidateMemories } from '../controllers/lifecycleController.js';
 import { authenticateUser, requireAuth, requireInternalKey } from '../middleware/auth.js';
+import { getRepository } from '../repositories/index.js';
 import { config } from '../config/index.js';
 
 export const apiRouter = Router();
 
 // 1. Health check
-apiRouter.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    system: 'ANCHOR AI Memory Engine Backend',
-    store_mode: config.store,
-    timestamp: new Date().toISOString(),
-    uptime_seconds: Math.floor(process.uptime())
-  });
+apiRouter.get('/health', async (req, res) => {
+  try {
+    const repo = await getRepository();
+    res.json({
+      status: 'healthy',
+      system: 'ANCHOR AI Memory Engine Backend',
+      store_mode: repo.name === 'MongoRepository' ? 'mongo' : 'memory',
+      configured_store: config.store,
+      active_repository: repo.name,
+      is_fallback: config.store === 'mongo' && repo.name !== 'MongoRepository',
+      timestamp: new Date().toISOString(),
+      uptime_seconds: Math.floor(process.uptime())
+    });
+  } catch (err: any) {
+    res.status(500).json({ status: 'error', error: err.message });
+  }
 });
 
 // 2. Authentication & User Profile
