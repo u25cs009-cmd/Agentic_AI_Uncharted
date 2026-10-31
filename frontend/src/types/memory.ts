@@ -97,6 +97,16 @@ export interface RetrievalScoring {
 export interface ChatModeResult {
   mode: 'none' | 'naive' | 'governed';
   answer: string;
+  structuredOutput?: {
+    diagnosis: string;
+    proposedFix: string;
+    citedMemoryIds: string[];
+    confidence: number;
+    warnings: string[];
+    abstain: boolean;
+    abstainReason?: string | null;
+  };
+  llmFallback?: boolean;
   retrieved_memories: RetrievalScoring[];
   excluded_memories: RetrievalScoring[];
   abstention: boolean;

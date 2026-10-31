@@ -6,33 +6,95 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 let isLiveBackend = false;
 let hasCheckedBackend = false;
 
-// Check backend health silently to determine live vs demo mode
-export async function checkBackendConnection(): Promise<boolean> {
-  
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
-    const res = await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    isLiveBackend = res.ok;
-  } catch {
-    isLiveBackend = false;
-  }
-  hasCheckedBackend = true;
-  return isLiveBackend;
+type WakingListener = (isWaking: boolean) => void;
+const wakingListeners = new Set<WakingListener>();
+let isServerWaking = false;
+
+export function subscribeToWakingState(listener: WakingListener): () => void {
+  wakingListeners.add(listener);
+  listener(isServerWaking);
+  return () => {
+    wakingListeners.delete(listener);
+  };
 }
 
-// Safe network request helper that suppresses unhandled network crash logs
+export function setServerWaking(waking: boolean) {
+  if (isServerWaking !== waking) {
+    isServerWaking = waking;
+    wakingListeners.forEach(fn => fn(waking));
+  }
+}
+
+
+// Check backend health with 3s slow threshold and 90s retry loop
+export async function checkBackendConnection(forceDelayUrl?: string): Promise<boolean> {
+  const targetUrl = forceDelayUrl || `${BASE_URL}/api/health`;
+  const startTime = Date.now();
+  const maxRetryDurationMs = 90000;
+  const retryIntervalMs = 5000;
+
+  async function probeOnce(): Promise<boolean> {
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => {
+      setServerWaking(true);
+      controller.abort();
+    }, 3000);
+
+    try {
+      const res = await fetch(targetUrl, { signal: controller.signal });
+      clearTimeout(timeoutTimer);
+      if (res.ok) {
+        setServerWaking(false);
+        isLiveBackend = true;
+        return true;
+      }
+    } catch {
+      // Handled by retries
+    }
+    clearTimeout(timeoutTimer);
+    return false;
+  }
+
+  const ok = await probeOnce();
+  hasCheckedBackend = true;
+  if (ok) return true;
+
+  setServerWaking(true);
+  const interval = setInterval(async () => {
+    if (Date.now() - startTime > maxRetryDurationMs) {
+      clearInterval(interval);
+      setServerWaking(false);
+      return;
+    }
+    const success = await probeOnce();
+    if (success) {
+      clearInterval(interval);
+      setServerWaking(false);
+    }
+  }, retryIntervalMs);
+
+  return false;
+}
+
+// Safe network request helper with 3s waking detection
 async function safeFetch(url: string, options?: RequestInit): Promise<Response | null> {
   if (!hasCheckedBackend) {
     await checkBackendConnection();
   }
   
+  const wakingTimer = setTimeout(() => {
+    setServerWaking(true);
+  }, 3000);
+
   try {
     const res = await fetch(url, options);
+    clearTimeout(wakingTimer);
+    setServerWaking(false);
     if (!isLiveBackend && res.ok) isLiveBackend = true;
     return res;
   } catch {
+    clearTimeout(wakingTimer);
+    setServerWaking(false);
     isLiveBackend = false;
     return null;
   }
@@ -410,6 +472,16 @@ export const api = {
       );
     }
     return result;
+  },
+
+  async getMemory(id: string): Promise<Memory | null> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/memories/${encodeURIComponent(id)}`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return memoryStore.find(m => (m._id === id || m.id === id)) || null;
   },
 
   async updateMemory(id: string, updates: Partial<Memory>): Promise<Memory> {
@@ -912,6 +984,113 @@ export const api = {
       if (es) es.close();
       clearInterval(interval);
     };
+  },
+
+  // Meta inspection
+  async getMeta(): Promise<{ embedProvider: string; dimension: number; store: string; retrievalPath: string; version?: string }> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/meta`);
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return {
+      embedProvider: 'local',
+      dimension: 384,
+      store: 'memory',
+      retrievalPath: 'memory',
+      version: '2.1.0'
+    };
+  },
+
+  // Account cascade purge
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/account`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return { success: false, message: 'Failed to delete account' };
+  },
+
+  // Human-in-the-Loop Outcome Feedback
+  async submitOutcome(data: {
+    memory_id: string;
+    action: 'APPROVED' | 'REJECTED';
+    feedback_source?: string;
+    user_id?: string;
+  }): Promise<{
+    success: boolean;
+    memory_id: string;
+    action: string;
+    previous_confidence: number;
+    new_confidence: number;
+    formula_applied: string;
+  }> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/outcomes`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+
+    const mem = memoryStore.find(m => m._id === data.memory_id || m.id === data.memory_id);
+    const prev = mem ? mem.confidence : 0.8;
+    const successes = data.action === 'APPROVED' ? 1 : 0;
+    const failures = data.action === 'REJECTED' ? 1 : 0;
+    const updated = parseFloat(((prev * 4 + successes) / (4 + successes + 2 * failures)).toFixed(4));
+    if (mem) {
+      mem.confidence = updated;
+      persist();
+    }
+    return {
+      success: true,
+      memory_id: data.memory_id,
+      action: data.action,
+      previous_confidence: prev,
+      new_confidence: updated,
+      formula_applied: '(prior * 4 + successes) / (4 + successes + 2 * failures)'
+    };
+  },
+
+  // JWT-Protected Scripted Demo Endpoints (No shared secret in browser)
+  async demoAlert(): Promise<{ success: boolean; message: string; alert?: any; triageResult?: any }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/alert`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to run demo alert' };
+  },
+
+  async demoDeploy(service: string = 'payments-api', version: string = 'v1.0.1'): Promise<{ success: boolean; message: string; staleCount?: number }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/deploy`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ service, version }),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to simulate deploy' };
+  },
+
+  async demoPoison(): Promise<{ success: boolean; message: string; quarantineAction?: string; quarantinedMemoryId?: string }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/poison`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to send poisoned note' };
+  },
+
+  async demoReset(): Promise<{ success: boolean; message: string; memoryCount?: number; eventCount?: number }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/reset`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to reset demo baseline' };
   },
 
   resetDemoData(): void {

@@ -76,14 +76,21 @@ apiRouter.get('/meta', (req, res) => {
 });
 
 apiRouter.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    system: 'ANCHOR AI Memory Engine Backend',
-    store_mode: config.store,
-    embed_provider: config.embedProvider,
-    timestamp: new Date().toISOString(),
-    uptime_seconds: Math.floor(process.uptime())
-  });
+  const delay = req.query.delay ? parseInt(req.query.delay as string, 10) : 0;
+  const sendHealth = () => {
+    res.json({
+      status: 'healthy',
+      system: 'ANCHOR AI Memory Engine Backend',
+      store_mode: config.store,
+      embed_provider: config.embedProvider,
+      timestamp: new Date().toISOString(),
+      uptime_seconds: Math.floor(process.uptime())
+    });
+  };
+  if (delay > 0) {
+    return setTimeout(sendHealth, delay);
+  }
+  return sendHealth();
 });
 
 // 2. Authentication & User Profile
@@ -122,10 +129,10 @@ apiRouter.get('/quarantine', requireAuth, getQuarantinedMemories);
 apiRouter.post('/quarantine/:id/release', requireAuth, releaseQuarantine);
 apiRouter.post('/quarantine/:id/reject', requireAuth, rejectQuarantine);
 
-// 7. External Event Triggers & Webhooks (Protected by x-engram-secret)
+// 7. External Event Triggers & Webhooks (Protected by x-engram-secret or JWT)
 apiRouter.post('/events/deploy', requireWebhookSecret, handleDeployEvent);
 apiRouter.post('/hooks/deploy', requireWebhookSecret, handleDeployEvent);
-apiRouter.post('/outcomes', requireWebhookSecret, handleOutcomeFeedback);
+apiRouter.post('/outcomes', authenticateUserOrWebhook, handleOutcomeFeedback);
 apiRouter.post('/hooks/outcome', requireWebhookSecret, handleOutcomeFeedback);
 apiRouter.post('/agent/triage', requireWebhookSecret, agentTriage);
 apiRouter.post('/hooks/alert', requireWebhookSecret, agentTriage);
