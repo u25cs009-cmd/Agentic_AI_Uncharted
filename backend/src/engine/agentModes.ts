@@ -20,7 +20,7 @@ export class AgentOrchestrator {
    */
   async chat(request: ChatRequest): Promise<ChatResponse> {
     const mode: ChatMode = request.mode || 'governed';
-    const query = request.query;
+    const query = request.query || (request as any).message || '';
 
     switch (mode) {
       case 'none':
