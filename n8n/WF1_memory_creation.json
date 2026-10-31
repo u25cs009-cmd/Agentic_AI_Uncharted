@@ -541,7 +541,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Ingestion and governance successfully executed.\",\n  \"results\": {{ JSON.stringify($('Aggregate Step Result').all().map(i => i.json)) }}\n}",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Ingestion and governance successfully executed.\"\n}",
         "options": {
           "responseCode": 200
         }
