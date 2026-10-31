@@ -1,4 +1,4 @@
-import { Memory, MemoryEvent, ChatModeResult, BenchmarkScenario, RetrievalScoring } from '../types/memory';
+import { Memory, MemoryEvent, ChatModeResult, BenchmarkScenario, RetrievalScoring, AgentRun } from '../types/memory';
 import { INITIAL_MEMORIES, INITIAL_EVENTS, BENCHMARK_SCENARIOS } from './mockData';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -667,6 +667,28 @@ export const api = {
       latency_ms: mode === 'none' ? 120 : mode === 'naive' ? 240 : 380,
       tokens_used: mode === 'none' ? 85 : mode === 'naive' ? 320 : 540,
     };
+  },
+
+
+  // Agent Runs (Step 6)
+  async getAgentRuns(): Promise<AgentRun[]> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/agent/runs`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return [];
+  },
+
+  async getAgentRunById(id: string): Promise<AgentRun | null> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/agent/runs/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return null;
   },
 
   // Benchmarks

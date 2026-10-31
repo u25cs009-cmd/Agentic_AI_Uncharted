@@ -185,3 +185,31 @@ export interface RetrievalResult {
   mode: 'none' | 'naive' | 'governed';
   retrievalPath?: 'atlas-hybrid' | 'memory';
 }
+
+export interface AgentRun {
+  _id: string;
+  id?: string;
+  workspaceId: string;
+  ownerId?: string;
+  ts: string;
+  mode: 'none' | 'naive' | 'governed';
+  input: string;
+  retrievalPath: 'atlas-hybrid' | 'memory';
+  candidates: {
+    retrieved: ScoredMemory[];
+    excluded: ScoredMemory[];
+  };
+  structuredOutput: {
+    diagnosis: string;
+    proposedFix: string;
+    citedMemoryIds: string[];
+    confidence: number;
+    warnings: string[];
+    abstain: boolean;
+    abstainReason?: string | null;
+  };
+  latencyMs: number;
+  tokensUsed: number;
+  llmFallback: boolean;
+  answer: string;
+}

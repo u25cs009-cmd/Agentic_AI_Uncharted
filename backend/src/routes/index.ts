@@ -39,7 +39,9 @@ import {
   chat,
   ingestObservation,
   retrieveMemories,
-  agentTriage
+  agentTriage,
+  getAgentRuns,
+  getAgentRunById
 } from '../controllers/aiEngineController.js';
 import {
   runBenchmark,
@@ -117,6 +119,8 @@ apiRouter.get('/timetravel', requireAuth, timeTravel);
 
 // 9. AI Engine Interaction Routes (User JWT or External Automation Secret)
 apiRouter.post('/chat', authenticateUserOrWebhook, chat);
+apiRouter.get('/agent/runs', requireAuth, getAgentRuns);
+apiRouter.get('/agent/runs/:id', requireAuth, getAgentRunById);
 apiRouter.post('/ingest', authenticateUserOrWebhook, ingestObservation);
 apiRouter.post('/memories/observations', authenticateUserOrWebhook, ingestObservation);
 apiRouter.post('/retrieve', authenticateUserOrWebhook, retrieveMemories);

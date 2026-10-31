@@ -119,3 +119,32 @@ export interface BenchmarkScenario {
     governed: { status: 'passed' | 'failed'; answer: string; harmful: boolean; stale_used: boolean };
   };
 }
+
+
+export interface AgentRun {
+  _id: string;
+  id?: string;
+  workspaceId: string;
+  ownerId?: string;
+  ts: string;
+  mode: 'none' | 'naive' | 'governed';
+  input: string;
+  retrievalPath: 'atlas-hybrid' | 'memory';
+  candidates: {
+    retrieved: RetrievalScoring[];
+    excluded: RetrievalScoring[];
+  };
+  structuredOutput: {
+    diagnosis: string;
+    proposedFix: string;
+    citedMemoryIds: string[];
+    confidence: number;
+    warnings: string[];
+    abstain: boolean;
+    abstainReason?: string | null;
+  };
+  latencyMs: number;
+  tokensUsed: number;
+  llmFallback: boolean;
+  answer: string;
+}

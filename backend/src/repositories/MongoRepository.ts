@@ -11,7 +11,8 @@ import {
   User,
   Conversation,
   MemoryFilter,
-  ScoredMemory
+  ScoredMemory,
+  AgentRun
 } from '../types/index.js';
 import { Repository } from './types.js';
 import { generateEmbedding } from '../services/embedding.js';
@@ -39,6 +40,7 @@ export class MongoRepository implements Repository {
   private entitiesCol!: Collection<Entity>;
   private usersCol!: Collection<User>;
   private conversationsCol!: Collection<Conversation>;
+  private agentRunsCol!: Collection<AgentRun>;
 
   constructor(private uri: string, private dbName: string) {
     try { dns.setServers(["8.8.8.8", "1.1.1.1"]); } catch {} 
@@ -59,6 +61,7 @@ export class MongoRepository implements Repository {
       this.entitiesCol = this.db.collection<Entity>('entities');
       this.usersCol = this.db.collection<User>('users');
       this.conversationsCol = this.db.collection<Conversation>('conversations');
+      this.agentRunsCol = this.db.collection<AgentRun>('agent_runs');
 
       // Create compound & attribute indexes
       await this.memoriesCol.createIndex({ workspaceId: 1, status: 1, type: 1 });
@@ -69,6 +72,7 @@ export class MongoRepository implements Repository {
       await this.eventsCol.createIndex({ memory_id: 1, timestamp: -1 });
       await this.eventsCol.createIndex({ workspaceId: 1, timestamp: -1 });
       await this.conversationsCol.createIndex({ userId: 1, updatedAt: -1 });
+      await this.agentRunsCol.createIndex({ workspaceId: 1, ts: -1 });
 
       logger.info('MongoDB Atlas indexes verified successfully.');
 
@@ -722,5 +726,36 @@ export class MongoRepository implements Repository {
     return () => {
       this.emitter.off('memory_event', listener);
     };
+  }
+
+  // --- Agent Runs (Step 6) ---
+
+  async saveAgentRun(run: AgentRun): Promise<AgentRun> {
+    const runId = run._id || run.id || `run-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const doc: AgentRun = {
+      ...run,
+      _id: runId,
+      id: runId,
+      ts: run.ts || new Date().toISOString()
+    };
+    await this.agentRunsCol.updateOne({ _id: runId }, { $set: doc }, { upsert: true });
+    return doc;
+  }
+
+  async getAgentRuns(workspaceId: string, limit: number = 50): Promise<AgentRun[]> {
+    return await this.agentRunsCol
+      .find({ workspaceId })
+      .sort({ ts: -1 })
+      .limit(limit)
+      .toArray();
+  }
+
+  async getAgentRunById(id: string, workspaceId: string): Promise<AgentRun | null> {
+    return await this.agentRunsCol.findOne({
+      $and: [
+        { $or: [{ _id: id }, { id }] },
+        { workspaceId }
+      ]
+    });
   }
 }

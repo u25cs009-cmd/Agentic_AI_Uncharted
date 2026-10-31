@@ -6,10 +6,14 @@ import {
   CheckCircle2, 
   XCircle,
   Calculator,
-  Scale
+  Scale,
+  History,
+  Bot,
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 import { api } from '../../services/api';
-import { RetrievalScoring } from '../../types/memory';
+import { RetrievalScoring, AgentRun } from '../../types/memory';
 import { Badge } from '../../components/common/Badge';
 import { ScoreBar } from '../../components/common/ScoreBar';
 
@@ -35,6 +39,24 @@ export const InspectorPage: React.FC = () => {
   const [simConfidence, setSimConfidence] = useState(0.95);
   const [simAgeDays, setSimAgeDays] = useState(5);
   const [simHalfLife, setSimHalfLife] = useState(60);
+
+  const [recentRuns, setRecentRuns] = useState<AgentRun[]>([]);
+  const [selectedRun, setSelectedRun] = useState<AgentRun | null>(null);
+
+  const loadRecentRuns = async () => {
+    try {
+      const runs = await api.getAgentRuns();
+      setRecentRuns(runs || []);
+      if (runs && runs.length > 0 && !selectedRun) {
+        setSelectedRun(runs[0]);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadRecentRuns();
+  }, []);
+
 
   const calculatedRecency = Math.pow(0.5, simAgeDays / simHalfLife);
   const calculatedFinalScore = simSimilarity * simTrust * simConfidence * calculatedRecency;

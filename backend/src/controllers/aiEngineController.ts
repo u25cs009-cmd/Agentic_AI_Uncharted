@@ -219,6 +219,42 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       }
     }
 
+    const latencyMs = activeMode === 'none' ? 120 : activeMode === 'naive' ? 240 : 380;
+    const tokensUsed = activeMode === 'none' ? 85 : activeMode === 'naive' ? 320 : 540;
+
+    // Persist Agent Run (Step 6)
+    try {
+      await repo.saveAgentRun({
+        _id: `run-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        id: `run-${Date.now()}`,
+        workspaceId: workspace,
+        ownerId: owner,
+        ts: new Date().toISOString(),
+        mode: activeMode,
+        input: query,
+        retrievalPath,
+        candidates: {
+          retrieved,
+          excluded
+        },
+        structuredOutput: structuredAnswer || {
+          diagnosis: 'General query',
+          proposedFix: answer,
+          citedMemoryIds: [],
+          confidence: 0.5,
+          warnings: [],
+          abstain: false,
+          abstainReason: null
+        },
+        latencyMs,
+        tokensUsed,
+        llmFallback,
+        answer
+      });
+    } catch (saveErr) {
+      // Non-blocking run persistence logging
+    }
+
     return res.json({
       mode: activeMode,
       answer,
@@ -230,8 +266,8 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       abstention_reason: abstentionReason,
       retrievalPath,
       indexError,
-      latency_ms: activeMode === 'none' ? 120 : activeMode === 'naive' ? 240 : 380,
-      tokens_used: activeMode === 'none' ? 85 : activeMode === 'naive' ? 320 : 540
+      latency_ms: latencyMs,
+      tokens_used: tokensUsed
     });
   } catch (err) {
     next(err);
@@ -604,6 +640,34 @@ export async function agentTriage(req: Request, res: Response, next: NextFunctio
       memory_id: topMemory ? topMemory._id : 'mem-001',
       status: 'AWAITING_HUMAN_APPROVAL'
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+
+export async function getAgentRuns(req: Request, res: Response, next: NextFunction) {
+  try {
+    const repo = await getRepository();
+    const workspace = req.user?.workspace || 'ws-primary';
+    const limit = parseInt((req.query.limit as string) || '50', 10);
+    const runs = await repo.getAgentRuns(workspace, limit);
+    return res.json(runs);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAgentRunById(req: Request, res: Response, next: NextFunction) {
+  try {
+    const repo = await getRepository();
+    const workspace = req.user?.workspace || 'ws-primary';
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const run = await repo.getAgentRunById(id, workspace);
+    if (!run) {
+      return res.status(404).json({ error: `Agent run '${id}' not found` });
+    }
+    return res.json(run);
   } catch (err) {
     next(err);
   }

@@ -7,7 +7,8 @@ import {
   User,
   Conversation,
   MemoryFilter,
-  ScoredMemory
+  ScoredMemory,
+  AgentRun
 } from '../types/index.js';
 
 export interface Repository {
@@ -82,4 +83,9 @@ export interface Repository {
 
   // Live SSE listener
   subscribeEvents(listener: (event: MemoryEvent) => void): () => void;
+
+  // Agent Runs (Step 6)
+  saveAgentRun(run: AgentRun): Promise<AgentRun>;
+  getAgentRuns(workspaceId: string, limit?: number): Promise<AgentRun[]>;
+  getAgentRunById(id: string, workspaceId: string): Promise<AgentRun | null>;
 }

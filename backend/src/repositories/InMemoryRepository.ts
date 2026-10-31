@@ -8,7 +8,8 @@ import {
   User,
   Conversation,
   MemoryFilter,
-  ScoredMemory
+  ScoredMemory,
+  AgentRun
 } from '../types/index.js';
 import { Repository } from './types.js';
 import { INITIAL_MEMORIES, INITIAL_EVENTS } from '../data/seedData.js';
@@ -30,6 +31,7 @@ export class InMemoryRepository implements Repository {
   private entities: Map<string, Entity> = new Map();
   private users: Map<string, User> = new Map();
   private conversations: Map<string, Conversation> = new Map();
+  private agentRuns: AgentRun[] = [];
   private emitter = new EventEmitter();
 
   constructor() {
@@ -487,5 +489,32 @@ export class InMemoryRepository implements Repository {
     return () => {
       this.emitter.off('memory_event', listener);
     };
+  }
+
+  // --- Agent Runs (Step 6) ---
+
+  async saveAgentRun(run: AgentRun): Promise<AgentRun> {
+    const runId = run._id || run.id || `run-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const fullRun: AgentRun = {
+      ...run,
+      _id: runId,
+      id: runId,
+      ts: run.ts || new Date().toISOString()
+    };
+    this.agentRuns.unshift(fullRun);
+    return { ...fullRun };
+  }
+
+  async getAgentRuns(workspaceId: string, limit: number = 50): Promise<AgentRun[]> {
+    return this.agentRuns
+      .filter(r => r.workspaceId === workspaceId)
+      .slice(0, limit);
+  }
+
+  async getAgentRunById(id: string, workspaceId: string): Promise<AgentRun | null> {
+    const found = this.agentRuns.find(
+      r => (r._id === id || r.id === id) && r.workspaceId === workspaceId
+    );
+    return found ? { ...found } : null;
   }
 }
