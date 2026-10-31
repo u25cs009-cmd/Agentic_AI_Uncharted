@@ -69,7 +69,7 @@ export class LLMService {
           return {
             content: res,
             provider: 'groq',
-            model: 'llama-3.3-70b-versatile',
+            model: 'qwen/qwen3.8-27b',
             cached: false,
             latencyMs: Date.now() - startTime
           };
@@ -150,10 +150,10 @@ export class LLMService {
   // Provider Implementations
   private static async callGroq(prompt: string, systemPrompt: string, options: LLMRequestOptions): Promise<string | null> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     const body: any = {
-      model: 'llama-3.3-70b-versatile',
+      model: 'qwen/qwen3.8-27b',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
@@ -178,11 +178,16 @@ export class LLMService {
       });
       clearTimeout(timeout);
 
-      if (!res.ok) return null;
+      if (!res.ok) {
+        const errText = await res.text();
+        logger.warn({ status: res.status, errText }, 'Groq API request non-ok');
+        return null;
+      }
       const data = (await res.json()) as any;
       return data.choices?.[0]?.message?.content || null;
-    } catch {
+    } catch (e: any) {
       clearTimeout(timeout);
+      logger.warn({ error: e.message }, 'Groq fetch exception');
       return null;
     }
   }
@@ -192,7 +197,7 @@ export class LLMService {
     const timeout = setTimeout(() => controller.abort(), 7000);
 
     const fullPrompt = `${systemPrompt}\n\n${prompt}`;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.ai.geminiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${config.ai.geminiKey}`;
 
     try {
       const res = await fetch(url, {
