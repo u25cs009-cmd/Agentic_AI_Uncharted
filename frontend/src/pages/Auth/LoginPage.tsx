@@ -16,17 +16,19 @@ import {
   Key
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { ShaktAILogo } from '../../components/common/ShaktAILogo';
 import { api, subscribeToWakingState } from '../../services/api';
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState(() => localStorage.getItem('anchor_remember_email') || 'demo@anchor.io');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState(() => localStorage.getItem('anchor_remember_email') || '');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('anchor_remember_email'));
   
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ email?: string; password?: string }>({});
   const [isWaking, setIsWaking] = useState(false);
+  const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
   
   // Forgot password modal state
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
@@ -59,7 +61,8 @@ export const LoginPage: React.FC = () => {
           });
           const container = document.getElementById('google-btn-container');
           if (container) {
-            (window as any).google.accounts.id.renderButton(container, {
+            setGoogleButtonRendered(true);
+          (window as any).google.accounts.id.renderButton(container, {
               theme: 'outline',
               size: 'large',
               width: 350,
@@ -97,7 +100,17 @@ export const LoginPage: React.FC = () => {
       return;
     }
     if ((window as any).google?.accounts?.id) {
-      (window as any).google.accounts.id.prompt();
+      (window as any).google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed()) {
+          console.warn('Google One Tap not displayed:', notification.getNotDisplayedReason());
+          const reason = notification.getNotDisplayedReason();
+          if (reason === 'opt_out_or_no_session') {
+            setError('Please sign into your Google account first, or sign in with email and password below.');
+          } else {
+            setError('Google Sign-In prompt was suppressed or domain is unverified. If on a live deployed domain, verify Authorized JavaScript Origins in Google Cloud Console.');
+          }
+        }
+      });
     } else {
       setError('Google Identity Services script is still loading. Please try again.');
     }
@@ -137,24 +150,12 @@ export const LoginPage: React.FC = () => {
     } catch (err: any) {
       const msg = err?.message || '';
       if (msg.includes('401') || msg.toLowerCase().includes('credential') || msg.toLowerCase().includes('password')) {
-        setError('Incorrect email or password. Please verify your credentials or use the Judge Demo Account above.');
+        setError('Incorrect email or password. Please verify your credentials and try again.');
       } else if (msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('network')) {
         setError('Server is unreachable. Please verify backend is running on port 5000 or check connection.');
       } else {
         setError(msg || 'Authentication failed. Please try again.');
       }
-    }
-  };
-
-  const handleFillDemoLogin = async () => {
-    setError(null);
-    setEmail('demo@anchor.io');
-    setPassword('password123');
-    try {
-      await login('demo@anchor.io', 'password123');
-      navigate('/');
-    } catch (err: any) {
-      setError(err?.message || 'Demo sign-in failed. Please retry in a moment.');
     }
   };
 
@@ -192,46 +193,11 @@ export const LoginPage: React.FC = () => {
       <div className="w-full max-w-md glass-panel border border-slate-200/90 rounded-3xl p-8 shadow-xl relative z-10 bg-white backdrop-blur-2xl">
         {/* Brand Header */}
         <div className="text-center mb-5">
-          <img
-            src="/logo.jpg"
-            alt="ShaktAI Logo"
-            className="w-16 h-16 rounded-full object-cover mx-auto mb-3 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
-          />
+          <ShaktAILogo size="lg" glow={true} className="mx-auto mb-3" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome Back</h1>
           <p className="text-xs text-slate-400 mt-1 font-medium">
             Sign in to access your governed ANCHOR workspace.
           </p>
-        </div>
-
-        {/* D1: Judge Demo Account Card */}
-        <div className="mb-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-700 font-bold flex items-center gap-1.5">
-              <Key className="w-3.5 h-3.5 text-indigo-600" /> Judge Demo Account
-            </span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-              One-Click
-            </span>
-          </div>
-          <div className="space-y-1 text-xs font-mono text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Email:</span>
-              <span className="text-slate-900 font-semibold">demo@anchor.io</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Password:</span>
-              <span className="text-slate-900 font-semibold">password123</span>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={handleFillDemoLogin}
-            disabled={isLoading}
-            className="w-full mt-2.5 py-2 px-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-semibold font-mono transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(6,182,212,0.25)]"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Fill Demo Login &amp; Sign In</span>
-          </button>
         </div>
 
         {/* Cold-Start Waking Banner */}
@@ -251,33 +217,37 @@ export const LoginPage: React.FC = () => {
         )}
 
         {/* Google Sign In Button */}
-        <div id="google-btn-container" className="w-full flex justify-center mb-1"></div>
-        <button
-          type="button"
-          onClick={handleGoogleClick}
-          disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 transition-all flex items-center justify-center space-x-3 shadow-xs active:scale-98 disabled:opacity-50 cursor-pointer"
-        >
-          <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
-          </svg>
-          <span>Continue with Google</span>
-        </button>
+        <div className="w-full flex justify-center mb-1">
+          <div id="google-btn-container" className="w-full flex justify-center min-h-[44px]"></div>
+        </div>
+        {!googleButtonRendered && (
+          <button
+            type="button"
+            onClick={handleGoogleClick}
+            disabled={isLoading}
+            className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 transition-all flex items-center justify-center space-x-3 shadow-xs active:scale-98 disabled:opacity-50 cursor-pointer"
+          >
+            <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+        )}
 
         <div className="flex items-center my-4">
           <div className="flex-1 border-t border-slate-200" />

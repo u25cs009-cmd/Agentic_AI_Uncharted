@@ -11,6 +11,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { ShaktAILogo } from '../../components/common/ShaktAILogo';
 
 export const RegisterPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -135,11 +136,7 @@ export const RegisterPage: React.FC = () => {
       <div className="w-full max-w-md glass-panel border border-slate-200/90 rounded-3xl p-8 shadow-xl relative z-10 bg-white backdrop-blur-2xl">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <img
-            src="/logo.jpg"
-            alt="ShaktAI Logo"
-            className="w-16 h-16 rounded-full object-cover mx-auto mb-4 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
-          />
+          <ShaktAILogo size="lg" glow={true} className="mx-auto mb-4" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create Your Account</h1>
           <p className="text-xs text-slate-400 mt-1.5 font-medium">
             Deploy an isolated ANCHOR memory instance for ShaktAI

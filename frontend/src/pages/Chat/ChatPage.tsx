@@ -854,11 +854,7 @@ export const ChatPage: React.FC = () => {
 
             {loading && (
               <div className="flex items-start gap-3.5">
-                <img
-                  src="/logo.jpg"
-                  alt="ShaktAI"
-                  className="w-7 h-7 rounded-full object-cover border border-amber-400/40 shrink-0 mt-0.5 animate-pulse"
-                />
+                <ShaktAILogo size="sm" glow={true} className="shrink-0 mt-0.5 animate-pulse" />
                 <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-xs flex items-center gap-2.5">
                   <div className="w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
                   <span className="text-xs font-mono text-slate-600">
