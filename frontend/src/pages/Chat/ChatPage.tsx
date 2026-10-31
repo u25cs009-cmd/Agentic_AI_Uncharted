@@ -778,10 +778,10 @@ export const ChatPage: React.FC = () => {
               // Clean Minimalist Welcome View
               <div className="py-16 flex flex-col items-center justify-center text-center animate-fade-in">
                 <ShaktAILogo size="xl" glow={true} className="mb-4" />
-                <h2 className="text-2xl font-bold text-amber-950 mb-2 tracking-tight">
+                <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">
                   ShaktAI Governed Memory Engine
                 </h2>
-                <p className="text-sm text-amber-900/70 max-w-md mb-6 leading-relaxed">
+                <p className="text-sm text-slate-500 max-w-md mb-6 leading-relaxed">
                   Primal intelligence with mathematical trust scoring, recency decay, and deterministic safety gates.
                 </p>
 
@@ -789,14 +789,14 @@ export const ChatPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => handleSendQuery('Which database are we currently using in production?')}
-                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-amber-950 border border-amber-300/80 transition-all cursor-pointer shadow-2xs font-medium"
+                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-slate-900 border border-emerald-300/80 transition-all cursor-pointer shadow-2xs font-medium"
                   >
                     🔍 Which database are we using?
                   </button>
                   <button
                     type="button"
                     onClick={() => handleSendQuery('How do I fix the checkout DB timeout right now?')}
-                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-amber-950 border border-amber-300/80 transition-all cursor-pointer shadow-2xs font-medium"
+                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-slate-900 border border-emerald-300/80 transition-all cursor-pointer shadow-2xs font-medium"
                   >
                     ⚡ Fix checkout DB timeout
                   </button>
@@ -810,7 +810,7 @@ export const ChatPage: React.FC = () => {
                     <div className="flex justify-center my-3 animate-fade-in">
                       <div className={`w-full max-w-2xl p-4 rounded-2xl border text-xs shadow-xs ${
                         msg.systemMeta?.action === 'alert'
-                          ? 'bg-amber-50/90 border-amber-200 text-amber-950'
+                          ? 'bg-amber-50/90 border-amber-200 text-slate-900'
                           : msg.systemMeta?.action === 'deploy'
                           ? 'bg-sky-50/90 border-sky-200 text-sky-950'
                           : 'bg-rose-50/90 border-rose-200 text-rose-950'
@@ -983,7 +983,7 @@ export const ChatPage: React.FC = () => {
                   disabled={!input.trim() || loading}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                     input.trim() && !loading
-                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs'
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   }`}
                   title="Send message (Enter)"

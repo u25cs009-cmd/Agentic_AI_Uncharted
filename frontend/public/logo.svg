@@ -1,44 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
   <defs>
-    <linearGradient id="shaktiGold" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FDE047" />
-      <stop offset="35%" stop-color="#F59E0B" />
-      <stop offset="100%" stop-color="#B45309" />
+    <linearGradient id="shaktiEmerald" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="40%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#047857" />
     </linearGradient>
-    <linearGradient id="shaktiDark" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1E293B" />
-      <stop offset="100%" stop-color="#0F172A" />
+    <linearGradient id="shaktiDarkJade" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#064E3B" />
+      <stop offset="60%" stop-color="#042F2E" />
+      <stop offset="100%" stop-color="#0B1319" />
     </linearGradient>
-    <linearGradient id="shaktiGlow" x1="64" y1="20" x2="64" y2="108" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFBEB" />
-      <stop offset="100%" stop-color="#F59E0B" />
-    </linearGradient>
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+    <filter id="mintGlow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="3" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
   <!-- Outer Rounded Shield Medallion -->
-  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#shaktiDark)" stroke="url(#shaktiGold)" stroke-width="3.5" />
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#shaktiDarkJade)" stroke="url(#shaktiEmerald)" stroke-width="3.5" />
   
   <!-- Subtle Internal Circuit/Shield Ring -->
-  <circle cx="64" cy="64" r="44" stroke="#F59E0B" stroke-opacity="0.25" stroke-dasharray="4 4" stroke-width="1.5" />
+  <circle cx="64" cy="64" r="44" stroke="#10B981" stroke-opacity="0.3" stroke-dasharray="4 4" stroke-width="1.5" />
   
-  <!-- Shakti Bolt / 'S' Power Emblem -->
+  <!-- Shakti Bolt / 'S' Power Emblem in Radiant Emerald -->
   <path d="M72 24 L42 62 H62 L52 104 L86 58 H66 Z" 
-        fill="url(#shaktiGold)" 
-        filter="url(#softGlow)" 
-        stroke="#FFFBEB" 
-        stroke-width="1" />
+        fill="url(#shaktiEmerald)" 
+        filter="url(#mintGlow)" 
+        stroke="#ECFDF5" 
+        stroke-width="1.2" />
 
   <!-- Core Intelligence Anchor Node -->
   <circle cx="64" cy="60" r="5" fill="#FFFFFF" />
-  <circle cx="64" cy="60" r="8" stroke="#FDE047" stroke-width="1.5" stroke-opacity="0.8" />
+  <circle cx="64" cy="60" r="8" stroke="#34D399" stroke-width="1.5" stroke-opacity="0.85" />
   
   <!-- Energy Nodes -->
-  <circle cx="72" cy="24" r="2.5" fill="#FDE047" />
-  <circle cx="52" cy="104" r="2.5" fill="#F59E0B" />
-  <circle cx="42" cy="62" r="2" fill="#FDE047" />
-  <circle cx="86" cy="58" r="2" fill="#FDE047" />
+  <circle cx="72" cy="24" r="2.5" fill="#6EE7B7" />
+  <circle cx="52" cy="104" r="2.5" fill="#10B981" />
+  <circle cx="42" cy="62" r="2" fill="#6EE7B7" />
+  <circle cx="86" cy="58" r="2" fill="#6EE7B7" />
 </svg>
