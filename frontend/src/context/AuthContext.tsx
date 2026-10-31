@@ -34,7 +34,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('anchor_token'));
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('anchor_user');
-    return saved ? JSON.parse(saved) : null;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.email === 'alex.chen@anchor.ai' || parsed.name === 'Alex Chen') {
+          localStorage.removeItem('anchor_user');
+          localStorage.removeItem('anchor_token');
+          return null;
+        }
+        return parsed;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   });
   const [isLoading, setIsLoading] = useState(false);
 
