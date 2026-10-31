@@ -8,9 +8,10 @@ import { timingSafeCompare } from '../middleware/auth.js';
 export async function getMemories(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
+    const isSystemWebhook = req.user?.id === 'system-webhook';
     const filter: MemoryFilter = {
-      owner: req.user?.id,
-      workspace: req.user?.workspace,
+      owner: isSystemWebhook ? undefined : req.user?.id,
+      workspace: req.user?.workspace || 'ws-primary',
       status: req.query.status as string,
       type: req.query.type as string,
       tier: req.query.tier as string,

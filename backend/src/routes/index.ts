@@ -133,7 +133,7 @@ apiRouter.delete('/conversations/:id', requireAuth, deleteConversation);
 apiRouter.get('/stream', authenticateUserOrWebhook, sseStream);
 
 // 5. Memory CRUD & Audit Trail (User/Workspace Scoped)
-apiRouter.get('/memories', requireAuth, getMemories);
+apiRouter.get('/memories', authenticateUserOrWebhook, getMemories);
 apiRouter.get('/memories/events', requireAuth, getEvents);
 apiRouter.post('/memories/manage', authenticateUserOrWebhook, manageMemories);
 apiRouter.get('/memories/:id', requireAuth, getMemoryById);
