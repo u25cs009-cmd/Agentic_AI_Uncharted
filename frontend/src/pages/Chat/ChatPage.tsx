@@ -28,7 +28,9 @@ import {
   ShieldAlert,
   PanelLeftClose,
   PanelLeftOpen,
-  HelpCircle
+  HelpCircle,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { ChatModeResult } from '../../types/memory';
@@ -108,6 +110,17 @@ export const ChatPage: React.FC = () => {
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isExpanded) {
+        setIsExpanded(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isExpanded]);
 
   // Quick Action & Outcome feedback state
   const [quickActionLoading, setQuickActionLoading] = useState<string | null>(null);
@@ -483,7 +496,13 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] max-w-7xl mx-auto overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm">
+    <div
+      className={`transition-all duration-300 ease-in-out ${
+        isExpanded
+          ? 'fixed inset-0 z-50 flex h-screen w-screen overflow-hidden bg-white shadow-2xl'
+          : 'flex h-[calc(100vh-5rem)] max-w-7xl mx-auto overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-sm'
+      }`}
+    >
       {/* ── Left ChatGPT/Claude Sessions Sidebar ── */}
       <div
         className={`flex flex-col border-r border-slate-200 bg-slate-50/70 transition-all duration-300 ease-in-out shrink-0 ${
@@ -659,6 +678,30 @@ export const ChatPage: React.FC = () => {
               title="Reset conversation"
             >
               <RotateCcw className="w-4 h-4" />
+            </button>
+
+            {/* Fullscreen Expand / Collapse Button */}
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                isExpanded
+                  ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 ring-1 ring-indigo-300'
+                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+              title={isExpanded ? 'Collapse to standard view (Esc)' : 'Expand chat to full screen'}
+            >
+              {isExpanded ? (
+                <>
+                  <Minimize2 className="w-4 h-4 text-indigo-600" />
+                  <span className="text-[11px] font-mono font-semibold hidden sm:inline">Exit Fullscreen</span>
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="w-4 h-4" />
+                  <span className="text-[11px] font-mono font-medium hidden sm:inline text-slate-600">Expand</span>
+                </>
+              )}
             </button>
           </div>
         </div>

@@ -157,95 +157,95 @@ export const BenchmarkPage: React.FC = () => {
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
-          <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
-            <span>Correct-Action Rate</span>
-            <CheckCircle2 className="w-4 h-4 text-[#60d49a]" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 min-w-0">
+        <div className="card p-4 rounded-2xl relative overflow-hidden group hover:border-slate-300 transition-all min-w-0 bg-white border border-slate-200 shadow-xs">
+          <div className="text-slate-500 text-[11px] font-mono mb-1.5 uppercase tracking-wider flex items-center justify-between gap-1.5 min-w-0 font-semibold">
+            <span className="truncate">Correct-Action Rate</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
-          <div className="text-3xl font-bold text-[#60d49a] font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-bold text-emerald-600 font-mono tracking-tight truncate">
             {metrics.correctActionRate.governed.toFixed(1)}%
           </div>
-          <div className="text-[10px] text-[#888] font-mono mt-1">
+          <div className="text-[11px] text-slate-500 font-mono mt-1 truncate">
             vs {metrics.correctActionRate.naive.toFixed(1)}% Naive (2.5x gain)
           </div>
         </div>
 
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
-          <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
-            <span>Harmful Action Rate</span>
-            <ShieldAlert className="w-4 h-4 text-[#e05c5c]" />
+        <div className="card p-4 rounded-2xl relative overflow-hidden group hover:border-slate-300 transition-all min-w-0 bg-white border border-slate-200 shadow-xs">
+          <div className="text-slate-500 text-[11px] font-mono mb-1.5 uppercase tracking-wider flex items-center justify-between gap-1.5 min-w-0 font-semibold">
+            <span className="truncate">Harmful Action Rate</span>
+            <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
           </div>
-          <div className="text-3xl font-bold text-[#f07070] font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-bold text-rose-600 font-mono tracking-tight truncate">
             {metrics.harmfulActionRate.governed.toFixed(1)}%
           </div>
-          <div className="text-[10px] text-[#888] font-mono mt-1">
+          <div className="text-[11px] text-slate-500 font-mono mt-1 truncate">
             vs {metrics.harmfulActionRate.naive.toFixed(1)}% Naive (zero incidents)
           </div>
         </div>
 
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
-          <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
-            <span>Poison Resistance</span>
-            <Zap className="w-4 h-4 text-[#06b6d4]" />
+        <div className="card p-4 rounded-2xl relative overflow-hidden group hover:border-slate-300 transition-all min-w-0 bg-white border border-slate-200 shadow-xs">
+          <div className="text-slate-500 text-[11px] font-mono mb-1.5 uppercase tracking-wider flex items-center justify-between gap-1.5 min-w-0 font-semibold">
+            <span className="truncate">Poison Resistance</span>
+            <Zap className="w-4 h-4 text-sky-600 shrink-0" />
           </div>
-          <div className="text-3xl font-bold text-[#06b6d4] font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-bold text-sky-600 font-mono tracking-tight truncate">
             {(100 - metrics.poisonAcceptanceRate.governed).toFixed(1)}%
           </div>
-          <div className="text-[10px] text-[#888] font-mono mt-1">
+          <div className="text-[11px] text-slate-500 font-mono mt-1 truncate">
             4 of 4 prompt injections blocked
           </div>
         </div>
 
-        <div className="card p-4.5 rounded-2xl relative overflow-hidden group hover:border-[#475569] transition-all">
-          <div className="text-[#888] text-[11px] font-mono mb-1 uppercase tracking-wider flex items-center justify-between">
-            <span>Abstention Precision</span>
-            <Activity className="w-4 h-4 text-[#06b6d4]" />
+        <div className="card p-4 rounded-2xl relative overflow-hidden group hover:border-slate-300 transition-all min-w-0 bg-white border border-slate-200 shadow-xs">
+          <div className="text-slate-500 text-[11px] font-mono mb-1.5 uppercase tracking-wider flex items-center justify-between gap-1.5 min-w-0 font-semibold">
+            <span className="truncate">Abstention Precision</span>
+            <Activity className="w-4 h-4 text-indigo-600 shrink-0" />
           </div>
-          <div className="text-3xl font-bold text-[#38bdf8] font-mono tracking-tight">
+          <div className="text-2xl sm:text-3xl font-bold text-indigo-600 font-mono tracking-tight truncate">
             {metrics.abstentionPrecision.governed.toFixed(1)}%
           </div>
-          <div className="text-[10px] text-[#888] font-mono mt-1">
+          <div className="text-[11px] text-slate-500 font-mono mt-1 truncate">
             Safe abstention on low confidence
           </div>
         </div>
       </div>
 
       {/* Secondary Efficiency HUD (Tokens, Latency, Stale Reuse) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold">Token Consumption</div>
-            <div className="text-lg font-bold text-slate-900 font-mono mt-0.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0">
+        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between min-w-0">
+          <div className="min-w-0 pr-2">
+            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold truncate">Token Consumption</div>
+            <div className="text-lg font-bold text-slate-900 font-mono mt-0.5 truncate">
               {metrics.tokenUsage?.governed?.toLocaleString() ?? '4,620'} tokens
             </div>
-            <div className="text-[10px] text-emerald-700 font-mono mt-0.5 font-bold">
+            <div className="text-[10px] text-emerald-700 font-mono mt-0.5 font-bold truncate">
               -32% vs Naive ({metrics.tokenUsage?.naive?.toLocaleString() ?? '6,840'})
             </div>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+          <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shrink-0">
             <Cpu className="w-4.5 h-4.5" />
           </div>
         </div>
 
-        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold">Average Latency</div>
-            <div className="text-lg font-bold text-slate-900 font-mono mt-0.5">{metrics.avgLatencyMs.governed} ms</div>
-            <div className="text-[10px] text-slate-500 font-mono mt-0.5">Governed guard overhead: ~110ms</div>
+        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between min-w-0">
+          <div className="min-w-0 pr-2">
+            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold truncate">Average Latency</div>
+            <div className="text-lg font-bold text-slate-900 font-mono mt-0.5 truncate">{metrics.avgLatencyMs.governed} ms</div>
+            <div className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">Governed guard overhead: ~110ms</div>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+          <div className="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
             <Clock className="w-4.5 h-4.5" />
           </div>
         </div>
 
-        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold">Stale Reuse Rate</div>
-            <div className="text-lg font-bold text-emerald-700 font-mono mt-0.5">0.0%</div>
-            <div className="text-[10px] text-slate-600 font-mono mt-0.5">vs 60.0% in Naive Vector Search</div>
+        <div className="card p-4 rounded-xl border border-slate-200 bg-white shadow-xs flex items-center justify-between min-w-0 sm:col-span-2 lg:col-span-1">
+          <div className="min-w-0 pr-2">
+            <div className="text-[10px] text-slate-600 font-mono uppercase tracking-wider font-semibold truncate">Stale Reuse Rate</div>
+            <div className="text-lg font-bold text-emerald-700 font-mono mt-0.5 truncate">0.0%</div>
+            <div className="text-[10px] text-slate-600 font-mono mt-0.5 truncate">vs 60.0% in Naive Vector Search</div>
           </div>
-          <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
             <CheckCircle2 className="w-4.5 h-4.5" />
           </div>
         </div>
