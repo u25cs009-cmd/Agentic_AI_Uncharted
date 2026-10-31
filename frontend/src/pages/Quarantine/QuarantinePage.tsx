@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, 
-  Check, 
+  CheckCircle2, 
   Trash2, 
   AlertTriangle, 
-  ShieldCheck, 
-  Lock, 
-  Info,
-  Scale,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  Radio
+  ArrowRightLeft, 
+  Check, 
+  X,
+  Radio,
+  FileQuestion,
+  Lock,
+  Layers
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { Memory } from '../../types/memory';
 import { Badge } from '../../components/common/Badge';
-import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { EmptyState } from '../../components/common/EmptyState';
 
 export const QuarantinePage: React.FC = () => {
@@ -34,8 +32,8 @@ export const QuarantinePage: React.FC = () => {
         api.getQuarantinedMemories(),
         api.getMemories({ status: 'active' }),
       ]);
-      setQuarantined(qData);
-      setActiveMemories(aData);
+      setQuarantined(qData || []);
+      setActiveMemories(aData || []);
     } catch (err: any) {
       setError(err?.message || 'Failed to load quarantine records.');
     } finally {
@@ -45,6 +43,20 @@ export const QuarantinePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+
+    // Auto-refetch on SSE quarantine, release, or rejection events
+    const unsubscribe = api.subscribeToEventStream((event) => {
+      if (
+        event.event_type === 'quarantined' ||
+        event.event_type === 'released' ||
+        event.event_type === 'feedback_rejected' ||
+        event.event_type === 'deleted'
+      ) {
+        loadData();
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleRelease = async (id: string) => {
@@ -52,7 +64,7 @@ export const QuarantinePage: React.FC = () => {
       await api.releaseQuarantine(id);
       setActionNotice(`quarantine_release logged: Memory ${id} verified and restored to active store`);
       setTimeout(() => setActionNotice(null), 4000);
-      loadData();
+      await loadData();
     } catch (err: any) {
       setError(err?.message || `Failed to release memory ${id}.`);
     }
@@ -63,7 +75,7 @@ export const QuarantinePage: React.FC = () => {
       await api.rejectQuarantine(id);
       setActionNotice(`quarantine_reject logged: Memory ${id} permanently purged & recorded to security audit`);
       setTimeout(() => setActionNotice(null), 4000);
-      loadData();
+      await loadData();
     } catch (err: any) {
       setError(err?.message || `Failed to reject memory ${id}.`);
     }
@@ -92,250 +104,164 @@ export const QuarantinePage: React.FC = () => {
         <div className="flex items-center space-x-2">
           <div className="card px-3 py-1.5 rounded-xl flex items-center space-x-2 text-xs font-mono text-slate-700 bg-white border border-slate-200 shadow-xs">
             <Radio className="w-3.5 h-3.5 text-rose-600 animate-pulse" />
-            <span>P1–P4 Rules: <span className="text-emerald-700 font-bold">100% Enforced</span></span>
+            <span>P1–P4 Safety Rules: <span className="text-emerald-700 font-bold">Active</span></span>
           </div>
+          <button
+            type="button"
+            onClick={loadData}
+            className="btn-secondary px-3 py-1.5 rounded-xl text-xs font-mono font-medium"
+            title="Refresh quarantine queue"
+          >
+            Refresh
+          </button>
         </div>
       </div>
 
-      {/* Notices & Errors */}
+      {/* Action Notification Banner */}
       {actionNotice && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-900 flex items-center space-x-2.5 animate-fade-in shadow-xs">
-          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span className="font-mono font-medium">{actionNotice}</span>
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center space-x-2 shadow-xs animate-fade-in font-mono">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{actionNotice}</span>
         </div>
       )}
 
       {error && (
-        <ErrorMessage
-          title="Quarantine Error"
-          message={error}
-          onRetry={loadData}
-          compact
-        />
+        <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center space-x-2 shadow-xs">
+          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+          <span>{error}</span>
+        </div>
       )}
 
-      {/* Summary Isolation Vault Banner */}
-      <div className="card p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 border border-rose-200 bg-rose-50/40 relative overflow-hidden shadow-xs">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-600">
-            <Lock className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="text-base font-semibold text-slate-900">
-                Active Threat Containment Facility
-              </h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                {quarantined.length} PENDING REVIEW
-              </span>
-            </div>
-            <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
-              Quarantined items are strictly segregated from agent context retrieval, ensuring zero hallucination and zero prompt hijacking.
-            </p>
-          </div>
+      {/* Main Content Area */}
+      {loading && quarantined.length === 0 ? (
+        <div className="card p-12 text-center text-slate-500 font-mono text-xs bg-white border border-slate-200">
+          Scanning deterministic quarantine vault...
         </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-2 text-xs font-mono">
-          <div className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 flex items-center space-x-1.5 shadow-xs">
-            <Info className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Harmful Action Rate: <strong className="text-emerald-700">0.0%</strong></span>
-          </div>
-        </div>
-      </div>
-
-      {/* Quarantined Items List */}
-      <div className="space-y-6">
-        {loading ? (
-          <div className="card p-12 text-center text-[#888] text-xs font-mono">
-            Scanning isolation vault & cross-referencing active facts against invariant rules...
-          </div>
-        ) : quarantined.length === 0 ? (
+      ) : quarantined.length === 0 ? (
+        <div className="card p-10 text-center bg-white border border-slate-200 shadow-xs rounded-2xl">
           <EmptyState
-            icon={<ShieldCheck className="w-8 h-8 text-[#22c55e]" />}
-            title="All clear! No quarantined items pending review."
-            description="Zero isolated threats in the vault. This confirms that all active memories comply with operational invariants, with no prompt injections, untrusted policy overrides, or conflicting mutations threatening downstream reasoning."
+            icon={<CheckCircle2 className="w-7 h-7 text-emerald-600" />}
+            title="Zero Contaminated or Contested Memories"
+            description="All active memory records conform to deterministic trust supremacy, valid provenance standards, and verified schema integrity. No security interventions currently required."
           />
-        ) : (
-          quarantined.map((item) => {
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 px-1 font-semibold">
+            <span>PENDING OPERATOR VERIFICATION: {quarantined.length} ITEM(S)</span>
+            <span>PROVENANCE VERIFICATION REQUIRED</span>
+          </div>
+
+          {quarantined.map((item) => {
             const conflictingActive = activeMemories.find(
-              (m) => m.attribute_key === item.attribute_key && (m._id || m.id) !== (item._id || item.id)
+              (m) => m.attribute_key === item.attribute_key && (m._id !== item._id && m.id !== item.id)
             );
 
             return (
               <div
                 key={item._id || item.id}
-                className="card p-5 rounded-2xl border-[rgba(220,80,80,0.35)] space-y-4 hover:border-[rgba(220,80,80,0.6)] transition-all duration-200 relative overflow-hidden"
+                className="card p-5 border-l-4 border-l-rose-500 border border-slate-200 rounded-2xl space-y-4 bg-white shadow-xs hover:border-slate-300 transition-all"
               >
-                {/* Red warning bar on top */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#e05c5c] via-[#38bdf8] to-[#e05c5c]" />
-
-                {/* Header info */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3 pt-1">
-                  <div className="flex items-center space-x-2.5">
-                    <span className="font-mono text-xs font-bold text-rose-600">
+                {/* Header row */}
+                <div className="flex items-start justify-between flex-wrap gap-2">
+                  <div className="flex items-center space-x-2 flex-wrap gap-1.5">
+                    <span className="font-mono text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                       {item._id || item.id}
                     </span>
                     <Badge variant="danger" size="sm">
-                      ISOLATED THREAT
+                      {item.type.toUpperCase()}
                     </Badge>
-                    <span className="text-xs font-mono text-slate-600">
-                      Key: <strong className="text-indigo-700">{item.attribute_key}</strong>
+                    <span className="font-mono text-xs font-semibold text-slate-800">
+                      key: <strong className="text-indigo-600">{item.attribute_key}</strong>
                     </span>
                   </div>
 
-                  <div className="flex items-center space-x-3 text-xs font-mono">
-                    <span className="text-slate-600">
-                      Trust: <strong className="text-rose-700">{item.trust.toFixed(2)}</strong>
-                    </span>
-                    <span className="text-slate-300">|</span>
-                    <span className="text-slate-600">
-                      Confidence: <strong className="text-slate-900">{item.confidence.toFixed(2)}</strong>
-                    </span>
+                  <div className="text-[11px] font-mono text-slate-500">
+                    Flagged: {new Date(item.created_at || '').toLocaleTimeString()}
                   </div>
                 </div>
 
-                {/* Quarantine Reason Banner */}
-                <div className="p-3 bg-[rgba(220,80,80,0.12)] border border-[rgba(220,80,80,0.3)] rounded-xl text-xs text-[#f07070] flex items-start space-x-2.5">
-                  <AlertTriangle className="w-4 h-4 text-[#f07070] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold text-rose-800">Quarantine Reason: </span>
-                    <span className="text-slate-900 font-medium">{item.quarantine_reason || 'Untrusted low-confidence source with potential policy violation'}</span>
+                {/* Quarantined Content Preview */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1">
+                    <FileQuestion className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Candidate Memory Payload (Isolated from Retrieval)</span>
                   </div>
+                  <p className="text-sm font-medium text-slate-900 leading-relaxed font-sans">
+                    "{item.content}"
+                  </p>
                 </div>
 
-                {/* Conflicting Memory Comparison Matrix */}
-                <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-mono text-slate-700">
-                    <div className="flex items-center space-x-2">
-                      <Scale className="w-4 h-4 text-indigo-600" />
-                      <span className="font-bold uppercase tracking-wider text-slate-900">
-                        Fact Governance Comparison Matrix
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-slate-600 font-semibold">Target Key: {item.attribute_key}</span>
+                {/* Conflict / Violation Trigger Explainer */}
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1">
+                  <div className="font-mono font-bold text-[11px] uppercase tracking-wider text-rose-700 flex items-center space-x-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                    <span>Deterministic Trigger / Rejection Reason</span>
                   </div>
-
-                  {conflictingActive ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                      {/* Left: Current Established Fact */}
-                      <div className="card p-4 rounded-xl border border-emerald-300 bg-white shadow-xs flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-mono text-emerald-800 font-bold uppercase flex items-center">
-                              <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Current Established Fact
-                            </span>
-                            <Badge variant="success" size="sm">
-                              {conflictingActive.tier.toUpperCase()} TIER
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-slate-900 font-medium leading-relaxed mb-3">
-                            "{conflictingActive.content}"
-                          </p>
-                        </div>
-
-                        <div className="pt-2 border-t border-slate-100 text-[11px] font-mono text-slate-600 space-y-1">
-                          <div className="flex justify-between">
-                            <span>Memory ID:</span>
-                            <span className="text-slate-900 font-semibold">{conflictingActive._id || conflictingActive.id}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Source Kind:</span>
-                            <span className="text-slate-900 font-medium">{conflictingActive.source.kind}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Trust Level:</span>
-                            <span className="text-emerald-700 font-bold">{conflictingActive.trust.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Status:</span>
-                            <span className="text-emerald-700 font-bold uppercase">{conflictingActive.status}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Proposed Conflicting Fact */}
-                      <div className="card p-4 rounded-xl border border-rose-300 bg-rose-50/50 flex flex-col justify-between shadow-xs">
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[11px] font-mono text-rose-800 font-bold uppercase flex items-center">
-                              <XCircle className="w-3.5 h-3.5 mr-1 text-rose-600" /> Proposed Conflicting Fact
-                            </span>
-                            <Badge variant="danger" size="sm">
-                              QUARANTINED
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-rose-950 font-medium leading-relaxed mb-3">
-                            "{item.content}"
-                          </p>
-                        </div>
-
-                        <div className="pt-2 border-t border-rose-200 text-[11px] font-mono text-slate-700 space-y-1">
-                          <div className="flex justify-between">
-                            <span>Memory ID:</span>
-                            <span className="text-slate-900 font-semibold">{item._id || item.id}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Source Kind:</span>
-                            <span className="text-rose-800 font-medium">{item.source.kind}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Trust Level:</span>
-                            <span className="text-rose-800 font-bold">{item.trust.toFixed(2)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Governance Action:</span>
-                            <span className="text-sky-700 font-semibold">Blocked by Policy Guard</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="card p-4 rounded-xl border border-slate-200 bg-white text-xs text-slate-700 leading-relaxed shadow-xs">
-                      <div className="text-slate-900 font-semibold mb-1 flex items-center space-x-1.5">
-                        <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>Isolated Direct Adversarial Vector:</span>
-                      </div>
-                      <p className="text-slate-900 font-mono italic my-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                        "{item.content}"
-                      </p>
-                      <p className="text-[11px] text-slate-600">
-                        No conflicting active memory currently exists for attribute key <code className="text-indigo-700 font-mono">{item.attribute_key}</code>. This payload was isolated directly by deterministic safety screening (prompt injection / exfiltration defense).
-                      </p>
-                    </div>
-                  )}
+                  <p className="text-xs leading-relaxed text-slate-800 font-sans">
+                    {item.quarantine_reason || 'Flagged by Deterministic Guard: Memory failed trust floor or safety schema verification.'}
+                  </p>
                 </div>
 
-                {/* Operator Actions Bar */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-100">
-                  <span className="text-[11px] font-mono text-slate-600">
-                    Source: <span className="text-slate-900 font-medium">{item.source.kind}</span> • Recorded: {new Date(item.valid_from).toLocaleDateString()}
-                  </span>
+                {/* Trust Ladder Comparison (if conflicting memory exists) */}
+                {conflictingActive && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs space-y-1">
+                      <div className="font-mono font-bold text-emerald-800 text-[10px] uppercase flex items-center space-x-1">
+                        <Lock className="w-3 h-3 text-emerald-600" />
+                        <span>Active Verified Fact (Protected)</span>
+                      </div>
+                      <p className="text-slate-900 font-medium font-sans">"{conflictingActive.content}"</p>
+                      <div className="flex items-center space-x-3 text-[11px] font-mono text-slate-600 pt-1">
+                        <span>Source: <strong>{conflictingActive.source?.kind}</strong></span>
+                        <span>Trust: <strong className="text-emerald-700">{typeof conflictingActive.trust === 'number' ? conflictingActive.trust.toFixed(2) : '1.00'}</strong></span>
+                      </div>
+                    </div>
 
-                  <div className="flex items-center space-x-2.5">
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs space-y-1">
+                      <div className="font-mono font-bold text-rose-800 text-[10px] uppercase flex items-center space-x-1">
+                        <AlertTriangle className="w-3 h-3 text-rose-600" />
+                        <span>Contested Candidate (Quarantined)</span>
+                      </div>
+                      <p className="text-slate-900 font-medium font-sans">"{item.content}"</p>
+                      <div className="flex items-center space-x-3 text-[11px] font-mono text-slate-600 pt-1">
+                        <span>Source: <strong>{item.source?.kind}</strong></span>
+                        <span>Trust: <strong className="text-rose-700">{typeof item.trust === 'number' ? item.trust.toFixed(2) : '0.20'}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer Controls: Operator Decision Buttons */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200 flex-wrap gap-2">
+                  <div className="text-[11px] font-mono text-slate-500">
+                    Source: <strong className="text-slate-700">{item.source?.kind || 'unverified'}</strong> ({item.source?.actor || 'external'})
+                  </div>
+
+                  <div className="flex items-center space-x-2">
                     <button
                       type="button"
                       onClick={() => handleRelease(item._id || item.id || '')}
-                      className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-semibold transition-all active:scale-95 shadow-xs cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer"
                     >
                       <Check className="w-3.5 h-3.5" />
-                      <span>Release to Active Memory</span>
+                      <span>Approve &amp; Activate</span>
                     </button>
-
                     <button
                       type="button"
                       onClick={() => handleReject(item._id || item.id || '')}
-                      className="btn-danger flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 shadow-xs cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-medium text-xs flex items-center space-x-1.5 transition-all cursor-pointer"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Confirm Poison &amp; Purge</span>
+                      <X className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Reject &amp; Purge</span>
                     </button>
                   </div>
                 </div>
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 };

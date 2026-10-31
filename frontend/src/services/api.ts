@@ -6,23 +6,41 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 let isLiveBackend = false;
 let hasCheckedBackend = false;
 
-type WakingListener = (isWaking: boolean) => void;
-const wakingListeners = new Set<WakingListener>();
+export type BackendStatus = { waking: boolean; unavailable: boolean };
 let isServerWaking = false;
+let isBackendUnavailable = false;
+const statusListeners = new Set<(status: BackendStatus) => void>();
 
-export function subscribeToWakingState(listener: WakingListener): () => void {
-  wakingListeners.add(listener);
-  listener(isServerWaking);
+export function subscribeToBackendStatus(listener: (status: BackendStatus) => void): () => void {
+  statusListeners.add(listener);
+  listener({ waking: isServerWaking, unavailable: isBackendUnavailable });
   return () => {
-    wakingListeners.delete(listener);
+    statusListeners.delete(listener);
   };
+}
+
+function notifyBackendStatus() {
+  const status = { waking: isServerWaking, unavailable: isBackendUnavailable };
+  statusListeners.forEach(fn => fn(status));
 }
 
 export function setServerWaking(waking: boolean) {
   if (isServerWaking !== waking) {
     isServerWaking = waking;
-    wakingListeners.forEach(fn => fn(waking));
+    notifyBackendStatus();
   }
+}
+
+export function setBackendUnavailable(unavailable: boolean) {
+  if (isBackendUnavailable !== unavailable) {
+    isBackendUnavailable = unavailable;
+    notifyBackendStatus();
+  }
+}
+
+type WakingListener = (isWaking: boolean) => void;
+export function subscribeToWakingState(listener: WakingListener): () => void {
+  return subscribeToBackendStatus(s => listener(s.waking));
 }
 
 
@@ -1103,33 +1121,56 @@ export const api = {
     return { success: true, affectedCount: count };
   },
 
-  // SSE Stream Support with Exponential Backoff and Error Termination
+  // SSE Stream Support with Automatic 3s Polling Fallback
   subscribeToEventStream(
     onEvent: (event: MemoryEvent) => void,
-    onError?: (errMessage: string) => void
+    onError?: (errMessage: string) => void,
+    onStatusChange?: (mode: 'live' | 'polling') => void
   ): () => void {
     let es: EventSource | null = null;
-    let retryTimeout: any = null;
-    let retryCount = 0;
-    const maxRetries = 5;
-    let backoffDelay = 2000;
+    let pollInterval: any = null;
     let isClosed = false;
+    const seenEventIds = new Set<string>();
+
+    function startPollingFallback() {
+      if (isClosed || pollInterval) return;
+      onStatusChange?.('polling');
+      pollInterval = setInterval(async () => {
+        if (isClosed) {
+          clearInterval(pollInterval);
+          return;
+        }
+        try {
+          const events = await api.getEvents();
+          if (Array.isArray(events)) {
+            for (const ev of events) {
+              if (ev.id && !seenEventIds.has(ev.id)) {
+                seenEventIds.add(ev.id);
+                onEvent(ev);
+              }
+            }
+          }
+        } catch {}
+      }, 3000);
+    }
 
     function connect() {
       if (isClosed) return;
-      const token = localStorage.getItem("anchor_token");
+      const token = localStorage.getItem('anchor_token');
       if (!token) {
-        onError?.("Session expired, log in again.");
+        startPollingFallback();
         return;
       }
       const streamUrl = `${BASE_URL}/api/stream?token=${encodeURIComponent(token)}`;
       try {
         es = new EventSource(streamUrl);
+        es.onopen = () => {
+          onStatusChange?.('live');
+        };
         es.onmessage = (e) => {
           try {
-            retryCount = 0;
-            backoffDelay = 2000;
             const parsed = JSON.parse(e.data);
+            if (parsed.id) seenEventIds.add(parsed.id);
             onEvent(parsed);
           } catch {}
         };
@@ -1139,20 +1180,11 @@ export const api = {
             es = null;
           }
           if (isClosed) return;
-
-          retryCount++;
-          if (retryCount >= maxRetries) {
-            onError?.("Session expired, log in again.");
-            return;
-          }
-
-          retryTimeout = setTimeout(() => {
-            backoffDelay = Math.min(30000, backoffDelay * 1.5);
-            connect();
-          }, backoffDelay);
+          // Switch to polling fallback (every 3s) after one failed SSE connection
+          startPollingFallback();
         };
-      } catch (err: any) {
-        onError?.(err?.message || "Stream connection failed");
+      } catch {
+        startPollingFallback();
       }
     }
 
@@ -1160,8 +1192,14 @@ export const api = {
 
     return () => {
       isClosed = true;
-      if (es) es.close();
-      if (retryTimeout) clearTimeout(retryTimeout);
+      if (es) {
+        es.close();
+        es = null;
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
     };
   },
 
