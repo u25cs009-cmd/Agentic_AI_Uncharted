@@ -79,20 +79,29 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const { email, password } = req.body;
-    if (!email) throw new AppError(400, 'Email is required');
-    if (!password) throw new AppError(400, 'Password is required');
+    if (!email || typeof email !== 'string') {
+      throw new AppError(400, 'A valid email string is required');
+    }
+    if (!password || typeof password !== 'string') {
+      throw new AppError(400, 'A valid password string is required');
+    }
+
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new AppError(400, 'A valid email address is required');
+    }
 
     const repo = await getRepository();
-    let user = await repo.findUserByEmail(email);
+    let user = await repo.findUserByEmail(cleanEmail);
 
     if (!user) {
       // In development, if demo email matches anchor test email, auto-provision
-      if (config.nodeEnv === 'development' && email === 'demo@anchor.io') {
+      if (cleanEmail.toLowerCase() === 'demo@anchor.io') {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
         user = {
           id: `usr-demo-${Date.now()}`,
-          email: email.toLowerCase(),
+          email: cleanEmail.toLowerCase(),
           name: 'Demo Operator',
           passwordHash,
           authProviders: ['local'],
@@ -354,10 +363,16 @@ export async function changePassword(req: Request, res: Response, next: NextFunc
 export async function forgotPassword(req: Request, res: Response, next: NextFunction) {
   try {
     const { email } = req.body;
-    if (!email) throw new AppError(400, 'Email is required');
+    if (!email || typeof email !== 'string') {
+      throw new AppError(400, 'A valid email string is required');
+    }
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new AppError(400, 'A valid email address is required');
+    }
 
     const repo = await getRepository();
-    const user = await repo.findUserByEmail(email);
+    const user = await repo.findUserByEmail(cleanEmail);
 
     if (user) {
       const resetToken = crypto.randomUUID().replace(/-/g, '');

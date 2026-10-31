@@ -193,7 +193,7 @@ export interface ScoredMemory extends Memory {
   recency_score: number;
   final_score: number;
   excluded?: boolean;
-  exclusion_reason?: string;
+  exclusion_reason?: 'stale' | 'quarantined' | 'expired' | 'low_score' | 'env_mismatch' | 'conflict_unresolved' | 'superseded' | string;
 }
 
 export interface RetrievalResult {

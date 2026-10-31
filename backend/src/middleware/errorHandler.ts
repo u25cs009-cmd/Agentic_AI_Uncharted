@@ -15,6 +15,17 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
+  // 1. Express body-parser SyntaxError on malformed JSON payload
+  if (
+    (err instanceof SyntaxError && 'body' in err && (err as any).status === 400) ||
+    (err as any).type === 'entity.parse.failed'
+  ) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Invalid or malformed JSON payload'
+    });
+  }
+
   if (err instanceof ZodError) {
     const list = (err as any).issues || (err as any).errors || [];
     return res.status(400).json({

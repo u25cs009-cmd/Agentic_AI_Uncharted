@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
           <img src="/logo.jpg" alt="Logo" className="w-4 h-4 rounded-md object-cover border border-slate-200" />
           <span className="text-slate-900 font-semibold">ShaktAI</span>
           <span className={`tag text-[10px] ${isLive ? 'tag-success' : 'tag-accent'}`}>
-            {isLive ? 'MongoDB Live' : 'High-Fidelity Sandbox'}
+            {isLive ? 'Cloud Engine Live' : 'High-Fidelity Sandbox'}
           </span>
         </div>
 

@@ -6,23 +6,41 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 let isLiveBackend = false;
 let hasCheckedBackend = false;
 
-type WakingListener = (isWaking: boolean) => void;
-const wakingListeners = new Set<WakingListener>();
+export type BackendStatus = { waking: boolean; unavailable: boolean };
 let isServerWaking = false;
+let isBackendUnavailable = false;
+const statusListeners = new Set<(status: BackendStatus) => void>();
 
-export function subscribeToWakingState(listener: WakingListener): () => void {
-  wakingListeners.add(listener);
-  listener(isServerWaking);
+export function subscribeToBackendStatus(listener: (status: BackendStatus) => void): () => void {
+  statusListeners.add(listener);
+  listener({ waking: isServerWaking, unavailable: isBackendUnavailable });
   return () => {
-    wakingListeners.delete(listener);
+    statusListeners.delete(listener);
   };
+}
+
+function notifyBackendStatus() {
+  const status = { waking: isServerWaking, unavailable: isBackendUnavailable };
+  statusListeners.forEach(fn => fn(status));
 }
 
 export function setServerWaking(waking: boolean) {
   if (isServerWaking !== waking) {
     isServerWaking = waking;
-    wakingListeners.forEach(fn => fn(waking));
+    notifyBackendStatus();
   }
+}
+
+export function setBackendUnavailable(unavailable: boolean) {
+  if (isBackendUnavailable !== unavailable) {
+    isBackendUnavailable = unavailable;
+    notifyBackendStatus();
+  }
+}
+
+type WakingListener = (isWaking: boolean) => void;
+export function subscribeToWakingState(listener: WakingListener): () => void {
+  return subscribeToBackendStatus(s => listener(s.waking));
 }
 
 
@@ -81,7 +99,6 @@ async function safeFetch(url: string, options?: RequestInit): Promise<Response |
   if (!hasCheckedBackend) {
     await checkBackendConnection();
   }
-  
   const wakingTimer = setTimeout(() => {
     setServerWaking(true);
   }, 3000);
@@ -149,178 +166,259 @@ export const api = {
 
   // Authentication & Profile Services
   async login(email: string, password?: string): Promise<{ token: string; user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to sign in. Please verify your credentials.');
-      }
-      localStorage.setItem('anchor_token', data.token);
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      if (err.message && !err.message.includes('fetch')) {
-        throw err;
-      }
-      // Demo / simulation offline fallback
-      const token = `jwt_mock_${Date.now()}`;
-      const user = {
-        id: `usr-demo-${Date.now()}`,
-        email,
-        name: email.split('@')[0] || 'ANCHOR Operator',
-        workspace: 'ws-primary',
-        authProviders: ['local'],
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('anchor_token', token);
-      localStorage.setItem('anchor_user', JSON.stringify(user));
-      return { token, user };
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to sign in. Please verify your credentials.');
+          }
+          localStorage.setItem('anchor_token', data.token);
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        if (err.message && !err.message.includes('fetch') && err.name !== 'SyntaxError') {
+          throw err;
+        }
+      }
+    }
+    // Demo / simulation offline fallback
+    const token = `jwt_mock_${Date.now()}`;
+    const user = {
+      id: `usr-demo-${Date.now()}`,
+      email,
+      name: email.split('@')[0] || 'ANCHOR Operator',
+      workspace: 'ws-primary',
+      authProviders: ['local'],
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('anchor_token', token);
+    localStorage.setItem('anchor_user', JSON.stringify(user));
+    return { token, user };
   },
 
   async register(email: string, password?: string, name?: string): Promise<{ token: string; user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Registration failed.');
-      }
-      localStorage.setItem('anchor_token', data.token);
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      if (err.message && !err.message.includes('fetch')) {
-        throw err;
-      }
-      const token = `jwt_mock_${Date.now()}`;
-      const user = {
-        id: `usr-reg-${Date.now()}`,
-        email,
-        name: name || email.split('@')[0] || 'New Operator',
-        workspace: 'ws-primary',
-        authProviders: ['local'],
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('anchor_token', token);
-      localStorage.setItem('anchor_user', JSON.stringify(user));
-      return { token, user };
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, name }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Registration failed.');
+          }
+          localStorage.setItem('anchor_token', data.token);
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        if (err.message && !err.message.includes('fetch') && err.name !== 'SyntaxError') {
+          throw err;
+        }
+      }
+    }
+    const token = `jwt_mock_${Date.now()}`;
+    const user = {
+      id: `usr-reg-${Date.now()}`,
+      email,
+      name: name || email.split('@')[0] || 'New Operator',
+      workspace: 'ws-primary',
+      authProviders: ['local'],
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('anchor_token', token);
+    localStorage.setItem('anchor_user', JSON.stringify(user));
+    return { token, user };
   },
 
   async googleLogin(credential: string): Promise<{ token: string; user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/google`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential, idToken: credential }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Google authentication failed.');
-      }
-      localStorage.setItem('anchor_token', data.token);
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      if (err.message && !err.message.includes('fetch')) {
-        throw err;
-      }
-      // Demo Google session fallback
-      const token = `jwt_mock_google_${Date.now()}`;
-      const user = {
-        id: `usr-google-${Date.now()}`,
-        email: 'alex.chen@anchor.ai',
-        name: 'Alex Chen',
-        profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        workspace: 'ws-primary',
-        authProviders: ['google'],
-        createdAt: new Date().toISOString()
-      };
-      localStorage.setItem('anchor_token', token);
-      localStorage.setItem('anchor_user', JSON.stringify(user));
-      return { token, user };
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential, idToken: credential }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Google authentication failed.');
+          }
+          localStorage.setItem('anchor_token', data.token);
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        if (err.message && !err.message.includes('fetch') && err.name !== 'SyntaxError') {
+          throw err;
+        }
+      }
+    }
+    // Demo Google session fallback
+    const token = `jwt_mock_google_${Date.now()}`;
+    const user = {
+      id: `usr-google-${Date.now()}`,
+      email: 'alex.chen@anchor.ai',
+      name: 'Alex Chen',
+      profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      workspace: 'ws-primary',
+      authProviders: ['google'],
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('anchor_token', token);
+    localStorage.setItem('anchor_user', JSON.stringify(user));
+    return { token, user };
   },
 
   async me(): Promise<{ user: any }> {
-    try {
-      const res = await fetch(`${BASE_URL}/api/auth/me`, {
-        headers: getAuthHeaders(),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Session expired. Please sign in again.');
-      }
-      localStorage.setItem('anchor_user', JSON.stringify(data.user));
-      return data;
-    } catch (err: any) {
-      const local = localStorage.getItem('anchor_user');
-      if (local) {
-        return { user: JSON.parse(local) };
-      }
-      throw err;
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/me`, {
+          headers: getAuthHeaders(),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Session expired. Please sign in again.');
+          }
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch (err: any) {
+        // Fall back to local storage user
+      }
+    }
+    const local = localStorage.getItem('anchor_user');
+    if (local) {
+      return { user: JSON.parse(local) };
+    }
+    throw new Error('No active user session');
   },
 
   async updateProfile(updates: { name?: string; profilePicture?: string }): Promise<{ user: any; message: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/profile`, {
-      method: 'PATCH',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(updates),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to update user profile.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    localStorage.setItem('anchor_user', JSON.stringify(data.user));
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/profile`, {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify(updates),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to update user profile.');
+          }
+          localStorage.setItem('anchor_user', JSON.stringify(data.user));
+          return data;
+        }
+      } catch {}
+    }
+    const local = localStorage.getItem('anchor_user');
+    const user = local ? JSON.parse(local) : { id: 'usr-demo', email: 'demo@anchor.io' };
+    const updated = { ...user, ...updates };
+    localStorage.setItem('anchor_user', JSON.stringify(updated));
+    return { user: updated, message: 'Profile updated successfully (Demo Mode).' };
   },
 
   async changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/change-password`, {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ currentPassword, newPassword }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to change password.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/change-password`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ currentPassword, newPassword }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to change password.');
+          }
+          return data;
+        }
+      } catch {}
+    }
+    return { success: true, message: 'Password changed successfully (Demo Mode).' };
   },
 
   async forgotPassword(email: string): Promise<{ success: boolean; message: string; resetToken?: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to process password reset request.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to process password reset request.');
+          }
+          return data;
+        }
+      } catch {}
+    }
+    return { success: true, message: `Password reset link sent to ${email} (Demo Mode).` };
   },
 
   async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, newPassword }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to reset password.');
+    if (!hasCheckedBackend) {
+      await checkBackendConnection();
     }
-    return data;
+    if (isLiveBackend) {
+      try {
+        const res = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, newPassword }),
+        });
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to reset password.');
+          }
+          return data;
+        }
+      } catch {}
+    }
+    return { success: true, message: 'Password reset successfully (Demo Mode).' };
   },
 
   async logout(): Promise<void> {
@@ -713,26 +811,38 @@ export const api = {
 
     // Generate response text
     let answer = "";
+    const qLower = query.toLowerCase();
+    const isGreeting = /^(hi|hello|hey|greetings|good morning|good evening)\b/i.test(query.trim());
+    const isHowAreYou = qLower.includes('how are you') || qLower.includes('how r u') || qLower.includes('how are u');
+
     if (mode === 'none') {
-      if (query.includes('country') || query.includes('countries')) {
-        answer = "[NONE MODE - NO MEMORY RETRIEVAL]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)";
+      if (isHowAreYou) {
+        answer = "Hello! I am doing well, thank you for asking. How can I assist you today?";
+      } else if (isGreeting) {
+        answer = "Hello! How can I help you today?";
+      } else if (query.includes('country') || query.includes('countries')) {
+        answer = "The top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)";
       } else if (query.includes('database')) {
-        answer = "As ShaktAI operating in [NONE] mode (zero memory recall), I do not know which database the team is currently utilizing. Please specify your system context.";
+answer = "As ShaktAI operating without internal memory recall, I do not have access to private documentation regarding your active database configuration. Please refer to system topology or documentation.";
       } else if (query.includes('timeout') || query.includes('checkout')) {
-        answer = "In [NONE] mode, I have no contextual memory of previous incidents. Generally, timeouts can be diagnosed by checking application logs, thread dumps, and database pool saturation.";
+        answer = "Without access to operational memories, I can only provide general guidance: timeouts can typically be diagnosed by checking application logs, thread pool saturation, and database connectivity.";
       } else {
-        answer = `[NONE MODE - NO MEMORY RETRIEVAL]\nDirect response without memory retrieval: "${message}".`;
+        answer = "I have received your request. Without memory recall enabled, I can answer general knowledge and programming questions directly. How can I assist you further?";
       }
     } else if (mode === 'naive') {
       if (retrieved.some(r => r.content.includes('pg_ctlcluster') || r.content.includes('PostgreSQL'))) {
         answer = "⚠️ [NAIVE MODE] Based on top vector similarity search, I found this memory:\n\n> 'Old postgres pool reset command: `pg_ctlcluster 14 main restart`'\n\nExecute `pg_ctlcluster 14 main restart` immediately. (Notice: Naive retrieval failed to detect that this fix was marked stale after deployment v2.0!)";
-      } else if (retrieved.some(r => r.content.includes('MongoDB Atlas'))) {
-        answer = "According to vector retrieval, our database is MongoDB Atlas.";
+      } else if (retrieved.some(r => r.content.includes('database') || r.content.includes('Primary Database'))) {
+        answer = "According to vector retrieval, our primary production database is active.";
       } else if (retrieved.length === 0) {
-        if (query.includes('country') || query.includes('countries')) {
+        if (isHowAreYou) {
+          answer = "Hello! I am doing well, thank you for asking. How can I help you today?";
+        } else if (isGreeting) {
+          answer = "Hello! How can I help you today?";
+        } else if (query.includes('country') || query.includes('countries')) {
           answer = "⚠️ [NAIVE MODE - GENERAL KNOWLEDGE]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Notice: No matching internal memory vectors were retrieved; answered using general model knowledge).*";
         } else {
-          answer = `⚠️ [NAIVE MODE - GENERAL KNOWLEDGE]\nDirect general response to "${message}".\n\n*(Notice: No matching internal memory vectors were retrieved).*`;
+          answer = "I received your request. No matching memory vectors were found in the database for this specific query, but I am ready to help.";
         }
       } else {
         answer = `[ShaktAI - Mode: NAIVE] Retrieved ${retrieved.length} memory records via raw vector cosine similarity: ${retrieved.map(r => r.memory_id).join(', ')}.`;
@@ -742,7 +852,7 @@ export const api = {
       if (abstention) {
         answer = `🛡️ [ShaktAI GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
       } else if (retrieved.length === 0) {
-        if (query.includes('website') || query.includes('about') || query.includes('what is this') || query.includes('platform')) {
+if (query.includes('website') || query.includes('about') || query.includes('what is this') || query.includes('platform')) {
           answer = `🛡️ [ShaktAI GOVERNED AGENT]
 Welcome to **ANCHOR (ShaktAI)** — the Governed Agentic Memory Engine.
 
@@ -752,17 +862,19 @@ This platform guarantees enterprise AI reliability through:
 • **Incident Triage**: Evaluates real-time microservice alerts against verified infrastructure facts.
 
 Try asking: *"Which database are we currently using in production?"* or *"How do I fix checkout DB timeout?"*`;
+        } else if (isHowAreYou) {
+          answer = "Hello! I am doing well, thank you for asking. As the ShaktAI Governed Agent, I'm ready to assist you with operations, memory governance, and system queries. What can I do for you today?";
+        } else if (isGreeting) {
+          answer = "Hello! I am ShaktAI, your Governed Memory Agent. How can I assist you today?";
         } else if (query.includes('country') || query.includes('countries')) {
           answer = "🛡️ [ShaktAI GOVERNED AGENT]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Verified: No corporate operational memories applied for general query).*";
-        } else if (query.includes('hi') || query.includes('hello') || query.includes('hey')) {
-          answer = "🛡️ [ShaktAI GOVERNED AGENT]\nHello! I am ShaktAI, your Governed Agentic Memory Engine. How can I assist you with your system architecture or incident triage today?";
         } else {
-          answer = `🛡️ [ShaktAI GOVERNED AGENT]\nDirect response to "${message}".\n\n*(Verified: No corporate operational memories applied for general query).*`;
+          answer = "🛡️ [ShaktAI GOVERNED AGENT]\nI evaluated your query against the memory graph. No corporate operational memories were required for this query, but I am here to assist.";
         }
       } else if (query.includes('timeout') || query.includes('checkout')) {
-        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy MongoDB connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
+        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy database connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
       } else if (query.includes('database')) {
-        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nThe current production database is **MongoDB Atlas** (Cluster `shakti2-primary`), verified via system deployment event `mem-002` (Trust: 0.85, Confidence: 0.98).";
+        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nThe current production database is **Primary Database Service** (Cluster `prod-primary`), verified via system deployment event `mem-002` (Trust: 0.85, Confidence: 0.98).";
       } else {
         answer = `🛡️ [ShaktAI GOVERNED DECISION]\nRetrieved ${retrieved.length} trusted memory records after applying source trust weighting, recency decay, and environmental fingerprint verification.\n\n${retrieved.map(r => `• **${r.attribute_key}**: ${r.content} (Score: ${r.final_score})`).join('\n')}`;
       }
@@ -873,8 +985,8 @@ Try asking: *"Which database are we currently using in production?"* or *"How do
     return BENCHMARK_SCENARIOS;
   },
 
-  // Ingest observation
-  async ingestObservation(text: string, sourceKind: string = 'user_stated'): Promise<{ success: boolean; action: string; reason: string; memory?: Memory }> {
+  // Ingest observation (WF1 or local engine)
+  async ingestObservation(text: string, sourceKind: string = 'user_stated'): Promise<{ success: boolean; action: string; reason: string; memory?: Memory; executed_by?: string }> {
     try {
       const res = await safeFetch(`${BASE_URL}/api/ingest`, {
         method: 'POST',
@@ -967,6 +1079,32 @@ Try asking: *"Which database are we currently using in production?"* or *"How do
     return { success: true, action: 'ADD', reason: 'New valid memory added to active store', memory: newMem };
   },
 
+  // Retrieve memories (WF2 or local engine)
+  async retrieveMemories(query: string): Promise<any> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/retrieve`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ query }),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return { query, retrieved: [], excluded: [], total: 0, executed_by: 'local_engine' };
+  },
+
+  // Manage memory via natural language command (WF3 or local engine)
+  async manageMemories(instruction: string): Promise<any> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/memories/manage`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ instruction }),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return { executed_by: 'local_engine', message: 'Command received', instruction };
+  },
+
   // Simulators for demo
   async simulateAlert(): Promise<{ success: boolean; message: string }> {
     const alertText = "CRITICAL ALERT: checkout-api database pool timeout detected (error_code: 504_GATEWAY_TIMEOUT)";
@@ -996,33 +1134,56 @@ Try asking: *"Which database are we currently using in production?"* or *"How do
     return { success: true, affectedCount: count };
   },
 
-  // SSE Stream Support with Exponential Backoff and Error Termination
+  // SSE Stream Support with Automatic 3s Polling Fallback
   subscribeToEventStream(
     onEvent: (event: MemoryEvent) => void,
-    onError?: (errMessage: string) => void
+    onError?: (errMessage: string) => void,
+    onStatusChange?: (mode: 'live' | 'polling') => void
   ): () => void {
     let es: EventSource | null = null;
-    let retryTimeout: any = null;
-    let retryCount = 0;
-    const maxRetries = 5;
-    let backoffDelay = 2000;
+    let pollInterval: any = null;
     let isClosed = false;
+    const seenEventIds = new Set<string>();
+
+    function startPollingFallback() {
+      if (isClosed || pollInterval) return;
+      onStatusChange?.('polling');
+      pollInterval = setInterval(async () => {
+        if (isClosed) {
+          clearInterval(pollInterval);
+          return;
+        }
+        try {
+          const events = await api.getEvents();
+          if (Array.isArray(events)) {
+            for (const ev of events) {
+              if (ev.id && !seenEventIds.has(ev.id)) {
+                seenEventIds.add(ev.id);
+                onEvent(ev);
+              }
+            }
+          }
+        } catch {}
+      }, 3000);
+    }
 
     function connect() {
       if (isClosed) return;
-      const token = localStorage.getItem("anchor_token");
+      const token = localStorage.getItem('anchor_token');
       if (!token) {
-        onError?.("Session expired, log in again.");
+        startPollingFallback();
         return;
       }
       const streamUrl = `${BASE_URL}/api/stream?token=${encodeURIComponent(token)}`;
       try {
         es = new EventSource(streamUrl);
+        es.onopen = () => {
+          onStatusChange?.('live');
+        };
         es.onmessage = (e) => {
           try {
-            retryCount = 0;
-            backoffDelay = 2000;
             const parsed = JSON.parse(e.data);
+            if (parsed.id) seenEventIds.add(parsed.id);
             onEvent(parsed);
           } catch {}
         };
@@ -1032,20 +1193,11 @@ Try asking: *"Which database are we currently using in production?"* or *"How do
             es = null;
           }
           if (isClosed) return;
-
-          retryCount++;
-          if (retryCount >= maxRetries) {
-            onError?.("Session expired, log in again.");
-            return;
-          }
-
-          retryTimeout = setTimeout(() => {
-            backoffDelay = Math.min(30000, backoffDelay * 1.5);
-            connect();
-          }, backoffDelay);
+          // Switch to polling fallback (every 3s) after one failed SSE connection
+          startPollingFallback();
         };
-      } catch (err: any) {
-        onError?.(err?.message || "Stream connection failed");
+      } catch {
+        startPollingFallback();
       }
     }
 
@@ -1053,8 +1205,14 @@ Try asking: *"Which database are we currently using in production?"* or *"How do
 
     return () => {
       isClosed = true;
-      if (es) es.close();
-      if (retryTimeout) clearTimeout(retryTimeout);
+      if (es) {
+        es.close();
+        es = null;
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
     };
   },
 

@@ -2,7 +2,7 @@
 """
 ANCHOR Production Workflow Generator
 Configures all 4 workflows matching the actual ANCHOR backend,
-integrates Google Gemini (models/gemini-2.5-flash), fixes known aggregation
+integrates Google Gemini (models/gemini-3.5-flash-lite), fixes known aggregation
 and patch sanitization bugs, and outputs import-ready JSON files.
 """
 
@@ -10,7 +10,7 @@ import json
 import os
 
 OUTPUT_DIRS = [
-    "/Users/mac/Desktop/agentic_ai copy/Agentic_AI/n8n",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "n8n"),
     "/Users/mac/Downloads/n8n"
 ]
 
@@ -191,7 +191,7 @@ Extraction Instructions:
         },
         {
             "parameters": {
-                "modelName": "models/gemini-2.5-flash",
+                "modelName": "models/gemini-3.5-flash-lite",
                 "options": {
                     "temperature": 0.1
                 }
@@ -259,7 +259,7 @@ return {
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -273,7 +273,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -340,7 +340,7 @@ Return JSON ONLY:
         },
         {
             "parameters": {
-                "modelName": "models/gemini-2.5-flash",
+                "modelName": "models/gemini-3.5-flash-lite",
                 "options": {
                     "temperature": 0.1
                 }
@@ -536,7 +536,7 @@ return {
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/ingest",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/ingest",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -550,7 +550,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -570,7 +570,7 @@ return {
         {
             "parameters": {
                 "method": "PATCH",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -584,7 +584,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -604,7 +604,7 @@ return {
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/ingest",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/ingest",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -618,7 +618,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -638,7 +638,7 @@ return {
         {
             "parameters": {
                 "method": "PATCH",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id || 'quarantine-item' }}",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id || 'quarantine-item' }}",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -652,7 +652,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -848,7 +848,7 @@ return {
         "tags": [
             {"name": "ANCHOR"},
             {"name": "Memory Creation"},
-            {"name": "Gemini-2.5"}
+            {"name": "Gemini-3.5-Lite"}
         ]
     }
 
@@ -960,7 +960,7 @@ Return JSON ONLY:
         },
         {
             "parameters": {
-                "modelName": "models/gemini-2.5-flash",
+                "modelName": "models/gemini-3.5-flash-lite",
                 "options": {
                     "temperature": 0.1
                 }
@@ -1021,7 +1021,7 @@ return {
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -1035,7 +1035,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1147,7 +1147,7 @@ Return JSON ONLY:
         },
         {
             "parameters": {
-                "modelName": "models/gemini-2.5-flash",
+                "modelName": "models/gemini-3.5-flash-lite",
                 "options": {
                     "temperature": 0.1
                 }
@@ -1295,7 +1295,7 @@ return {
         "tags": [
             {"name": "ANCHOR"},
             {"name": "Memory Retrieval"},
-            {"name": "Gemini-2.5"}
+            {"name": "Gemini-3.5-Lite"}
         ]
     }
 
@@ -1406,7 +1406,7 @@ Return JSON ONLY:
         },
         {
             "parameters": {
-                "modelName": "models/gemini-2.5-flash",
+                "modelName": "models/gemini-3.5-flash-lite",
                 "options": {
                     "temperature": 0.1
                 }
@@ -1426,7 +1426,7 @@ Return JSON ONLY:
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/retrieve",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -1440,7 +1440,7 @@ Return JSON ONLY:
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1685,7 +1685,7 @@ Rules:
         },
         {
             "parameters": {
-                "modelName": "models/gemini-2.5-flash",
+                "modelName": "models/gemini-3.5-flash-lite",
                 "options": {
                     "temperature": 0.1
                 }
@@ -1746,7 +1746,7 @@ return {
         {
             "parameters": {
                 "method": "PATCH",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -1760,7 +1760,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1780,7 +1780,7 @@ return {
         {
             "parameters": {
                 "method": "DELETE",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -1794,7 +1794,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1811,7 +1811,7 @@ return {
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/outcomes",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/outcomes",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -1825,7 +1825,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -1988,7 +1988,7 @@ return {
             {"name": "ANCHOR"},
             {"name": "Memory Update"},
             {"name": "Memory Deletion"},
-            {"name": "Gemini-2.5"}
+            {"name": "Gemini-3.5-Lite"}
         ]
     }
 
@@ -2036,7 +2036,7 @@ return {
         {
             "parameters": {
                 "method": "GET",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories",
                 "sendQuery": True,
                 "queryParameters": {
                     "parameters": [
@@ -2059,7 +2059,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },
@@ -2157,7 +2157,7 @@ return {
         {
             "parameters": {
                 "method": "POST",
-                "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/lifecycle/consolidate",
+                "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/lifecycle/consolidate",
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
@@ -2171,7 +2171,7 @@ return {
                         },
                         {
                             "name": "x-internal-key",
-                            "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+                            "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
                         }
                     ]
                 },

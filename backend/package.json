@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run tests/",
-    "test:engine": "tsx --test src/engine/tests/*.test.ts"
+    "test:engine": "tsx --test src/engine/tests/*.test.ts",
+    "benchmark": "tsx src/scripts/runBenchmarkCli.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

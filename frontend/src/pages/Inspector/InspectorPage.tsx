@@ -22,15 +22,24 @@ import { Badge } from '../../components/common/Badge';
 import { EmptyState } from '../../components/common/EmptyState';
 import { MEMORY_HALF_LIVES, HalfLifeType } from '../../config/halfLives';
 
+const toNum = (val: any, fallback = 0): number => {
+  if (typeof val === 'number' && !isNaN(val)) return val;
+  if (typeof val === 'string') {
+    const parsed = parseFloat(val);
+    if (!isNaN(parsed)) return parsed;
+  }
+  return fallback;
+};
+
 /** Large, high-contrast score bar component (>= 4.5:1 contrast) */
 const LargeScoreBar: React.FC<{ label: string; value?: number | null; colorHex: string }> = ({ label, value, colorHex }) => {
-  const num = typeof value === 'number' && !isNaN(value) ? value : 0;
+  const num = toNum(value, 0);
   const pct = Math.max(0, Math.min(100, Math.round(num * 100)));
   return (
-    <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl space-y-1.5 shadow-xs">
-      <div className="flex justify-between items-center text-xs font-mono">
-        <span className="text-slate-600 font-medium text-[11px]">{label}</span>
-        <span className="font-bold text-slate-900 text-xs">{num.toFixed(2)}</span>
+    <div className="bg-slate-50 border border-slate-200 p-2 rounded-xl space-y-1 shadow-xs min-w-0">
+      <div className="flex justify-between items-center text-xs font-mono gap-1">
+        <span className="text-slate-600 font-medium text-[11px] truncate min-w-0">{label}</span>
+        <span className="font-bold text-slate-900 text-xs shrink-0 ml-1">{num.toFixed(2)}</span>
       </div>
       <div className="w-full bg-slate-200/70 rounded-full h-2.5 overflow-hidden border border-slate-200">
         <div
@@ -195,7 +204,7 @@ export const InspectorPage: React.FC = () => {
                 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
                 : 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-[0_0_12px_rgba(6,182,212,0.2)]'
             }`}>
-              Engine: {results.retrievalPath === 'atlas-hybrid' ? 'Atlas Hybrid ($vectorSearch + $search)' : 'In-Memory Engine'}
+              Engine: {results.retrievalPath === 'atlas-hybrid' ? 'Hybrid Vector Retrieval' : 'In-Memory Engine'}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
@@ -322,17 +331,17 @@ export const InspectorPage: React.FC = () => {
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">Retained &amp; Usable Candidates</h2>
             </div>
             <span className="text-xs bg-emerald-500/15 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-mono font-bold">
-              {results.retrieved.length} Approved
+              {(Array.isArray(results?.retrieved) ? results.retrieved : []).length} Approved
             </span>
           </div>
 
-          {results.retrieved.length === 0 ? (
+          {(Array.isArray(results?.retrieved) ? results.retrieved : []).length === 0 ? (
             <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-xl border border-slate-200">
               No memories met all safety thresholds and floor score constraints (&ge; 0.25). Engine safely abstained.
             </div>
           ) : (
             <div className="space-y-4">
-              {results.retrieved.map((m) => (
+              {(Array.isArray(results?.retrieved) ? results.retrieved : []).map((m) => (
                 <div
                   key={m.memory_id}
                   className="bg-white p-4 rounded-xl border border-emerald-500/30 space-y-3 shadow-lg"
@@ -350,7 +359,7 @@ export const InspectorPage: React.FC = () => {
                     <div className="flex items-center space-x-1.5 font-mono">
                       <span className="text-xs text-slate-500 font-medium">Score:</span>
                       <span className="text-sm font-extrabold text-emerald-700">
-                        {(m?.final_score ?? 0).toFixed(3)}
+                        {toNum(m?.final_score ?? (m as any)?.finalScore ?? 0).toFixed(3)}
                       </span>
                     </div>
                   </div>
@@ -365,7 +374,7 @@ export const InspectorPage: React.FC = () => {
                   </div>
 
                   {/* Large High-Contrast Score Bars */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-slate-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 pt-2 border-t border-slate-200 overflow-hidden">
                     <LargeScoreBar label="Similarity" value={m.similarity ?? 0} colorHex="#06b6d4" />
                     <LargeScoreBar label="Trust" value={m.trust ?? 1.0} colorHex="#10b981" />
                     <LargeScoreBar label="Confidence" value={m.confidence ?? 0.9} colorHex="#38bdf8" />
@@ -387,17 +396,17 @@ export const InspectorPage: React.FC = () => {
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">Excluded Memories &amp; Guard Triggers</h2>
             </div>
             <span className="text-xs bg-rose-500/15 text-rose-300 px-2.5 py-0.5 rounded-full border border-rose-500/30 font-mono font-bold">
-              {results.excluded.length} Blocked
+              {(Array.isArray(results?.excluded) ? results.excluded : []).length} Blocked
             </span>
           </div>
 
-          {results.excluded.length === 0 ? (
+          {(Array.isArray(results?.excluded) ? results.excluded : []).length === 0 ? (
             <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-xl border border-slate-200">
               No candidate memories were flagged or excluded for this query.
             </div>
           ) : (
             <div className="space-y-4">
-              {results.excluded.map((m) => (
+              {(Array.isArray(results?.excluded) ? results.excluded : []).map((m) => (
                 <div
                   key={m.memory_id}
                   className="bg-white p-4 rounded-xl border border-rose-500/30 space-y-3 shadow-lg"
@@ -413,7 +422,7 @@ export const InspectorPage: React.FC = () => {
                     <div className="flex items-center space-x-1.5 font-mono">
                       <span className="text-xs text-slate-500 font-medium">Score:</span>
                       <span className="text-xs font-bold text-rose-700">
-                        {(m?.final_score ?? 0).toFixed(3)}
+                        {toNum(m?.final_score ?? (m as any)?.finalScore ?? 0).toFixed(3)}
                       </span>
                     </div>
                   </div>
@@ -428,7 +437,7 @@ export const InspectorPage: React.FC = () => {
                   </div>
 
                   {/* Large High-Contrast Score Bars */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-slate-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 pt-2 border-t border-slate-200 overflow-hidden">
                     <LargeScoreBar label="Similarity" value={m.similarity ?? 0} colorHex="#06b6d4" />
                     <LargeScoreBar label="Trust" value={m.trust ?? 0} colorHex="#10b981" />
                     <LargeScoreBar label="Confidence" value={m.confidence ?? 0} colorHex="#38bdf8" />

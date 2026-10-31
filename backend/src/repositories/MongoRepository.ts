@@ -663,7 +663,8 @@ export class MongoRepository implements Repository {
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    return await this.usersCol.findOne({ email: email.toLowerCase() });
+    if (!email || typeof email !== 'string') return null;
+    return await this.usersCol.findOne({ email: email.toLowerCase().trim() });
   }
 
   async findUserById(id: string): Promise<User | null> {

@@ -11,13 +11,14 @@ import {
   MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Network, Zap, CheckCircle2, RefreshCw, X } from 'lucide-react';
+import { Network, Zap, CheckCircle2, RefreshCw, X, Layers } from 'lucide-react';
 import { Badge } from '../../components/common/Badge';
 import { api } from '../../services/api';
 import { Memory } from '../../types/memory';
 
 export const EntityGraphPage: React.FC = () => {
   const [highlightDeployment, setHighlightDeployment] = useState(true);
+  const [showMiniMap, setShowMiniMap] = useState(false);
   const [selectedNodeInfo, setSelectedNodeInfo] = useState<any | null>(null);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [loading, setLoading] = useState(false);
@@ -138,18 +139,18 @@ export const EntityGraphPage: React.FC = () => {
         type: 'default',
         position: { x: 50, y: 340 },
         data: {
-          title: 'MongoDB Atlas',
+          title: 'Primary Database',
           kind: 'Infrastructure DB',
           status: 'PRIMARY',
-          details: 'Cluster shakti2-primary • ANCHOR Vector index active',
+          details: 'Production Data Store • ANCHOR Vector index active',
           label: (
             <div className="p-1.5 text-left">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] font-mono text-emerald-700 font-bold uppercase tracking-wider">INFRASTRUCTURE</span>
                 <span className="text-[9px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.2 rounded font-mono font-bold">PRIMARY</span>
               </div>
-              <div className="text-xs font-bold text-slate-900 tracking-wide">MongoDB Atlas</div>
-              <div className="text-[10px] text-slate-500 font-mono">Cluster shakti2-primary</div>
+              <div className="text-xs font-bold text-slate-900 tracking-wide">Primary Database</div>
+              <div className="text-[10px] text-slate-500 font-mono">Production Data Store</div>
             </div>
           ),
         },
@@ -350,7 +351,7 @@ export const EntityGraphPage: React.FC = () => {
           <button
             onClick={() => fetchGraphData()}
             className="btn-ghost flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-semibold"
-            title="Refresh from MongoDB"
+            title="Refresh live topology"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-[#06b6d4] ${loading ? 'animate-spin' : ''}`} />
             <span>Sync Live Graph</span>
@@ -366,6 +367,19 @@ export const EntityGraphPage: React.FC = () => {
           >
             <Zap className={`w-4 h-4 ${highlightDeployment ? 'text-[#38bdf8]' : 'text-[#888]'}`} />
             <span>{highlightDeployment ? 'Highlight Invalidation (W2)' : 'Show Neutral Graph'}</span>
+          </button>
+
+          <button
+            onClick={() => setShowMiniMap(!showMiniMap)}
+            className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all border ${
+              showMiniMap
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                : 'card text-slate-600 hover:text-slate-900 border-slate-200'
+            }`}
+            title="Toggle MiniMap Overview"
+          >
+            <Layers className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{showMiniMap ? 'Hide MiniMap' : 'Show MiniMap'}</span>
           </button>
         </div>
       </div>
@@ -420,20 +434,33 @@ export const EntityGraphPage: React.FC = () => {
         >
           <Background color="#cbd5e1" gap={20} size={1} />
           <Controls className="bg-white border-slate-200 text-slate-700 fill-slate-700 stroke-slate-700 shadow-sm rounded-xl" />
-          <MiniMap
-            nodeColor={(n) => {
-              if (n.id.includes('svc')) return '#6366f1';
-              if (n.id.includes('cmp')) return '#0284c7';
-              if (n.id.includes('ent')) return '#16a34a';
-              if (n.data?.status === 'ACTIVE') return '#22c55e';
-              if (n.data?.status === 'STALE' || n.data?.status === 'INVALIDATED') return '#f59e0b';
-              if (n.data?.status === 'QUARANTINED') return '#ef4444';
-              if (n.data?.status === 'SUPERSEDED') return '#64748b';
-              if (n.data?.status === 'EXPIRED' || n.data?.status === 'DELETED') return '#94a3b8';
-              return '#a855f7';
-            }}
-            className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-md"
-          />
+          {showMiniMap && (
+            <MiniMap
+              nodeStrokeColor="#cbd5e1"
+              nodeStrokeWidth={1}
+              nodeBorderRadius={4}
+              maskColor="rgba(241, 245, 249, 0.75)"
+              maskStrokeColor="#94a3b8"
+              maskStrokeWidth={1}
+              nodeColor={(n: any) => {
+                if (n.id.includes('svc')) return '#818cf8';
+                if (n.id.includes('cmp')) return '#38bdf8';
+                if (n.id.includes('ent')) return '#4ade80';
+                if (n.data?.status === 'ACTIVE') return '#4ade80';
+                if (n.data?.status === 'STALE' || n.data?.status === 'INVALIDATED') return '#fbbf24';
+                if (n.data?.status === 'QUARANTINED') return '#f87171';
+                if (n.data?.status === 'SUPERSEDED') return '#94a3b8';
+                if (n.data?.status === 'EXPIRED' || n.data?.status === 'DELETED') return '#cbd5e1';
+                return '#c084fc';
+              }}
+              style={{
+                width: 150,
+                height: 100,
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              }}
+              className="!border !border-slate-300 !rounded-xl !overflow-hidden !shadow-md backdrop-blur-sm"
+            />
+          )}
         </ReactFlow>
 
         {/* Node Detail Drawer Overlay */}

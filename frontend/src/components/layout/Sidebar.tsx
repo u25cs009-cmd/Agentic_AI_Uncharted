@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ quarantineCount = 0 }) => {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-slate-600 font-mono font-medium">
             <Radio className="w-3.5 h-3.5 text-sky-600 animate-pulse" />
-            <span>Atlas Live</span>
+            <span>System Live</span>
           </div>
         </div>
       </div>

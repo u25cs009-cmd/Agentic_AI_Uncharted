@@ -13,7 +13,7 @@ import time
 BASE_URL = "http://localhost:5000/api"
 HEADERS = {
     "Content-Type": "application/json",
-    "x-internal-key": "shakti2_internal_key_for_n8n_webhooks"
+    "x-internal-key": "{{ $vars.ENGRAM_SHARED_SECRET }}"
 }
 
 def request(method, path, body=None, extra_headers=None):

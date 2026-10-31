@@ -1,0 +1,841 @@
+{
+  "name": "WF1 \u2014 Intelligent Memory Creation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "memory-create",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf1-node-01",
+      "name": "Ingest Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        100,
+        300
+      ],
+      "webhookId": "anchor-memory-create-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.body.user_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ ($json.body.conversation_text || '').trim().length }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "wf1-node-02",
+      "name": "Validate Input Payload",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Validation failed: 'user_id' and 'conversation_text' (>5 characters) are required.\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "wf1-node-02b",
+      "name": "Respond 400 Bad Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        540,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF1 Node 3: Text Preprocessing & Paragraph Chunking\nconst body = $input.item.json.body || {};\nconst rawText = body.conversation_text || '';\nconst userId = body.user_id || 'usr-shakti2';\nconst sessionId = body.session_id || null;\nconst sourceTimestamp = body.source_timestamp || new Date().toISOString();\n\n// 1. Sanitize text: remove URLs, filler phrases, duplicate newlines\nlet cleanText = rawText\n  .replace(/(?:https?|ftp):\\/\\/[\\n\\S]+/g, '')\n  .replace(/^(hi|hello|hey|good morning|thanks|thank you)[\\.\\,\\!]?\\s*/gi, '')\n  .replace(/\\r\\n/g, '\\n')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\n// 2. Chunk if length > 2000 characters along paragraph boundaries\nconst maxChunkSize = 2000;\nconst chunks = [];\nif (cleanText.length <= maxChunkSize) {\n  chunks.push(cleanText);\n} else {\n  const paragraphs = cleanText.split(/\\n\\s*\\n/);\n  let current = '';\n  for (const p of paragraphs) {\n    if ((current + '\\n\\n' + p).length <= maxChunkSize) {\n      current = current ? current + '\\n\\n' + p : p;\n    } else {\n      if (current) chunks.push(current);\n      current = p;\n    }\n  }\n  if (current) chunks.push(current);\n}\n\nreturn chunks.map((chunk, idx) => ({\n  json: {\n    user_id: userId,\n    session_id: sessionId,\n    chunk_index: idx,\n    total_chunks: chunks.length,\n    text_content: chunk,\n    reference_date: sourceTimestamp,\n    processed_at: new Date().toISOString()\n  }\n}));"
+      },
+      "id": "wf1-node-03",
+      "name": "Text Preprocessing & Chunking",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "wf1-node-04",
+      "name": "Loop Over Chunks",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Semantic Memory Extraction Engine for ANCHOR, an Autonomous AI Memory Management System.\nAnalyze the following conversational fragment and extract structured knowledge facts.\n\nReference Timestamp: {{ $json.reference_date }}\nContent:\n\"\"\"\n{{ $json.text_content }}\n\"\"\"\n\nExtraction Instructions:\n1. Identify if the text contains meaningful, durable facts. If trivial small-talk, set is_informative: false.\n2. If the user mentions an event, workshop, training, booking, or trip with a specific duration or end date, set is_temporary: true and compute the exact ISO8601 UTC expiration_date corresponding to the conclusion of that event.\n3. For ongoing habits, preferences, and static facts, set is_temporary: false and expiration_date: null.\n4. Extract topics, concise description, searchable keywords, atomic facts, entities, and dates.\n5. Return VALID JSON ONLY matching this schema:\n{\n  \"is_informative\": true,\n  \"topic\": \"string\",\n  \"topic_description\": \"string\",\n  \"keywords\": [\"string\"],\n  \"important_facts\": [\"string\"],\n  \"entities\": [{\"name\": \"string\", \"type\": \"string\"}],\n  \"dates\": [{\"event\": \"string\", \"date\": \"ISO8601 string\"}],\n  \"confidence_score\": 0.95,\n  \"is_temporary\": true,\n  \"expiration_date\": \"ISO8601 string or null\"\n}"
+      },
+      "id": "wf1-node-05",
+      "name": "Extract Semantic Memory",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "wf1-node-05b",
+      "name": "Google Gemini Model - Extractor",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        980,
+        500
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "googlePalmApiCredential",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF1 Node 6: Parse & Validate Gemini Extraction\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    is_informative: false,\n    parse_error: true,\n    raw_output: String(rawLlm)\n  };\n}\n\nconst chunkInfo = $('Loop Over Chunks').item.json;\n\nreturn {\n  json: {\n    user_id: chunkInfo.user_id,\n    session_id: chunkInfo.session_id,\n    chunk_index: chunkInfo.chunk_index,\n    total_chunks: chunkInfo.total_chunks,\n    reference_date: chunkInfo.reference_date,\n    original_text: chunkInfo.text_content,\n    is_informative: Boolean(parsed.is_informative),\n    topic: parsed.topic || 'General Memory',\n    topic_description: parsed.topic_description || '',\n    keywords: parsed.keywords || [],\n    important_facts: parsed.important_facts || [],\n    entities: parsed.entities || [],\n    dates: parsed.dates || [],\n    confidence_score: parsed.confidence_score || 0.85,\n    is_temporary: Boolean(parsed.is_temporary),\n    expiration_date: parsed.expiration_date || null\n  }\n};"
+      },
+      "id": "wf1-node-06",
+      "name": "Parse & Validate Extraction",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"{{ $json.important_facts.join(' ') || $json.topic }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          },
+          "retry": {
+            "retry": {
+              "maxTries": 3,
+              "waitBetweenTries": 1500
+            }
+          }
+        }
+      },
+      "id": "wf1-node-07",
+      "name": "Search Similar Memories",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are the Memory Governance Engine for ANCHOR.\nCompare the newly extracted memory against candidate memories retrieved from vector/keyword search.\n\nNewly Extracted Memory:\n- User ID: {{ $('Parse & Validate Extraction').item.json.user_id }}\n- Topic: {{ $('Parse & Validate Extraction').item.json.topic }}\n- Description: {{ $('Parse & Validate Extraction').item.json.topic_description }}\n- Facts: {{ JSON.stringify($('Parse & Validate Extraction').item.json.important_facts) }}\n- Is Temporary: {{ $('Parse & Validate Extraction').item.json.is_temporary }}\n- Expiration: {{ $('Parse & Validate Extraction').item.json.expiration_date }}\n\nCandidate Existing Memories from Backend:\n{{ JSON.stringify($json.retrieved || $json.results || []) }}\n\nGovernance Rules:\n1. If no candidates exist or facts are completely new, decide 'ADD'.\n2. If the new facts are an exact duplicate of an active memory, decide 'IGNORE'.\n3. If the new memory adds supplemental details without contradiction, decide 'UPDATE'.\n4. If the new memory updates or reschedules a past event (e.g. date change, location change), decide 'SUPERSEDE' and provide target_memory_id.\n5. If there is an unresolved or severe factual contradiction, decide 'QUARANTINE'.\n\nReturn JSON ONLY:\n{\n  \"decision\": \"ADD | UPDATE | SUPERSEDE | QUARANTINE | IGNORE\",\n  \"target_memory_id\": \"string or null\",\n  \"rationale\": \"Clear 1-sentence justification\",\n  \"confidence\": 0.95\n}"
+      },
+      "id": "wf1-node-08",
+      "name": "Memory Governance Engine",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        1640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "id": "wf1-node-08b",
+      "name": "Google Gemini Model - Governance",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        500
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "googlePalmApiCredential",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF1 Node 9: Parse Governance Decision (Preserving Chunk Scope)\nconst rawLlm = $input.item.json.text || $input.item.json.response || '';\nlet parsed = {};\n\ntry {\n  const cleaned = typeof rawLlm === 'string'\n    ? rawLlm.replace(/```json\\s*/gi, '').replace(/```\\s*$/gi, '').trim()\n    : rawLlm;\n  parsed = typeof cleaned === 'string' ? JSON.parse(cleaned) : cleaned;\n} catch (e) {\n  parsed = {\n    decision: 'QUARANTINE',\n    target_memory_id: null,\n    rationale: 'Failed to parse governance Gemini response.',\n    confidence: 0.5\n  };\n}\n\nconst extraction = $('Parse & Validate Extraction').item.json;\nconst validDecisions = ['ADD', 'UPDATE', 'SUPERSEDE', 'QUARANTINE', 'IGNORE'];\nlet decision = (parsed.decision || 'ADD').toUpperCase();\nif (!validDecisions.includes(decision)) decision = 'QUARANTINE';\n\nreturn {\n  json: {\n    chunk_index: extraction.chunk_index,\n    total_chunks: extraction.total_chunks,\n    user_id: extraction.user_id,\n    decision: decision,\n    target_memory_id: parsed.target_memory_id || null,\n    rationale: parsed.rationale || 'Processed by ANCHOR governance engine.',\n    confidence: parsed.confidence || 0.9,\n    memory_payload: {\n      user_id: extraction.user_id,\n      topic: extraction.topic,\n      description: extraction.topic_description,\n      content: extraction.original_text,\n      keywords: extraction.keywords,\n      facts: extraction.important_facts,\n      entities: extraction.entities,\n      dates: extraction.dates,\n      confidence_score: extraction.confidence_score,\n      is_temporary: extraction.is_temporary,\n      expiration_date: extraction.expiration_date,\n      governance_decision: decision,\n      governance_rationale: parsed.rationale\n    }\n  }\n};"
+      },
+      "id": "wf1-node-09",
+      "name": "Parse Governance Decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1860,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "rule-add",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "ADD",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "rule-update",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "UPDATE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "rule-supersede",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "SUPERSEDE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "rule-quarantine",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "QUARANTINE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "rule-ignore",
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "IGNORE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        }
+      },
+      "id": "wf1-node-10",
+      "name": "Governance Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        2080,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.memory_payload.content }}\",\n  \"source\": {\n    \"kind\": \"user_stated\",\n    \"actor\": \"{{ $json.user_id }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf1-node-11a",
+      "name": "Commit New Memory (ADD)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2320,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"content\": \"{{ $json.memory_payload.content }}\",\n  \"value\": \"{{ $json.memory_payload.description }}\",\n  \"expires_at\": \"{{ $json.memory_payload.expiration_date }}\",\n  \"reason\": \"{{ $json.rationale }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf1-node-11b",
+      "name": "Patch Existing Memory (UPDATE)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2320,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.memory_payload.content }}\",\n  \"source\": {\n    \"kind\": \"user_stated\",\n    \"actor\": \"{{ $json.user_id }}\"\n  }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf1-node-11c",
+      "name": "Supersede Memory (SUPERSEDE)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2320,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id || 'quarantine-item' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || '{{ $vars.ENGRAM_SHARED_SECRET }}' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"quarantined\",\n  \"quarantine_reason\": \"{{ $json.rationale }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf1-node-11d",
+      "name": "File Quarantine Record (QUARANTINE)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2320,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF1 Node 11e: Log Ignored Event\nconst decision = $('Parse Governance Decision').item.json;\nreturn {\n  json: {\n    success: true,\n    action: \"IGNORE\",\n    chunk_index: decision.chunk_index,\n    topic: decision.memory_payload.topic,\n    reason: decision.rationale\n  }\n};"
+      },
+      "id": "wf1-node-11e",
+      "name": "Log Ignored Event (IGNORE)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF1 Node 12: Aggregate Chunk Result (Fixed Bug: Retains Current Chunk Scope)\nconst decisionNode = $('Parse Governance Decision').item.json;\nconst apiResponse = $input.item.json;\n\nreturn {\n  json: {\n    chunk_index: decisionNode.chunk_index,\n    total_chunks: decisionNode.total_chunks,\n    user_id: decisionNode.user_id,\n    topic: decisionNode.memory_payload.topic,\n    decision: decisionNode.decision,\n    is_temporary: decisionNode.memory_payload.is_temporary,\n    expiration_date: decisionNode.memory_payload.expiration_date,\n    backend_status: apiResponse.action || apiResponse.status || (apiResponse.success ? 'SUCCESS' : 'PROCESSED'),\n    memory_id: apiResponse.memory?._id || apiResponse.memory?.id || decisionNode.target_memory_id || null,\n    rationale: decisionNode.rationale,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf1-node-12",
+      "name": "Aggregate Step Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2580,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Ingestion and governance successfully executed.\",\n  \"results\": {{ JSON.stringify($('Aggregate Step Result').all().map(i => i.json)) }}\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "wf1-node-13",
+      "name": "Respond Webhook Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1000,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Ingest Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Input Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input Payload": {
+      "main": [
+        [
+          {
+            "node": "Text Preprocessing & Chunking",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 400 Bad Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Preprocessing & Chunking": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Chunks": {
+      "main": [
+        [
+          {
+            "node": "Extract Semantic Memory",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Webhook Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Model - Extractor": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Semantic Memory",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Semantic Memory": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Extraction": {
+      "main": [
+        [
+          {
+            "node": "Search Similar Memories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Similar Memories": {
+      "main": [
+        [
+          {
+            "node": "Memory Governance Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Model - Governance": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Memory Governance Engine",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory Governance Engine": {
+      "main": [
+        [
+          {
+            "node": "Parse Governance Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Governance Decision": {
+      "main": [
+        [
+          {
+            "node": "Governance Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Governance Switch": {
+      "main": [
+        [
+          {
+            "node": "Commit New Memory (ADD)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Patch Existing Memory (UPDATE)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supersede Memory (SUPERSEDE)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File Quarantine Record (QUARANTINE)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Ignored Event (IGNORE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Commit New Memory (ADD)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Step Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Patch Existing Memory (UPDATE)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Step Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supersede Memory (SUPERSEDE)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Step Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Quarantine Record (QUARANTINE)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Step Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Ignored Event (IGNORE)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Step Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Step Result": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.1.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "anchor-automation-instance"
+  },
+  "tags": [
+    {
+      "name": "ANCHOR"
+    },
+    {
+      "name": "Memory Creation"
+    },
+    {
+      "name": "Gemini-3.5-Lite"
+    }
+  ]
+}

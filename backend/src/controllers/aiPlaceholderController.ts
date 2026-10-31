@@ -65,7 +65,14 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     // 2. Generate mode-specific answer
     let answer = '';
     if (activeMode === 'none') {
-      answer = `[NONE MODE] Direct answer without memory recall: "${message}".`;
+      const q = (message || '').toLowerCase();
+      if (q.includes('how are you') || q.includes('how r u') || q.includes('how are u')) {
+        answer = "Hello! I am doing well, thank you for asking. How can I assist you today?";
+      } else if (/^(hi|hello|hey|greetings)\b/i.test((message || '').trim())) {
+        answer = "Hello! How can I help you today?";
+      } else {
+        answer = "I have received your request. Without memory recall enabled, I can answer general knowledge and programming questions directly. How can I assist you further?";
+      }
     } else if (activeMode === 'naive') {
       if (retrieved.some(r => r.content.includes('pg_ctlcluster'))) {
         answer = "⚠️ [NAIVE MODE] Found top vector similarity match:\n> 'Old postgres pool reset command: `pg_ctlcluster 14 main restart`'\nExecute `pg_ctlcluster 14 main restart` immediately. (Warning: Naive retrieval failed to detect that this fix was marked stale after deployment!)";

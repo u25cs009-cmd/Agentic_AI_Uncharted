@@ -19,13 +19,15 @@ for (const envPath of envCandidates) {
 export const config = {
   port: parseInt(process.env.PORT || '5000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
+  frontendUrl: process.env.FRONTEND_URL || '',
+  corsOrigins: (process.env.FRONTEND_URL || 'http://localhost:5173,http://localhost:3000,https://agentic-ai-uncharted.yashiadarsh2020.workers.dev').split(',').map(s => s.trim()).filter(Boolean),
   store: ((process.env.STORE || 'memory').toLowerCase().startsWith('mongo') ? 'mongo' : 'memory') as 'memory' | 'mongo',
   embedProvider: (process.env.EMBED_PROVIDER || 'local').toLowerCase() as 'openai' | 'local',
 
   jwtSecret: process.env.JWT_SECRET || 'anchor_dev_jwt_secret_change_in_production_key_2026',
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-  internalApiKey: process.env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks',
-  webhookSecret: process.env.ENGRAM_SHARED_SECRET || process.env.WEBHOOK_SECRET || process.env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks',
+  internalApiKey: process.env.INTERNAL_API_KEY || process.env.ENGRAM_SHARED_SECRET || '',
+  webhookSecret: process.env.ENGRAM_SHARED_SECRET || process.env.WEBHOOK_SECRET || process.env.INTERNAL_API_KEY || '',
 
   mongo: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/anchor',
@@ -43,5 +45,9 @@ export const config = {
 
   n8n: {
     webhookUrl: process.env.N8N_WEBHOOK_URL || '',
+    wf1WebhookUrl: process.env.N8N_WF1_WEBHOOK_URL || '',
+    wf2WebhookUrl: process.env.N8N_WF2_WEBHOOK_URL || '',
+    wf3WebhookUrl: process.env.N8N_WF3_WEBHOOK_URL || '',
+    timeoutMs: parseInt(process.env.N8N_TIMEOUT_MS || '8000', 10),
   }
 };

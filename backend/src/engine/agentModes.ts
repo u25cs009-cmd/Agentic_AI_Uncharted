@@ -41,12 +41,12 @@ export class AgentOrchestrator {
    */
   private async executeNoneMode(query: string): Promise<ChatResponse> {
     const qLower = query.toLowerCase();
-    let answer = `[NONE MODE - NO MEMORY RETRIEVED]\nI do not have access to any internal project documentation or operational memory. Based on general software principles, please check your application logs and environment settings.`;
+    let answer = `I do not have access to any internal project documentation or operational memory. Based on general software principles, please check your application logs and environment settings.`;
 
     if (qLower.includes('database') || qLower.includes('db')) {
-      answer = `[NONE MODE - NO MEMORY RETRIEVED]\nWithout access to system memory, I cannot verify which database your cluster is running. Common databases include PostgreSQL, MySQL, and MongoDB.`;
+      answer = `Without access to system memory, I cannot verify which database your cluster is running. Common databases include PostgreSQL, MySQL, and MongoDB.`;
     } else if (qLower.includes('timeout') || qLower.includes('connection error')) {
-      answer = `[NONE MODE - NO MEMORY RETRIEVED]\nFor connection timeouts, you may need to check firewall rules, restart your database service, or inspect connection strings.`;
+      answer = `For connection timeouts, you may need to check firewall rules, restart your database service, or inspect connection strings.`;
     }
 
     return {

@@ -22,15 +22,17 @@ export function buildScopedMongoMemoryFilter(ctx: ScopedAccessContext, filter?: 
   });
 
   // 2. Visibility & Ownership boundary
-  // Visible if public to workspace OR explicitly owned by user
-  andClauses.push({
-    $or: [
-      { visibility: 'workspace' },
-      { visibility: { $exists: false } },
-      { ownerId: ctx.userId },
-      { owner: ctx.userId }
-    ]
-  });
+  // Visible if public to workspace OR explicitly owned by user (bypassed for system automation)
+  if (ctx.userId && ctx.userId !== 'system-webhook' && ctx.userId !== '*') {
+    andClauses.push({
+      $or: [
+        { visibility: 'workspace' },
+        { visibility: { $exists: false } },
+        { ownerId: ctx.userId },
+        { owner: ctx.userId }
+      ]
+    });
+  }
 
   // 3. User-supplied filters
   if (filter?.status && filter.status !== 'all') {
@@ -75,7 +77,7 @@ export function filterScopedInMemoryMemories(memories: Memory[], ctx: ScopedAcce
 
     // 2. Visibility boundary
     const memOwner = m.ownerId || m.owner;
-    if (m.visibility === 'private' && memOwner !== ctx.userId) {
+    if (ctx.userId && ctx.userId !== 'system-webhook' && ctx.userId !== '*' && m.visibility === 'private' && memOwner !== ctx.userId) {
       return false;
     }
 
