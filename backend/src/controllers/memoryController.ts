@@ -3,7 +3,7 @@ import { getRepository } from '../repositories/index.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { MemoryFilter } from '../types/index.js';
 import { config } from '../config/index.js';
-import { timingSafeCompare } from '../middleware/auth.js';
+import { timingSafeCompare, isValidInternalKey } from '../middleware/auth.js';
 
 export async function getMemories(req: Request, res: Response, next: NextFunction) {
   try {
@@ -50,7 +50,7 @@ export async function updateMemory(req: Request, res: Response, next: NextFuncti
 
     const configuredKey = config.internalApiKey;
     const internalHeader = req.headers['x-internal-key'];
-    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isInternal = isValidInternalKey(internalHeader);
 
     // Enforce strict user ownership
     const ownerId = req.user?.id || (isInternal ? (req.body.user_id || req.query.user_id) : undefined);
@@ -88,7 +88,7 @@ export async function deleteMemory(req: Request, res: Response, next: NextFuncti
 
     const configuredKey = config.internalApiKey;
     const internalHeader = req.headers['x-internal-key'];
-    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isInternal = isValidInternalKey(internalHeader);
 
     // Enforce strict user ownership
     const ownerId = req.user?.id || (isInternal ? (req.body.user_id || req.query.user_id) : undefined);

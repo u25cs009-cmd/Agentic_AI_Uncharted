@@ -17,7 +17,7 @@ import { getEmbedding } from '../services/embedding.js';
 import { config } from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import { n8nService } from '../services/n8nService.js';
-import { timingSafeCompare } from '../middleware/auth.js';
+import { timingSafeCompare, isValidInternalKey } from '../middleware/auth.js';
 
 export const ANCHOR_SYSTEM_PROMPT = `You are the intelligence layer of ANCHOR, an AI assistant equipped with persistent user memory.
 
@@ -267,7 +267,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     // Loop Prevention & Internal Authentication Context (Timing-Safe)
     const configuredKey = config.internalApiKey;
     const internalHeader = req.headers['x-internal-key'];
-    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isInternal = isValidInternalKey(internalHeader);
     const isN8nOrigin = req.headers['x-execution-context'] === 'n8n-dispatch';
 
     // 1. Conversational & Explicit Memory Ingestion
@@ -740,7 +740,7 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
     // Loop Prevention & Internal Authentication Check (Timing-Safe)
     const configuredKey = config.internalApiKey || config.webhookSecret;
     const internalHeader = req.headers['x-internal-key'] || req.headers['x-engram-secret'];
-    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isInternal = isValidInternalKey(internalHeader);
     const isN8nOrigin = req.headers['x-execution-context'] === 'n8n-dispatch';
 
     // If caller is NOT an internal callback, and WF1 webhook is configured on server:
@@ -1122,7 +1122,7 @@ export async function retrieveMemories(req: Request, res: Response, next: NextFu
     // Loop Prevention & Internal Authentication Check (Timing-Safe)
     const configuredKey = config.internalApiKey || config.webhookSecret;
     const internalHeader = req.headers['x-internal-key'] || req.headers['x-engram-secret'];
-    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isInternal = isValidInternalKey(internalHeader);
     const isN8nOrigin = req.headers['x-execution-context'] === 'n8n-dispatch';
 
     // If caller is NOT an internal callback, and WF2 webhook is configured on server:
@@ -1183,7 +1183,7 @@ export async function manageMemories(req: Request, res: Response, next: NextFunc
 
     const configuredKey = config.internalApiKey;
     const internalHeader = req.headers['x-internal-key'];
-    const isInternal = Boolean(configuredKey && typeof internalHeader === 'string' && timingSafeCompare(internalHeader, configuredKey));
+    const isInternal = isValidInternalKey(internalHeader);
 
     if (!isInternal && config.n8n.wf3WebhookUrl) {
       const n8nRes = await n8nService.dispatchWF3({
