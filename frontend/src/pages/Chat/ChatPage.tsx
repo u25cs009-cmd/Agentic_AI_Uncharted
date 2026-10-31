@@ -235,10 +235,15 @@ export const ChatPage: React.FC = () => {
 
     try {
       let agentMsg: MessageItem;
+      const recentHistory = messages.slice(-6).map(m => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text
+      }));
+
       if (compareMode) {
         const [resNone, resGov] = await Promise.all([
-          api.chat(queryText, 'none'),
-          api.chat(queryText, 'governed'),
+          api.chat(queryText, 'none', convId, recentHistory),
+          api.chat(queryText, 'governed', convId, recentHistory),
         ]);
 
         agentMsg = {
@@ -252,7 +257,7 @@ export const ChatPage: React.FC = () => {
           }
         };
       } else {
-        const res = await api.chat(queryText, activeMode);
+        const res = await api.chat(queryText, activeMode, convId, recentHistory);
         agentMsg = {
           id: `agt-${Date.now()}`,
           sender: 'agent',

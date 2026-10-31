@@ -748,12 +748,17 @@ export const api = {
   },
 
   // Chat with ShaktAI
-  async chat(message: string, mode: 'none' | 'naive' | 'governed'): Promise<ChatModeResult> {
+  async chat(
+    message: string,
+    mode: 'none' | 'naive' | 'governed',
+    conversationId?: string | null,
+    history?: { role: string; content: string }[]
+  ): Promise<ChatModeResult> {
     try {
       const res = await safeFetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ message, mode, agent: 'ShaktAI' }),
+        body: JSON.stringify({ message, mode, agent: 'ShaktAI', conversationId: conversationId || undefined, history }),
       });
       if (res && res.ok) return await res.json();
     } catch {}
