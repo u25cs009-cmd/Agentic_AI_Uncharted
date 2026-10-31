@@ -454,10 +454,10 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
         }
       }
 
-      const sim = Number(Math.min(0.98, Math.max(0.15, overlap > 0 ? 0.70 + (overlap * 0.25) : 0.20)).toFixed(3));
+      const sim = overlap > 0 ? Number(Math.min(0.98, Math.max(0.20, 0.70 + (overlap * 0.25))).toFixed(3)) : 0;
       const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
       const validity = mem.status === 'stale' ? 0.15 : 1.0;
-      const finalScore = calculateFinalScore(sim, mem.trust, mem.confidence, recency, validity);
+      const finalScore = sim > 0 ? calculateFinalScore(sim, mem.trust, mem.confidence, recency, validity) : 0;
 
       const scoredMem: ScoredMemory = {
         ...mem,
@@ -490,7 +490,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
           scoredMem.excluded = true;
           scoredMem.exclusion_reason = 'expired';
           excluded.push(scoredMem);
-        } else if (finalScore < 0.25) {
+        } else if (finalScore < 0.25 || sim === 0) {
           scoredMem.excluded = true;
           scoredMem.exclusion_reason = 'low_score';
           excluded.push(scoredMem);
@@ -530,6 +530,19 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
 
       for (const [key, list] of keyMap.entries()) {
         if (list.length >= 2) {
+          // If values or contents are identical or complementary, they do not conflict!
+          const val0 = (list[0].value || list[0].content || '').trim().toLowerCase();
+          const val1 = (list[1].value || list[1].content || '').trim().toLowerCase();
+          if (val0 === val1) continue;
+
+          // If one is clearly newer than the other (temporal update), prioritize newer
+          const time0 = new Date(list[0].created_at || list[0].valid_from || 0).getTime();
+          const time1 = new Date(list[1].created_at || list[1].valid_from || 0).getTime();
+          if (Math.abs(time0 - time1) > 1000) {
+            // Distinct timestamps: newer supersedes older in resolution
+            continue;
+          }
+
           const delta = Math.abs(list[0].trust - list[1].trust);
           if (delta < 0.15) {
             abstention = true;
