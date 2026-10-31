@@ -10,7 +10,7 @@ interface SidebarProps {
 }
 
 const NAV = [
-  { to: '/',             label: 'Chat Agent',          icon: MessageSquare, badge: 'XYRO101' },
+  { to: '/',             label: 'Chat Agent',          icon: MessageSquare, badge: 'ShaktAI' },
   { to: '/inspector',    label: 'Retrieval Inspector', icon: Search },
   { to: '/explorer',     label: 'Memory Explorer',     icon: Database },
   { to: '/quarantine',   label: 'Quarantine Inbox',    icon: ShieldAlert,  danger: true },
@@ -28,12 +28,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ quarantineCount = 0 }) => {
         <div className="flex items-center gap-3">
           <img
             src="/logo.jpg"
-            alt="XYRO101 Logo"
+            alt="ShaktAI Logo"
             className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-sm border border-slate-200"
           />
           <div>
             <div className="text-base font-bold text-slate-900 tracking-tight leading-none flex items-center gap-1.5">
-              <span>XYRO101</span>
+              <span>ShaktAI</span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded-md border border-indigo-200/80 font-bold">AI</span>
             </div>
             <div className="text-xs text-slate-500 mt-1 font-medium">ANCHOR Memory Engine</div>

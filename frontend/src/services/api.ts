@@ -607,18 +607,18 @@ export const api = {
     });
   },
 
-  // Chat with XYRO101
+  // Chat with ShaktAI
   async chat(message: string, mode: 'none' | 'naive' | 'governed'): Promise<ChatModeResult> {
     try {
       const res = await safeFetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ message, mode, agent: 'XYRO101' }),
+        body: JSON.stringify({ message, mode, agent: 'ShaktAI' }),
       });
       if (res && res.ok) return await res.json();
     } catch {}
 
-    // Realistic ANCHOR Engine simulation for XYRO101
+    // Realistic ANCHOR Engine simulation for ShaktAI
     const query = message.toLowerCase();
     
     // Evaluate memory matches
@@ -659,7 +659,7 @@ export const api = {
           retrieved.push(scoringObj);
         }
       } else {
-        // GOVERNED (XYRO101 Core Guard)
+        // GOVERNED (ShaktAI Core Guard)
         if (mem.status === 'quarantined') {
           scoringObj.excluded = true;
           scoringObj.exclusion_reason = 'quarantined';
@@ -717,7 +717,7 @@ export const api = {
       if (query.includes('country') || query.includes('countries')) {
         answer = "[NONE MODE - NO MEMORY RETRIEVAL]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)";
       } else if (query.includes('database')) {
-        answer = "As XYRO101 operating in [NONE] mode (zero memory recall), I do not know which database the team is currently utilizing. Please specify your system context.";
+        answer = "As ShaktAI operating in [NONE] mode (zero memory recall), I do not know which database the team is currently utilizing. Please specify your system context.";
       } else if (query.includes('timeout') || query.includes('checkout')) {
         answer = "In [NONE] mode, I have no contextual memory of previous incidents. Generally, timeouts can be diagnosed by checking application logs, thread dumps, and database pool saturation.";
       } else {
@@ -735,16 +735,16 @@ export const api = {
           answer = `⚠️ [NAIVE MODE - GENERAL KNOWLEDGE]\nDirect general response to "${message}".\n\n*(Notice: No matching internal memory vectors were retrieved).*`;
         }
       } else {
-        answer = `[XYRO101 - Mode: NAIVE] Retrieved ${retrieved.length} memory records via raw vector cosine similarity: ${retrieved.map(r => r.memory_id).join(', ')}.`;
+        answer = `[ShaktAI - Mode: NAIVE] Retrieved ${retrieved.length} memory records via raw vector cosine similarity: ${retrieved.map(r => r.memory_id).join(', ')}.`;
       }
     } else {
       // GOVERNED MODE
       if (abstention) {
-        answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
+        answer = `🛡️ [ShaktAI GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
       } else if (retrieved.length === 0) {
         if (query.includes('website') || query.includes('about') || query.includes('what is this') || query.includes('platform')) {
-          answer = `🛡️ [XYRO101 GOVERNED AGENT]
-Welcome to **ANCHOR (XYRO101)** — the Governed Agentic Memory Engine.
+          answer = `🛡️ [ShaktAI GOVERNED AGENT]
+Welcome to **ANCHOR (ShaktAI)** — the Governed Agentic Memory Engine.
 
 This platform guarantees enterprise AI reliability through:
 • **Unified Memory Retrieval**: Source trust ladder, temporal recency decay, and environmental fingerprinting.
@@ -753,18 +753,18 @@ This platform guarantees enterprise AI reliability through:
 
 Try asking: *"Which database are we currently using in production?"* or *"How do I fix checkout DB timeout?"*`;
         } else if (query.includes('country') || query.includes('countries')) {
-          answer = "🛡️ [XYRO101 GOVERNED AGENT]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Verified: No corporate operational memories applied for general query).*";
+          answer = "🛡️ [ShaktAI GOVERNED AGENT]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Verified: No corporate operational memories applied for general query).*";
         } else if (query.includes('hi') || query.includes('hello') || query.includes('hey')) {
-          answer = "🛡️ [XYRO101 GOVERNED AGENT]\nHello! I am XYRO101, your Governed Agentic Memory Engine. How can I assist you with your system architecture or incident triage today?";
+          answer = "🛡️ [ShaktAI GOVERNED AGENT]\nHello! I am ShaktAI, your Governed Agentic Memory Engine. How can I assist you with your system architecture or incident triage today?";
         } else {
-          answer = `🛡️ [XYRO101 GOVERNED AGENT]\nDirect response to "${message}".\n\n*(Verified: No corporate operational memories applied for general query).*`;
+          answer = `🛡️ [ShaktAI GOVERNED AGENT]\nDirect response to "${message}".\n\n*(Verified: No corporate operational memories applied for general query).*`;
         }
       } else if (query.includes('timeout') || query.includes('checkout')) {
-        answer = "🛡️ [XYRO101 GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy MongoDB connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
+        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy MongoDB connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
       } else if (query.includes('database')) {
-        answer = "🛡️ [XYRO101 GOVERNED DECISION]\nThe current production database is **MongoDB Atlas** (Cluster `shakti2-primary`), verified via system deployment event `mem-002` (Trust: 0.85, Confidence: 0.98).";
+        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nThe current production database is **MongoDB Atlas** (Cluster `shakti2-primary`), verified via system deployment event `mem-002` (Trust: 0.85, Confidence: 0.98).";
       } else {
-        answer = `🛡️ [XYRO101 GOVERNED DECISION]\nRetrieved ${retrieved.length} trusted memory records after applying source trust weighting, recency decay, and environmental fingerprint verification.\n\n${retrieved.map(r => `• **${r.attribute_key}**: ${r.content} (Score: ${r.final_score})`).join('\n')}`;
+        answer = `🛡️ [ShaktAI GOVERNED DECISION]\nRetrieved ${retrieved.length} trusted memory records after applying source trust weighting, recency decay, and environmental fingerprint verification.\n\n${retrieved.map(r => `• **${r.attribute_key}**: ${r.content} (Score: ${r.final_score})`).join('\n')}`;
       }
     }
 
@@ -921,7 +921,7 @@ Try asking: *"Which database are we currently using in production?"* or *"How do
         memory_id: qMem._id,
         event_type: 'quarantined',
         reason: 'Flagged by safety screener: Prompt injection signature',
-        actor: 'XYRO101 Guard',
+        actor: 'ShaktAI Guard',
         timestamp: new Date().toISOString(),
       });
       persist();
@@ -960,7 +960,7 @@ Try asking: *"Which database are we currently using in production?"* or *"How do
       memory_id: newMem._id,
       event_type: 'created',
       reason: 'Extracted new candidate fact from user observation',
-      actor: 'XYRO101 Ingestion Pipeline',
+      actor: 'ShaktAI Ingestion Pipeline',
       timestamp: new Date().toISOString(),
     });
     persist();

@@ -1,6 +1,6 @@
 /**
  * ANCHOR Temporal & Lifecycle Engine
- * Agent: XYRO101
+ * Agent: ShaktAI
  * Manages deployment staleness invalidation, Bayesian confidence calibration, time travel, and cascade forgetting.
  */
 

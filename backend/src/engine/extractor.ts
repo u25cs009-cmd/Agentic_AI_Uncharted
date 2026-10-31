@@ -1,6 +1,6 @@
 /**
  * ANCHOR Candidate Fact Extractor & Entity Resolution Engine
- * Agent: XYRO101
+ * Agent: ShaktAI
  * Extracts structured facts from unstructured natural language observations.
  */
 

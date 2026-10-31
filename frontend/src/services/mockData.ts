@@ -176,7 +176,7 @@ export const INITIAL_EVENTS: MemoryEvent[] = [
     memory_id: "mem-005",
     event_type: "quarantined",
     reason: "Prompt safety filter flagged potential prompt injection attack pattern",
-    actor: "XYRO101 Deterministic Safety Guard",
+    actor: "ShaktAI Deterministic Safety Guard",
     timestamp: "2026-10-30T19:40:00Z"
   },
   {
@@ -192,7 +192,7 @@ export const INITIAL_EVENTS: MemoryEvent[] = [
     memory_id: "mem-002",
     event_type: "superseded",
     reason: "New database choice MongoDB Atlas replaces legacy PostgreSQL configuration",
-    actor: "XYRO101 Governed Write Engine",
+    actor: "ShaktAI Governed Write Engine",
     timestamp: "2026-10-28T08:30:00Z"
   },
   {

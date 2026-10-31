@@ -1,6 +1,6 @@
 /**
  * ANCHOR Hybrid Retrieval & Abstention Engine (F4)
- * Agent: XYRO101
+ * Agent: ShaktAI
  * Implements Reciprocal Rank Fusion, Mathematical Recency Decay, and Deterministic Abstention.
  */
 

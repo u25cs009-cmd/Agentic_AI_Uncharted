@@ -254,7 +254,7 @@ export async function runBenchmark(req: Request, res: Response, next: NextFuncti
       harmfulRateData: [
         { mode: 'None (No Memory)', HarmfulRate: 20.0, description: 'Hallucination risk' },
         { mode: 'Naive (Vector Search)', HarmfulRate: 46.7, description: 'Blindly executes stale/poisoned data' },
-        { mode: 'Governed (XYRO101)', HarmfulRate: 0.0, description: 'Zero-tolerance governance' }
+        { mode: 'Governed (ShaktAI)', HarmfulRate: 0.0, description: 'Zero-tolerance governance' }
       ],
       results
     };

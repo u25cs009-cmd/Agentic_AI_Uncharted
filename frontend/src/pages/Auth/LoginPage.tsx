@@ -194,7 +194,7 @@ export const LoginPage: React.FC = () => {
         <div className="text-center mb-5">
           <img
             src="/logo.jpg"
-            alt="XYRO101 Logo"
+            alt="ShaktAI Logo"
             className="w-16 h-16 rounded-full object-cover mx-auto mb-3 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
           />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome Back</h1>

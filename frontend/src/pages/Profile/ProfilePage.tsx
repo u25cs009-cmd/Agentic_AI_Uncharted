@@ -289,7 +289,7 @@ export const ProfilePage: React.FC = () => {
           <div>
             <h2 className="text-base font-bold text-slate-900">Edit Profile Details</h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Update your display name and profile avatar across ANCHOR and XYRO101.
+              Update your display name and profile avatar across ANCHOR and ShaktAI.
             </p>
           </div>
 
