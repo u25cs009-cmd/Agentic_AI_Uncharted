@@ -8,11 +8,7 @@ let hasCheckedBackend = false;
 
 // Check backend health silently to determine live vs demo mode
 export async function checkBackendConnection(): Promise<boolean> {
-  if (!BASE_URL) {
-    isLiveBackend = false;
-    hasCheckedBackend = true;
-    return false;
-  }
+  
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1500);
@@ -31,9 +27,7 @@ async function safeFetch(url: string, options?: RequestInit): Promise<Response |
   if (!hasCheckedBackend) {
     await checkBackendConnection();
   }
-  if (!isLiveBackend && !BASE_URL) {
-    return null;
-  }
+  
   try {
     const res = await fetch(url, options);
     if (!isLiveBackend && res.ok) isLiveBackend = true;
