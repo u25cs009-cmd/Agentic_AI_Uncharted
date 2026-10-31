@@ -13,18 +13,26 @@ services:
         value: production
       - key: STORE
         value: mongo
+      - key: PORT
+        value: 10000
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB_NAME
         value: anchor
       - key: JWT_SECRET
         generateValue: true
-      - key: ENGRAM_SHARED_SECRET
-        value: shakti2_internal_key_for_n8n_webhooks
       - key: INTERNAL_API_KEY
-        value: shakti2_internal_key_for_n8n_webhooks
-      - key: PORT
-        value: 10000
+        sync: false
+      - key: ENGRAM_SHARED_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: N8N_WF1_WEBHOOK_URL
+        sync: false
+      - key: N8N_WF2_WEBHOOK_URL
+        sync: false
+      - key: N8N_WF3_WEBHOOK_URL
+        sync: false
 
   # ANCHOR Frontend Static Site
   - type: web

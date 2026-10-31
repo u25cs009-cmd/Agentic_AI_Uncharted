@@ -18,6 +18,20 @@ declare global {
 }
 
 /**
+ * Constant-time comparison using SHA256 hashes to prevent timing attacks and handle variable lengths
+ */
+export function timingSafeCompare(a: string, b: string): boolean {
+  try {
+    if (!a || !b) return false;
+    const hashA = crypto.createHash('sha256').update(a).digest();
+    const hashB = crypto.createHash('sha256').update(b).digest();
+    return crypto.timingSafeEqual(hashA, hashB);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Strict JWT Authentication Middleware
  * Enforces valid bearer token or query token on all protected routes.
  * Zero unauthenticated fallback.
@@ -51,21 +65,20 @@ export function authenticateUser(req: Request, res: Response, next: NextFunction
 export const requireAuth = authenticateUser;
 
 /**
- * Timing-Safe Webhook Secret Authentication Middleware
- * Validates 'x-engram-secret' (or fallback 'x-internal-key') using constant-time comparison.
+ * Timing-Safe Internal / Webhook Secret Authentication Middleware
+ * Validates 'x-engram-secret' or 'x-internal-key' using constant-time comparison.
  */
-export function requireWebhookSecret(req: Request, res: Response, next: NextFunction) {
-  const provided = req.headers['x-engram-secret'] || req.headers['x-internal-key'];
-  if (!provided || typeof provided !== 'string') {
-    return res.status(403).json({ error: 'Forbidden: Missing or invalid x-engram-secret header' });
+export function requireInternalKey(req: Request, res: Response, next: NextFunction) {
+  const expectedKey = config.internalApiKey || config.webhookSecret;
+  if (!expectedKey) {
+    return res.status(503).json({
+      error: 'Service Unavailable: Internal automation authentication is not configured on this server.'
+    });
   }
 
-  const expected = config.webhookSecret;
-  const hashProvided = crypto.createHash('sha256').update(provided).digest();
-  const hashExpected = crypto.createHash('sha256').update(expected).digest();
-
-  if (!crypto.timingSafeEqual(hashProvided, hashExpected)) {
-    return res.status(403).json({ error: 'Forbidden: Invalid secret header' });
+  const providedKey = req.headers['x-internal-key'] || req.headers['x-engram-secret'];
+  if (!providedKey || typeof providedKey !== 'string' || !timingSafeCompare(providedKey, expectedKey)) {
+    return res.status(403).json({ error: 'Forbidden: Missing or invalid internal authentication header' });
   }
 
   req.user = {
@@ -76,29 +89,23 @@ export function requireWebhookSecret(req: Request, res: Response, next: NextFunc
   next();
 }
 
+export const requireWebhookSecret = requireInternalKey;
+
 /**
- * Authenticates either a valid JWT user OR a trusted external webhook with x-engram-secret
+ * Authenticates either a valid JWT user OR a trusted external webhook with x-engram-secret / x-internal-key
  */
 export function authenticateUserOrWebhook(req: Request, res: Response, next: NextFunction) {
+  const expectedKey = config.internalApiKey || config.webhookSecret;
   const secret = req.headers['x-engram-secret'] || req.headers['x-internal-key'];
-  if (secret && typeof secret === 'string') {
-    const hashProvided = crypto.createHash('sha256').update(secret).digest();
-    const hashExpected = crypto.createHash('sha256').update(config.webhookSecret).digest();
-
-    if (crypto.timingSafeEqual(hashProvided, hashExpected)) {
-      req.user = {
-        id: (req.headers['x-owner-id'] as string) || 'system-webhook',
-        email: 'webhook@engram.system',
-        workspace: (req.headers['x-workspace-id'] as string) || 'ws-primary'
-      };
-      return next();
-    }
+  
+  if (expectedKey && secret && typeof secret === 'string' && timingSafeCompare(secret, expectedKey)) {
+    req.user = {
+      id: (req.headers['x-owner-id'] as string) || 'system-webhook',
+      email: 'webhook@engram.system',
+      workspace: (req.headers['x-workspace-id'] as string) || 'ws-primary'
+    };
+    return next();
   }
 
   return authenticateUser(req, res, next);
 }
-
-/**
- * Legacy compatibility alias
- */
-export const requireInternalKey = requireWebhookSecret;
