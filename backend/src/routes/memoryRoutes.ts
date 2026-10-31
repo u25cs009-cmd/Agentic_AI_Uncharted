@@ -8,7 +8,7 @@ export function createMemoryRouter(engine: AnchorMemoryEngine): Router {
   router.get('/health', (_req: Request, res: Response) => {
     res.json({
       status: 'healthy',
-      agent: 'XYRO101',
+      agent: 'ShaktAI',
       version: '1.0.0',
       storage: process.env.STORE === 'mongo' ? 'mongo' : 'in-memory',
       timestamp: new Date().toISOString(),

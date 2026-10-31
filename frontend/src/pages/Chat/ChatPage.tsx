@@ -778,11 +778,11 @@ export const ChatPage: React.FC = () => {
               <div className="py-12 flex flex-col items-center justify-center text-center animate-fade-in">
                 <img
                   src="/logo.jpg"
-                  alt="XYRO101"
+                  alt="ShaktAI"
                   className="w-16 h-16 rounded-full object-cover border border-amber-400/50 shadow-md mb-4"
                 />
                 <h2 className="text-xl font-bold text-slate-900 mb-1.5">
-                  XYRO101 Governed Memory Engine
+                  ShaktAI Governed Memory Engine
                 </h2>
                 <p className="text-sm text-slate-500 max-w-md mb-8">
                   Stateful agentic memory with mathematical trust scoring, temporal recency decay, and deterministic safety abstention.
@@ -868,12 +868,12 @@ export const ChatPage: React.FC = () => {
                     <div className="flex items-start gap-3.5 group">
                       <img
                         src="/logo.jpg"
-                        alt="XYRO101"
+                        alt="ShaktAI"
                         className="w-7 h-7 rounded-full object-cover border border-amber-400/40 shrink-0 mt-0.5"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-xs font-bold text-slate-900">XYRO101</span>
+                          <span className="text-xs font-bold text-slate-900">ShaktAI</span>
                           <span className="text-[10px] font-mono text-slate-400">{msg.timestamp}</span>
                           {msg.mode && (
                             <Badge
@@ -931,7 +931,7 @@ export const ChatPage: React.FC = () => {
               <div className="flex items-start gap-3.5">
                 <img
                   src="/logo.jpg"
-                  alt="XYRO101"
+                  alt="ShaktAI"
                   className="w-7 h-7 rounded-full object-cover border border-amber-400/40 shrink-0 mt-0.5 animate-pulse"
                 />
                 <div className="p-3.5 rounded-2xl border border-slate-200 bg-white shadow-xs flex items-center gap-2.5">
@@ -973,8 +973,8 @@ export const ChatPage: React.FC = () => {
                   compareMode
                     ? "Ask a question to compare Baseline vs Engram Governed..."
                     : activeMode === 'governed'
-                    ? "Message XYRO101 (Governed Mode)..."
-                    : "Message XYRO101 in Baseline Mode (Zero Recall)..."
+                    ? "Message ShaktAI (Governed Mode)..."
+                    : "Message ShaktAI in Baseline Mode (Zero Recall)..."
                 }
                 className="w-full bg-transparent text-[15px] text-slate-900 placeholder-slate-400 outline-none resize-none max-h-44 font-sans leading-relaxed px-1 pt-1 pb-2"
               />
@@ -1014,7 +1014,7 @@ export const ChatPage: React.FC = () => {
             {/* Disclaimer Footer (ChatGPT/Claude style) */}
             <div className="text-center mt-2">
               <span className="text-[11px] text-slate-400 font-sans">
-                XYRO101 enforces deterministic trust gates &amp; recency decay. Verify critical production commands.
+                ShaktAI enforces deterministic trust gates &amp; recency decay. Verify critical production commands.
               </span>
             </div>
           </div>

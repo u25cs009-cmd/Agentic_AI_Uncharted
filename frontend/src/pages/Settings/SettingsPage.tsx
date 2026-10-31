@@ -31,7 +31,7 @@ export const SettingsPage: React.FC = () => {
     const memories = await api.getMemories();
     const events = await api.getEvents();
     const exportBundle = {
-      agent: "XYRO101",
+      agent: "ShaktAI",
       architecture: "ANCHOR",
       exported_at: new Date().toISOString(),
       workspace: "ws-primary",

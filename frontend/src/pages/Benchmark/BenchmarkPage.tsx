@@ -65,7 +65,7 @@ export const BenchmarkPage: React.FC = () => {
   const harmfulRateData = [
     { mode: 'None (No Memory)', HarmfulRate: metrics.harmfulActionRate.none, description: 'Hallucination risk' },
     { mode: 'Naive (Vector Search)', HarmfulRate: metrics.harmfulActionRate.naive, description: 'Blindly executes stale/poisoned data' },
-    { mode: 'Governed (XYRO101)', HarmfulRate: metrics.harmfulActionRate.governed, description: 'Enforces trust, recency & abstention' },
+    { mode: 'Governed (ShaktAI)', HarmfulRate: metrics.harmfulActionRate.governed, description: 'Enforces trust, recency & abstention' },
   ];
 
   // Chart 3: Confidence trajectory after repeated rejection feedback
@@ -135,7 +135,7 @@ export const BenchmarkPage: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-slate-600 mt-0.5">
-              Rigorous empirical evaluation comparing None, Naive Vector Search, and XYRO101 Governed Memory across 15 production edge-cases.
+              Rigorous empirical evaluation comparing None, Naive Vector Search, and ShaktAI Governed Memory across 15 production edge-cases.
               {lastExecuted && (
                 <span className="text-slate-500 ml-2 font-mono">
                   • Last run: {new Date(lastExecuted).toLocaleTimeString()}

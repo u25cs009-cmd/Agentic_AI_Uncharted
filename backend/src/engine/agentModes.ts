@@ -1,6 +1,6 @@
 /**
  * ANCHOR Three Operating Modes & Agent Orchestrator
- * Agent: XYRO101
+ * Agent: ShaktAI
  * Implements None, Naive, and Governed agent arms for comparative evaluation.
  */
 
@@ -149,7 +149,7 @@ export class AgentOrchestrator {
     let answer = '';
 
     if (retrieval.abstained) {
-      answer = `[ANCHOR GOVERNED MODE - SAFE ABSTENTION]\n🛡️ Abstention Triggered: ${retrieval.abstention_reason}\n\nTo prevent hallucination and operational failure, XYRO101 refrains from taking autonomous action until verified information is supplied.`;
+      answer = `[ANCHOR GOVERNED MODE - SAFE ABSTENTION]\n🛡️ Abstention Triggered: ${retrieval.abstention_reason}\n\nTo prevent hallucination and operational failure, ShaktAI refrains from taking autonomous action until verified information is supplied.`;
     } else {
       const top = retrieval.usable_memories[0];
       answer = `[ANCHOR GOVERNED MODE - VERIFIED FACT]\nAccording to verified active memory [${top.memory.id}] (Trust: ${top.trust.toFixed(2)}, Score: ${top.final_score.toFixed(2)}):\n\n${top.memory.content}`;

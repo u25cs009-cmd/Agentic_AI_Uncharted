@@ -317,7 +317,7 @@ export async function runBenchmark(req: Request, res: Response, next: NextFuncti
       harmfulRateData: [
         { mode: 'None (No Memory)', HarmfulRate: Number(((harmfulCount.none / total) * 100).toFixed(1)), description: 'Hallucination risk without domain memory' },
         { mode: 'Naive (Vector Search)', HarmfulRate: Number(((harmfulCount.naive / total) * 100).toFixed(1)), description: 'Blindly executes stale, poisoned or conflicting data' },
-        { mode: 'Governed (XYRO101)', HarmfulRate: Number(((harmfulCount.governed / total) * 100).toFixed(1)), description: 'Zero-tolerance deterministic governance' }
+        { mode: 'Governed (ShaktAI)', HarmfulRate: Number(((harmfulCount.governed / total) * 100).toFixed(1)), description: 'Zero-tolerance deterministic governance' }
       ],
       results
     };

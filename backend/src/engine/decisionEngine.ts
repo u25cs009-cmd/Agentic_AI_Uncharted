@@ -1,6 +1,6 @@
 /**
  * ANCHOR Governed Memory Decision Engine (F1)
- * Agent: XYRO101
+ * Agent: ShaktAI
  * Implements the Governed Write Path with Deterministic Guard Rules overriding LLM proposals.
  */
 
@@ -94,7 +94,7 @@ export class DecisionEngine {
           event_type: 'quarantined',
           timestamp: now,
           reason: `GUARD RULE ENFORCED: ${decision.reason}`,
-          actor: 'XYRO101 Safety Guard',
+          actor: 'ShaktAI Safety Guard',
           diff: { after: mem },
         };
         await this.repo.appendEvent(event);

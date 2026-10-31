@@ -137,12 +137,12 @@ export const RegisterPage: React.FC = () => {
         <div className="text-center mb-6">
           <img
             src="/logo.jpg"
-            alt="XYRO101 Logo"
+            alt="ShaktAI Logo"
             className="w-16 h-16 rounded-full object-cover mx-auto mb-4 shadow-[0_0_30px_rgba(204,139,60,0.45)] border-2 border-amber-400/50"
           />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create Your Account</h1>
           <p className="text-xs text-slate-400 mt-1.5 font-medium">
-            Deploy an isolated ANCHOR memory instance for XYRO101
+            Deploy an isolated ANCHOR memory instance for ShaktAI
           </p>
         </div>
 

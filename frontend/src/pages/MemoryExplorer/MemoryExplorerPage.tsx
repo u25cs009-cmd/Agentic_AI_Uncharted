@@ -257,7 +257,7 @@ export const MemoryExplorerPage: React.FC = () => {
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">Memory Explorer</h1>
-                <Badge variant="primary" size="sm">XYRO101 Knowledge Base</Badge>
+                <Badge variant="primary" size="sm">ShaktAI Knowledge Base</Badge>
               </div>
               <p className="text-xs text-slate-600 mt-0.5">
                 Inspect, calibrate, promote, and audit governed memory states across temporal tiers.

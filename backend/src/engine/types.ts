@@ -1,6 +1,6 @@
 /**
  * ANCHOR AI Memory Engine - Core Domain Types
- * Agent: XYRO101
+ * Agent: ShaktAI
  * Team: Shakti-2 | Track 1: Agentic Memory
  */
 

@@ -73,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
         {/* Engine mode pill */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
           <img src="/logo.jpg" alt="Logo" className="w-4 h-4 rounded-md object-cover border border-slate-200" />
-          <span className="text-slate-900 font-semibold">XYRO101</span>
+          <span className="text-slate-900 font-semibold">ShaktAI</span>
           <span className={`tag text-[10px] ${isLive ? 'tag-success' : 'tag-accent'}`}>
             {isLive ? 'Cloud Engine Live' : 'High-Fidelity Sandbox'}
           </span>

@@ -705,18 +705,18 @@ export const api = {
     });
   },
 
-  // Chat with XYRO101
+  // Chat with ShaktAI
   async chat(message: string, mode: 'none' | 'naive' | 'governed'): Promise<ChatModeResult> {
     try {
       const res = await safeFetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ message, mode, agent: 'XYRO101' }),
+        body: JSON.stringify({ message, mode, agent: 'ShaktAI' }),
       });
       if (res && res.ok) return await res.json();
     } catch {}
 
-    // Realistic ANCHOR Engine simulation for XYRO101
+    // Realistic ANCHOR Engine simulation for ShaktAI
     const query = message.toLowerCase();
     
     // Evaluate memory matches
@@ -757,7 +757,7 @@ export const api = {
           retrieved.push(scoringObj);
         }
       } else {
-        // GOVERNED (XYRO101 Core Guard)
+        // GOVERNED (ShaktAI Core Guard)
         if (mem.status === 'quarantined') {
           scoringObj.excluded = true;
           scoringObj.exclusion_reason = 'quarantined';
@@ -800,7 +800,10 @@ export const api = {
         }
       }
 
-      if (retrieved.length === 0 && excluded.some(e => e.exclusion_reason === 'stale')) {
+      // Only abstain if query specifically targets the invalidated incident resolution
+      const isIncidentQuery = query.includes('checkout') || query.includes('timeout') || query.includes('restart') || query.includes('pg_ctlcluster') || query.includes('deploy') || query.includes('fix');
+      const hasRelevantStale = excluded.some(e => e.exclusion_reason === 'stale' && (e.similarity >= 0.45 || isIncidentQuery));
+      if (retrieved.length === 0 && hasRelevantStale && isIncidentQuery) {
         abstention = true;
         abstentionReason = "Relevant prior resolution was invalidated by a recent deployment event. Abstaining from obsolete recommendation.";
       }
@@ -820,7 +823,7 @@ export const api = {
       } else if (query.includes('country') || query.includes('countries')) {
         answer = "The top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)";
       } else if (query.includes('database')) {
-        answer = "As an AI assistant operating without internal memory recall, I do not have access to private documentation regarding your active database configuration. Please refer to system topology or documentation.";
+answer = "As ShaktAI operating without internal memory recall, I do not have access to private documentation regarding your active database configuration. Please refer to system topology or documentation.";
       } else if (query.includes('timeout') || query.includes('checkout')) {
         answer = "Without access to operational memories, I can only provide general guidance: timeouts can typically be diagnosed by checking application logs, thread pool saturation, and database connectivity.";
       } else {
@@ -842,28 +845,38 @@ export const api = {
           answer = "I received your request. No matching memory vectors were found in the database for this specific query, but I am ready to help.";
         }
       } else {
-        answer = `[XYRO101 - Mode: NAIVE] Retrieved ${retrieved.length} memory records via raw vector cosine similarity: ${retrieved.map(r => r.memory_id).join(', ')}.`;
+        answer = `[ShaktAI - Mode: NAIVE] Retrieved ${retrieved.length} memory records via raw vector cosine similarity: ${retrieved.map(r => r.memory_id).join(', ')}.`;
       }
     } else {
       // GOVERNED MODE
       if (abstention) {
-        answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
+        answer = `🛡️ [ShaktAI GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
       } else if (retrieved.length === 0) {
-        if (isHowAreYou) {
-          answer = "Hello! I am doing well, thank you for asking. As the XYRO101 Governed Agent, I'm ready to assist you with operations, memory governance, and system queries. What can I do for you today?";
+if (query.includes('website') || query.includes('about') || query.includes('what is this') || query.includes('platform')) {
+          answer = `🛡️ [ShaktAI GOVERNED AGENT]
+Welcome to **ANCHOR (ShaktAI)** — the Governed Agentic Memory Engine.
+
+This platform guarantees enterprise AI reliability through:
+• **Unified Memory Retrieval**: Source trust ladder, temporal recency decay, and environmental fingerprinting.
+• **Deterministic Safety**: Prevents prompt injections and actively halts obsolete recommendations.
+• **Incident Triage**: Evaluates real-time microservice alerts against verified infrastructure facts.
+
+Try asking: *"Which database are we currently using in production?"* or *"How do I fix checkout DB timeout?"*`;
+        } else if (isHowAreYou) {
+          answer = "Hello! I am doing well, thank you for asking. As the ShaktAI Governed Agent, I'm ready to assist you with operations, memory governance, and system queries. What can I do for you today?";
         } else if (isGreeting) {
-          answer = "Hello! I am XYRO101, your Governed Memory Agent. How can I assist you today?";
+          answer = "Hello! I am ShaktAI, your Governed Memory Agent. How can I assist you today?";
         } else if (query.includes('country') || query.includes('countries')) {
-          answer = "🛡️ [XYRO101 GOVERNED AGENT]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Verified: No corporate operational memories applied for general query).*";
+          answer = "🛡️ [ShaktAI GOVERNED AGENT]\nThe top 3 biggest countries in the world by total land area are:\n1. **Russia** (~17.1M km²)\n2. **Canada** (~9.98M km²)\n3. **United States** (~9.83M km²)\n\n*(Verified: No corporate operational memories applied for general query).*";
         } else {
-          answer = "🛡️ [XYRO101 GOVERNED AGENT]\nI evaluated your query against the memory graph. No corporate operational memories were required for this query, but I am here to assist.";
+          answer = "🛡️ [ShaktAI GOVERNED AGENT]\nI evaluated your query against the memory graph. No corporate operational memories were required for this query, but I am here to assist.";
         }
       } else if (query.includes('timeout') || query.includes('checkout')) {
-        answer = "🛡️ [XYRO101 GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy database connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
+        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy database connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
       } else if (query.includes('database')) {
-        answer = "🛡️ [XYRO101 GOVERNED DECISION]\nThe current production database is **Primary Database Service** (Cluster `prod-primary`), verified via system deployment event `mem-002` (Trust: 0.85, Confidence: 0.98).";
+        answer = "🛡️ [ShaktAI GOVERNED DECISION]\nThe current production database is **Primary Database Service** (Cluster `prod-primary`), verified via system deployment event `mem-002` (Trust: 0.85, Confidence: 0.98).";
       } else {
-        answer = `🛡️ [XYRO101 GOVERNED DECISION]\nRetrieved ${retrieved.length} trusted memory records after applying source trust weighting, recency decay, and environmental fingerprint verification.\n\n${retrieved.map(r => `• **${r.attribute_key}**: ${r.content} (Score: ${r.final_score})`).join('\n')}`;
+        answer = `🛡️ [ShaktAI GOVERNED DECISION]\nRetrieved ${retrieved.length} trusted memory records after applying source trust weighting, recency decay, and environmental fingerprint verification.\n\n${retrieved.map(r => `• **${r.attribute_key}**: ${r.content} (Score: ${r.final_score})`).join('\n')}`;
       }
     }
 
@@ -1020,7 +1033,7 @@ export const api = {
         memory_id: qMem._id,
         event_type: 'quarantined',
         reason: 'Flagged by safety screener: Prompt injection signature',
-        actor: 'XYRO101 Guard',
+        actor: 'ShaktAI Guard',
         timestamp: new Date().toISOString(),
       });
       persist();
@@ -1059,7 +1072,7 @@ export const api = {
       memory_id: newMem._id,
       event_type: 'created',
       reason: 'Extracted new candidate fact from user observation',
-      actor: 'XYRO101 Ingestion Pipeline',
+      actor: 'ShaktAI Ingestion Pipeline',
       timestamp: new Date().toISOString(),
     });
     persist();
