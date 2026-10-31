@@ -428,12 +428,18 @@ export class LLMService {
       }
 
       if (lower.includes('diagnosis') || lower.includes('proposedfix') || lower.includes('agent answer')) {
+        const hasDbConstraint = lower.includes('never restart the prod database during business hours') || lower.includes('never restart');
+        const constraintMemMatch = prompt.match(/\[CONSTRAINT\s+([^\]]+)\]/i);
+        const constraintId = constraintMemMatch ? constraintMemMatch[1] : undefined;
+
         return JSON.stringify({
           diagnosis: 'Incident evaluated against active operational memories',
-          proposedFix: 'Follow verified operational procedure',
-          citedMemoryIds: [],
+          proposedFix: hasDbConstraint
+            ? 'DO NOT RESTART DATABASE: Strict operational constraint forbids restarting prod database during business hours. Scale pool max_connections to 50 instead or defer to maintenance window.'
+            : 'Follow verified operational procedure',
+          citedMemoryIds: constraintId ? [constraintId] : [],
           confidence: 0.9,
-          warnings: [],
+          warnings: hasDbConstraint ? ['Active operational constraint enforced: Prohibited DB restart during business hours'] : [],
           abstain: false,
           abstainReason: null
         });

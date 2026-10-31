@@ -8,8 +8,8 @@ describe('ANCHOR Retrieval Scoring & Deterministic Abstention', () => {
   it('Calculates recency decay correctly based on half-life', () => {
     const baseDate = new Date('2026-10-31T00:00:00Z');
 
-    // Episodic memory (Half-life = 7 days) exactly 7 days old
-    const sevenDaysAgo = new Date('2026-10-24T00:00:00Z').toISOString();
+    // Episodic memory (Half-life = 30 days) exactly 30 days old
+    const thirtyDaysAgo = new Date('2026-10-01T00:00:00Z').toISOString();
     const episodicMem: Memory = {
       id: 'test-ep',
       owner: 'u1',
@@ -25,9 +25,9 @@ describe('ANCHOR Retrieval Scoring & Deterministic Abstention', () => {
       trust: 0.8,
       confidence: 0.9,
       status: 'active',
-      valid_from: sevenDaysAgo,
-      created_at: sevenDaysAgo,
-      updated_at: sevenDaysAgo,
+      valid_from: thirtyDaysAgo,
+      created_at: thirtyDaysAgo,
+      updated_at: thirtyDaysAgo,
       access_count: 0,
     };
 

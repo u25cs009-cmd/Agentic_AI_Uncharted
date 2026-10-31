@@ -15,9 +15,12 @@ import { Repository } from './repository.js';
 
 // Official Half-Life values in days (Implementation Plan Section 6 Module 5)
 export const HALF_LIFE_DAYS: Record<MemoryType, number> = {
-  episodic: 7,
-  semantic: 60,
+  episodic: 30,
+  semantic: 180,
   procedural: 90,
+  constraint: 999999,
+  preference: 120,
+  ephemeral: 7
 };
 
 export const MIN_SCORE_THRESHOLD = 0.25;
@@ -32,8 +35,8 @@ export class RetrievalEngine {
    * Core hot tier skips recency decay (returns 1.0).
    */
   static calculateRecency(memory: Memory, referenceDate: Date = new Date()): number {
-    if (memory.tier === 'hot') {
-      return 1.0; // Core tier memories do not decay
+    if (memory.tier === 'hot' || memory.type === 'constraint') {
+      return 1.0; // Core tier and constraint memories do not decay
     }
 
     const createdTime = new Date(memory.created_at || memory.valid_from).getTime();

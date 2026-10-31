@@ -393,6 +393,9 @@ export const MemoryExplorerPage: React.FC = () => {
             <option value="semantic">Semantic</option>
             <option value="episodic">Episodic</option>
             <option value="procedural">Procedural</option>
+            <option value="constraint">Constraint</option>
+            <option value="preference">Preference</option>
+            <option value="ephemeral">Ephemeral</option>
           </select>
         </div>
 

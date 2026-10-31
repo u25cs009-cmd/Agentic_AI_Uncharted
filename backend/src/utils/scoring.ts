@@ -11,15 +11,19 @@ export function calculateRecency(
   tier?: string
 ): number {
   if (tier === 'hot') return 1.0;
+  if (type === 'constraint') return 1.0; // Constraint memories have zero decay
 
   const createdDate = new Date(createdAt);
   const now = new Date();
   const diffMs = Math.max(0, now.getTime() - createdDate.getTime());
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-  let halfLife = 60; // semantic default
-  if (type === 'episodic') halfLife = 7;
+  let halfLife = 180; // semantic 180d
+  if (type === 'episodic') halfLife = 30;
+  else if (type === 'semantic') halfLife = 180;
   else if (type === 'procedural') halfLife = 90;
+  else if (type === 'preference') halfLife = 120;
+  else if (type === 'ephemeral') halfLife = 7;
 
   return Math.pow(0.5, diffDays / halfLife);
 }
