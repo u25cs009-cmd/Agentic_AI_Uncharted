@@ -114,7 +114,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/retrieve",
+        "url": "https://agentic-ai-uncharted.onrender.com/api/retrieve",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -123,12 +123,8 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
-            },
-            {
               "name": "x-internal-key",
-              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+              "value": "shakti2_internal_key_for_n8n_webhooks"
             }
           ]
         },
@@ -343,7 +339,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+        "url": "=https://agentic-ai-uncharted.onrender.com/api/memories/{{ $json.target_memory_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -352,12 +348,8 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
-            },
-            {
               "name": "x-internal-key",
-              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+              "value": "shakti2_internal_key_for_n8n_webhooks"
             }
           ]
         },
@@ -384,7 +376,7 @@
     {
       "parameters": {
         "method": "DELETE",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/memories/{{ $json.target_memory_id }}",
+        "url": "=https://agentic-ai-uncharted.onrender.com/api/memories/{{ $json.target_memory_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -393,12 +385,8 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
-            },
-            {
               "name": "x-internal-key",
-              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+              "value": "shakti2_internal_key_for_n8n_webhooks"
             }
           ]
         },
@@ -422,7 +410,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://agentic-ai-uncharted.onrender.com' }}/api/outcomes",
+        "url": "https://agentic-ai-uncharted.onrender.com/api/outcomes",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -431,12 +419,8 @@
               "value": "application/json"
             },
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
-            },
-            {
               "name": "x-internal-key",
-              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+              "value": "shakti2_internal_key_for_n8n_webhooks"
             }
           ]
         },
