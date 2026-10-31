@@ -452,7 +452,7 @@ export class MongoRepository implements Repository {
     };
 
     const statusFilter = filter?.status && filter.status !== 'all' ? filter.status : { $in: ['active', 'stale'] };
-    const preFilter = buildScopedMongoMemoryFilter(ctx, { status: statusFilter });
+    const preFilter = buildScopedMongoMemoryFilter(ctx, { status: statusFilter as any });
 
     let vectorCandidates: Memory[] = [];
     let textCandidates: Memory[] = [];

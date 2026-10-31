@@ -190,12 +190,12 @@ export async function demoDeploy(req: Request, res: Response, next: NextFunction
         mem.entities.some(ent => changedLower.includes(ent.toLowerCase()));
 
       if (hasOverlap) {
-        await repo.updateMemory(mem._id || mem.id, { status: 'stale' }, userId, workspace);
-        affectedMemoryIds.push(mem._id || mem.id);
+        await repo.updateMemory((mem._id || mem.id)!, { status: 'stale' }, userId, workspace);
+        affectedMemoryIds.push((mem._id || mem.id)!);
 
         await repo.appendEvent({
           id: `evt-deploy-${Date.now()}-${affectedMemoryIds.length}`,
-          memory_id: mem._id || mem.id,
+          memory_id: (mem._id || mem.id)!,
           workspaceId: workspace,
           ownerId: userId,
           visibility: mem.visibility || 'workspace',
@@ -305,7 +305,7 @@ export async function demoReset(req: Request, res: Response, next: NextFunction)
     // 1. Fetch all existing memories in caller's workspace and delete them
     const existing = await repo.findMemories({ workspace });
     for (const mem of existing) {
-      await repo.deleteMemory(mem._id || mem.id, userId, workspace);
+      await repo.deleteMemory((mem._id || mem.id)!, userId, workspace);
     }
 
     // 2. Re-seed initial memories scoped to caller workspace

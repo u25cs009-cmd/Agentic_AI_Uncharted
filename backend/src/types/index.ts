@@ -47,13 +47,14 @@ export interface Memory {
   confidence: number;
   status: MemoryStatus;
   valid_from: string;
-  valid_to: string | null;
-  superseded_by: string | null;
-  env_fingerprint: EnvFingerprint;
-  derived_from: string[];
-  access_count: number;
-  last_used_at: string | null;
-  expires_at: string | null;
+  valid_to?: string | null;
+  superseded_by?: string | null;
+  env_fingerprint?: EnvFingerprint;
+  derived_from?: string[];
+  access_count?: number;
+  last_used_at?: string | null;
+  expires_at?: string | null;
+  expiresAt?: string | null;
   purgeAt?: string | null;
   quarantine_reason?: string;
   created_at?: string;
@@ -74,7 +75,7 @@ export type EventType =
 
 export interface MemoryEvent {
   id: string;
-  memory_id: string;
+  memory_id?: string;
   workspaceId?: string;
   workspace?: string;
   ownerId?: string;
@@ -117,28 +118,46 @@ export interface Entity {
   id: string;
   name: string;
   type: string;
-  dependencies: string[];
+  dependencies?: string[];
+  depends_on?: string[];
+  owned_by?: string;
   description?: string;
+  metadata?: Record<string, any>;
 }
+
+export type AuthProviderType = 'local' | 'google';
 
 export interface User {
   id: string;
+  _id?: string;
   email: string;
   name?: string;
   passwordHash?: string;
   googleId?: string;
   avatarUrl?: string;
+  profilePicture?: string;
+  authProviders?: AuthProviderType[];
+  workspace?: string;
   createdAt: string;
-  updatedAt: string;
+  created_at?: string;
+  updatedAt?: string;
+  lastLoginAt?: string;
+  isActive?: boolean;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: string;
 }
 
 export interface ConversationMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
+  role?: 'user' | 'assistant' | 'system';
+  sender?: 'user' | 'agent';
+  content?: string;
+  text?: string;
   timestamp: string;
   mode?: 'none' | 'naive' | 'governed';
   retrievedMemoryIds?: string[];
+  result?: any;
+  comparison?: any;
   metadata?: any;
 }
 
@@ -147,7 +166,7 @@ export interface Conversation {
   _id?: string;
   userId: string;
   title: string;
-  mode: 'none' | 'naive' | 'governed';
+  mode?: 'none' | 'naive' | 'governed';
   messages: ConversationMessage[];
   createdAt: string;
   updatedAt: string;
@@ -166,6 +185,7 @@ export interface MemoryFilter {
   entity?: string;
   search?: string;
   visibility?: 'private' | 'workspace';
+  valid_at?: string;
 }
 
 export interface ScoredMemory extends Memory {
