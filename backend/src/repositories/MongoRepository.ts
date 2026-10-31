@@ -14,6 +14,7 @@ import {
   ScoredMemory
 } from '../types/index.js';
 import { Repository } from './types.js';
+import { generateEmbedding } from '../services/embedding.js';
 import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
 import { logger } from '../utils/logger.js';
 
@@ -66,7 +67,7 @@ export class MongoRepository implements Repository {
       const memCount = await this.memoriesCol.countDocuments();
       if (memCount === 0) {
         logger.info('Empty MongoDB database detected. Auto-seeding initial memories and events...');
-        await this.memoriesCol.insertMany(INITIAL_MEMORIES.map(m => ({ ...m })) as any);
+        await this.memoriesCol.insertMany(INITIAL_MEMORIES.map(m => ({ ...m, embedding: m.embedding || generateEmbedding(m.content) })) as any);
         await this.eventsCol.insertMany(INITIAL_EVENTS.map(e => ({ ...e })) as any);
       }
       this.initChangeStreamOrPolling();

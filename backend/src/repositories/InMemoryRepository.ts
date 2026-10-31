@@ -12,6 +12,7 @@ import {
 } from '../types/index.js';
 import { Repository } from './types.js';
 import { INITIAL_MEMORIES, INITIAL_EVENTS } from '../data/seedData.js';
+import { generateEmbedding } from '../services/embedding.js';
 import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
 import { logger } from '../utils/logger.js';
 
