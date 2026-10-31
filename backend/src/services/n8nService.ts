@@ -35,6 +35,7 @@ export interface N8nWorkflowResult<T = any> {
 class N8nService {
   private inFlightRequests = new Map<string, Promise<any>>();
   private recentExecutionHashes = new Map<string, number>();
+  public lastDispatch: Record<string, { timestamp: string; success: boolean; executed_by: string; error?: string; latency_ms: number }> = {};
 
   /**
    * Deduplication check to prevent duplicate execution within a 3-second window
@@ -68,16 +69,26 @@ class N8nService {
     timeoutMs: number
   ): Promise<N8nWorkflowResult<T>> {
     const start = Date.now();
+    const recordResult = (res: N8nWorkflowResult<T>): N8nWorkflowResult<T> => {
+      this.lastDispatch[workflowId] = {
+        timestamp: new Date().toISOString(),
+        success: res.success,
+        executed_by: res.executed_by,
+        error: res.error,
+        latency_ms: res.latency_ms
+      };
+      return res;
+    };
 
     if (!webhookUrl || !webhookUrl.startsWith('http')) {
-      return {
+      return recordResult({
         success: false,
         executed_by: 'local_engine',
         workflow_id: workflowId,
         fallback_reason: 'n8n_unconfigured',
         error: `Webhook URL for ${workflowId} is not configured on this server.`,
         latency_ms: 0
-      };
+      });
     }
 
     const payloadStr = JSON.stringify(payload);
@@ -87,14 +98,14 @@ class N8nService {
       .digest('hex');
 
     if (this.checkDuplicate(hash)) {
-      return {
+      return recordResult({
         success: false,
         executed_by: 'local_engine',
         workflow_id: workflowId,
         fallback_reason: 'validation_failed',
         error: `Duplicate execution rejected: identical ${workflowId} payload was submitted within 3 seconds.`,
         latency_ms: Date.now() - start
-      };
+      });
     }
 
     const controller = new AbortController();
@@ -130,14 +141,14 @@ class N8nService {
           { workflowId, status: res.status, errorBody: errorBody.slice(0, 200) },
           'n8n webhook returned non-200 status'
         );
-        return {
+        return recordResult({
           success: false,
           executed_by: 'local_engine',
           workflow_id: workflowId,
           fallback_reason: 'n8n_error',
           error: `n8n webhook returned HTTP ${res.status}: ${errorBody.slice(0, 150)}`,
           latency_ms: latencyMs
-        };
+        });
       }
 
       let data: T;
@@ -155,13 +166,13 @@ class N8nService {
 
       logger.info({ workflowId, latencyMs }, 'n8n workflow executed successfully');
 
-      return {
+      return recordResult({
         success: true,
         executed_by: 'n8n_workflow',
         workflow_id: workflowId,
         data,
         latency_ms: latencyMs
-      };
+      });
     } catch (err: any) {
       clearTimeout(timer);
       const latencyMs = Date.now() - start;
@@ -172,7 +183,7 @@ class N8nService {
         'n8n webhook dispatch failed, routing to local fallback'
       );
 
-      return {
+      return recordResult({
         success: false,
         executed_by: 'local_engine',
         workflow_id: workflowId,
@@ -181,7 +192,7 @@ class N8nService {
           ? `n8n ${workflowId} webhook timed out after ${timeoutMs}ms.`
           : `n8n dispatch failed: ${err.message}`,
         latency_ms: latencyMs
-      };
+      });
     }
   }
 

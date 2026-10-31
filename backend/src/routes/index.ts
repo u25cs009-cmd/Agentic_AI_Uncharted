@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { n8nService } from '../services/n8nService.js';
 import {
   register,
   login,
@@ -98,6 +99,16 @@ apiRouter.get('/health', async (req, res) => {
       });
     }
 
+    const maskUrl = (url?: string) => {
+      if (!url) return 'unconfigured';
+      try {
+        const u = new URL(url);
+        return `${u.protocol}//${u.host.replace(/^([^.]+)\./, '***.')}${u.pathname}`;
+      } catch {
+        return 'configured_invalid_url';
+      }
+    };
+
     res.json({
       status: 'healthy',
       system: 'ANCHOR AI Memory Engine Backend',
@@ -106,6 +117,12 @@ apiRouter.get('/health', async (req, res) => {
       active_repository: repo.name,
       is_fallback: isFallback,
       embed_provider: config.embedProvider,
+      n8n_integration: {
+        wf1: { configured: Boolean(config.n8n.wf1WebhookUrl), endpoint: maskUrl(config.n8n.wf1WebhookUrl) },
+        wf2: { configured: Boolean(config.n8n.wf2WebhookUrl), endpoint: maskUrl(config.n8n.wf2WebhookUrl) },
+        wf3: { configured: Boolean(config.n8n.wf3WebhookUrl), endpoint: maskUrl(config.n8n.wf3WebhookUrl) },
+        last_dispatch: n8nService.lastDispatch
+      },
       timestamp: new Date().toISOString(),
       uptime_seconds: Math.floor(process.uptime())
     });
