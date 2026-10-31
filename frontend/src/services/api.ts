@@ -6,23 +6,41 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 let isLiveBackend = false;
 let hasCheckedBackend = false;
 
-type WakingListener = (isWaking: boolean) => void;
-const wakingListeners = new Set<WakingListener>();
+export type BackendStatus = { waking: boolean; unavailable: boolean };
 let isServerWaking = false;
+let isBackendUnavailable = false;
+const statusListeners = new Set<(status: BackendStatus) => void>();
 
-export function subscribeToWakingState(listener: WakingListener): () => void {
-  wakingListeners.add(listener);
-  listener(isServerWaking);
+export function subscribeToBackendStatus(listener: (status: BackendStatus) => void): () => void {
+  statusListeners.add(listener);
+  listener({ waking: isServerWaking, unavailable: isBackendUnavailable });
   return () => {
-    wakingListeners.delete(listener);
+    statusListeners.delete(listener);
   };
+}
+
+function notifyBackendStatus() {
+  const status = { waking: isServerWaking, unavailable: isBackendUnavailable };
+  statusListeners.forEach(fn => fn(status));
 }
 
 export function setServerWaking(waking: boolean) {
   if (isServerWaking !== waking) {
     isServerWaking = waking;
-    wakingListeners.forEach(fn => fn(waking));
+    notifyBackendStatus();
   }
+}
+
+export function setBackendUnavailable(unavailable: boolean) {
+  if (isBackendUnavailable !== unavailable) {
+    isBackendUnavailable = unavailable;
+    notifyBackendStatus();
+  }
+}
+
+type WakingListener = (isWaking: boolean) => void;
+export function subscribeToWakingState(listener: WakingListener): () => void {
+  return subscribeToBackendStatus(s => listener(s.waking));
 }
 
 
