@@ -24,6 +24,7 @@ export const TimelinePage: React.FC = () => {
   const [events, setEvents] = useState<MemoryEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [sseError, setSseError] = useState<string | null>(null);
+  const [streamMode, setStreamMode] = useState<'live' | 'polling'>('live');
   
   // Time travel slider: index from 0 to 4
   const timePoints = [
