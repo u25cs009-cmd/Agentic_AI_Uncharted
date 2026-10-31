@@ -1,3 +1,4 @@
+import { ShaktAILogo } from '../../components/common/ShaktAILogo';
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
@@ -774,46 +775,31 @@ export const ChatPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth">
           <div className="max-w-3xl mx-auto space-y-6">
             {messages.length === 0 ? (
-              // Empty State (Signature Anthropic/ChatGPT Welcome View)
-              <div className="py-12 flex flex-col items-center justify-center text-center animate-fade-in">
-                <img
-                  src="/logo.jpg"
-                  alt="ShaktAI"
-                  className="w-16 h-16 rounded-full object-cover border border-amber-400/50 shadow-md mb-4"
-                />
-                <h2 className="text-xl font-bold text-slate-900 mb-1.5">
+              // Clean Minimalist Welcome View
+              <div className="py-16 flex flex-col items-center justify-center text-center animate-fade-in">
+                <ShaktAILogo size="xl" glow={true} className="mb-4" />
+                <h2 className="text-2xl font-bold text-amber-950 mb-2 tracking-tight">
                   ShaktAI Governed Memory Engine
                 </h2>
-                <p className="text-sm text-slate-500 max-w-md mb-8">
-                  Stateful agentic memory with mathematical trust scoring, temporal recency decay, and deterministic safety abstention.
+                <p className="text-sm text-amber-900/70 max-w-md mb-6 leading-relaxed">
+                  Primal intelligence with mathematical trust scoring, recency decay, and deterministic safety gates.
                 </p>
 
-                {/* 4 Prompt Starter Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl text-left">
-                  {PROMPT_SUGGESTIONS.map((card) => {
-                    const Icon = card.icon;
-                    return (
-                      <button
-                        key={card.title}
-                        type="button"
-                        onClick={() => handleSendQuery(card.query)}
-                        className="p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-slate-50/80 transition-all cursor-pointer group text-left shadow-xs"
-                      >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <Icon className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">
-                            {card.tag}
-                          </span>
-                        </div>
-                        <h4 className="text-xs font-bold text-slate-900 mb-0.5">
-                          {card.title}
-                        </h4>
-                        <p className="text-[11px] text-slate-500 line-clamp-1">
-                          {card.subtitle}
-                        </p>
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-wrap items-center justify-center gap-2 max-w-lg">
+                  <button
+                    type="button"
+                    onClick={() => handleSendQuery('Which database are we currently using in production?')}
+                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-amber-950 border border-amber-300/80 transition-all cursor-pointer shadow-2xs font-medium"
+                  >
+                    🔍 Which database are we using?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSendQuery('How do I fix the checkout DB timeout right now?')}
+                    className="text-xs px-3.5 py-1.5 rounded-full bg-amber-100/80 hover:bg-amber-200 text-amber-950 border border-amber-300/80 transition-all cursor-pointer shadow-2xs font-medium"
+                  >
+                    ⚡ Fix checkout DB timeout
+                  </button>
                 </div>
               </div>
             ) : (
@@ -866,11 +852,7 @@ export const ChatPage: React.FC = () => {
                   ) : (
                     // Assistant Row (Left aligned with avatar)
                     <div className="flex items-start gap-3.5 group">
-                      <img
-                        src="/logo.jpg"
-                        alt="ShaktAI"
-                        className="w-7 h-7 rounded-full object-cover border border-amber-400/40 shrink-0 mt-0.5"
-                      />
+                      <ShaktAILogo size="sm" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5">
                           <span className="text-xs font-bold text-slate-900">ShaktAI</span>
@@ -1001,7 +983,7 @@ export const ChatPage: React.FC = () => {
                   disabled={!input.trim() || loading}
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                     input.trim() && !loading
-                      ? 'bg-slate-900 hover:bg-black text-white shadow-xs'
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs'
                       : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                   }`}
                   title="Send message (Enter)"

@@ -8,6 +8,7 @@ import { AlertTriangle, RefreshCw, Radio } from 'lucide-react';
 export const AppLayout: React.FC = () => {
   const [quarantineCount, setQuarantineCount] = useState(0);
   const [backendStatus, setBackendStatus] = useState<BackendStatus>({ waking: false, unavailable: false });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const fetchQuarantineCount = async () => {
     try {
@@ -30,7 +31,7 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] text-slate-900 overflow-hidden font-sans relative selection:bg-indigo-100 selection:text-indigo-900 flex-col">
+    <div className="flex h-screen bg-[#FEFDF8] text-slate-900 overflow-hidden font-sans relative selection:bg-amber-200 selection:text-amber-950 flex-col">
       {/* Cold-Start Waking Banner */}
       {backendStatus.waking && (
         <div className="bg-amber-500/15 border-b border-amber-500/30 text-amber-900 px-4 py-2 text-xs font-medium flex items-center justify-between z-50">
@@ -60,17 +61,26 @@ export const AppLayout: React.FC = () => {
         </div>
       )}
 
-      {/* App Body */}
+      {/* App Body with warm yellowish SaaS Accents */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
-        {/* Subtle Ambient SaaS Accents */}
-        <div className="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none z-0" />
-        <div className="fixed top-[20%] right-[-10%] w-[650px] h-[650px] rounded-full bg-sky-500/5 blur-[140px] pointer-events-none z-0" />
-        <div className="fixed bottom-[-10%] left-[25%] w-[600px] h-[600px] rounded-full bg-purple-500/5 blur-[130px] pointer-events-none z-0" />
+        <div className="fixed top-[-10%] left-[-10%] w-[550px] h-[550px] rounded-full bg-amber-400/8 blur-[130px] pointer-events-none z-0" />
+        <div className="fixed top-[15%] right-[-10%] w-[650px] h-[650px] rounded-full bg-yellow-300/8 blur-[150px] pointer-events-none z-0" />
+        <div className="fixed bottom-[-10%] left-[25%] w-[600px] h-[600px] rounded-full bg-amber-500/6 blur-[140px] pointer-events-none z-0" />
 
-        <Sidebar quarantineCount={quarantineCount} />
+        {/* Command Center Sidebar with Toggle Support */}
+        <Sidebar
+          quarantineCount={quarantineCount}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
-          <Header onRefresh={fetchQuarantineCount} />
-          <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
+          <Header
+            onRefresh={fetchQuarantineCount}
+            onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
+            isSidebarOpen={isSidebarOpen}
+          />
+          <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 bg-[#FEFDF8]/60">
             <Outlet />
           </main>
         </div>
