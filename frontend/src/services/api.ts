@@ -1,4 +1,4 @@
-import { Memory, MemoryEvent, ChatModeResult, BenchmarkScenario, RetrievalScoring } from '../types/memory';
+import { Memory, MemoryEvent, ChatModeResult, BenchmarkScenario, RetrievalScoring, AgentRun } from '../types/memory';
 import { INITIAL_MEMORIES, INITIAL_EVENTS, BENCHMARK_SCENARIOS } from './mockData';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -6,33 +6,95 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 let isLiveBackend = false;
 let hasCheckedBackend = false;
 
-// Check backend health silently to determine live vs demo mode
-export async function checkBackendConnection(): Promise<boolean> {
-  
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1500);
-    const res = await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
-    clearTimeout(timeoutId);
-    isLiveBackend = res.ok;
-  } catch {
-    isLiveBackend = false;
-  }
-  hasCheckedBackend = true;
-  return isLiveBackend;
+type WakingListener = (isWaking: boolean) => void;
+const wakingListeners = new Set<WakingListener>();
+let isServerWaking = false;
+
+export function subscribeToWakingState(listener: WakingListener): () => void {
+  wakingListeners.add(listener);
+  listener(isServerWaking);
+  return () => {
+    wakingListeners.delete(listener);
+  };
 }
 
-// Safe network request helper that suppresses unhandled network crash logs
+export function setServerWaking(waking: boolean) {
+  if (isServerWaking !== waking) {
+    isServerWaking = waking;
+    wakingListeners.forEach(fn => fn(waking));
+  }
+}
+
+
+// Check backend health with 3s slow threshold and 90s retry loop
+export async function checkBackendConnection(forceDelayUrl?: string): Promise<boolean> {
+  const targetUrl = forceDelayUrl || `${BASE_URL}/api/health`;
+  const startTime = Date.now();
+  const maxRetryDurationMs = 90000;
+  const retryIntervalMs = 5000;
+
+  async function probeOnce(): Promise<boolean> {
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => {
+      setServerWaking(true);
+      controller.abort();
+    }, 3000);
+
+    try {
+      const res = await fetch(targetUrl, { signal: controller.signal });
+      clearTimeout(timeoutTimer);
+      if (res.ok) {
+        setServerWaking(false);
+        isLiveBackend = true;
+        return true;
+      }
+    } catch {
+      // Handled by retries
+    }
+    clearTimeout(timeoutTimer);
+    return false;
+  }
+
+  const ok = await probeOnce();
+  hasCheckedBackend = true;
+  if (ok) return true;
+
+  setServerWaking(true);
+  const interval = setInterval(async () => {
+    if (Date.now() - startTime > maxRetryDurationMs) {
+      clearInterval(interval);
+      setServerWaking(false);
+      return;
+    }
+    const success = await probeOnce();
+    if (success) {
+      clearInterval(interval);
+      setServerWaking(false);
+    }
+  }, retryIntervalMs);
+
+  return false;
+}
+
+// Safe network request helper with 3s waking detection
 async function safeFetch(url: string, options?: RequestInit): Promise<Response | null> {
   if (!hasCheckedBackend) {
     await checkBackendConnection();
   }
   
+  const wakingTimer = setTimeout(() => {
+    setServerWaking(true);
+  }, 3000);
+
   try {
     const res = await fetch(url, options);
+    clearTimeout(wakingTimer);
+    setServerWaking(false);
     if (!isLiveBackend && res.ok) isLiveBackend = true;
     return res;
   } catch {
+    clearTimeout(wakingTimer);
+    setServerWaking(false);
     isLiveBackend = false;
     return null;
   }
@@ -412,6 +474,16 @@ export const api = {
     return result;
   },
 
+  async getMemory(id: string): Promise<Memory | null> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/memories/${encodeURIComponent(id)}`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return memoryStore.find(m => (m._id === id || m.id === id)) || null;
+  },
+
   async updateMemory(id: string, updates: Partial<Memory>): Promise<Memory> {
     try {
       const res = await safeFetch(`${BASE_URL}/api/memories/${id}`, {
@@ -647,7 +719,7 @@ export const api = {
     } else {
       // GOVERNED MODE
       if (abstention) {
-        answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Telegram bot?`;
+        answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
       } else if (query.includes('timeout') || query.includes('checkout')) {
         answer = "🛡️ [XYRO101 GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy MongoDB connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
       } else if (query.includes('database')) {
@@ -667,6 +739,28 @@ export const api = {
       latency_ms: mode === 'none' ? 120 : mode === 'naive' ? 240 : 380,
       tokens_used: mode === 'none' ? 85 : mode === 'naive' ? 320 : 540,
     };
+  },
+
+
+  // Agent Runs (Step 6)
+  async getAgentRuns(): Promise<AgentRun[]> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/agent/runs`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return [];
+  },
+
+  async getAgentRunById(id: string): Promise<AgentRun | null> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/agent/runs/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return null;
   },
 
   // Benchmarks
@@ -859,35 +953,173 @@ export const api = {
     return { success: true, affectedCount: count };
   },
 
-  // SSE Stream Support
-  subscribeToEventStream(onEvent: (event: MemoryEvent) => void): () => void {
+  // SSE Stream Support with Exponential Backoff and Error Termination
+  subscribeToEventStream(
+    onEvent: (event: MemoryEvent) => void,
+    onError?: (errMessage: string) => void
+  ): () => void {
     let es: EventSource | null = null;
-    try {
-      es = new EventSource(`${BASE_URL}/api/stream`);
-      es.onmessage = (e) => {
-        try {
-          const parsed = JSON.parse(e.data);
-          onEvent(parsed);
-        } catch (err) {}
-      };
-      es.onerror = () => {
-        if (es) {
-          es.close();
-          es = null;
-        }
-      };
-    } catch (e) {}
+    let retryTimeout: any = null;
+    let retryCount = 0;
+    const maxRetries = 5;
+    let backoffDelay = 2000;
+    let isClosed = false;
 
-    const interval = setInterval(() => {
-      if (Math.random() > 0.75 && eventStore.length > 0) {
-        onEvent(eventStore[0]);
+    function connect() {
+      if (isClosed) return;
+      const token = localStorage.getItem("anchor_token");
+      if (!token) {
+        onError?.("Session expired, log in again.");
+        return;
       }
-    }, 12000);
+      const streamUrl = `${BASE_URL}/api/stream?token=${encodeURIComponent(token)}`;
+      try {
+        es = new EventSource(streamUrl);
+        es.onmessage = (e) => {
+          try {
+            retryCount = 0;
+            backoffDelay = 2000;
+            const parsed = JSON.parse(e.data);
+            onEvent(parsed);
+          } catch {}
+        };
+        es.onerror = () => {
+          if (es) {
+            es.close();
+            es = null;
+          }
+          if (isClosed) return;
+
+          retryCount++;
+          if (retryCount >= maxRetries) {
+            onError?.("Session expired, log in again.");
+            return;
+          }
+
+          retryTimeout = setTimeout(() => {
+            backoffDelay = Math.min(30000, backoffDelay * 1.5);
+            connect();
+          }, backoffDelay);
+        };
+      } catch (err: any) {
+        onError?.(err?.message || "Stream connection failed");
+      }
+    }
+
+    connect();
 
     return () => {
+      isClosed = true;
       if (es) es.close();
-      clearInterval(interval);
+      if (retryTimeout) clearTimeout(retryTimeout);
     };
+  },
+
+  // Meta inspection
+  async getMeta(): Promise<{ embedProvider: string; dimension: number; store: string; retrievalPath: string; version?: string }> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/meta`);
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return {
+      embedProvider: 'local',
+      dimension: 384,
+      store: 'memory',
+      retrievalPath: 'memory',
+      version: '2.1.0'
+    };
+  },
+
+  // Account cascade purge
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/account`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+    return { success: false, message: 'Failed to delete account' };
+  },
+
+  // Human-in-the-Loop Outcome Feedback
+  async submitOutcome(data: {
+    memory_id: string;
+    action: 'APPROVED' | 'REJECTED';
+    feedback_source?: string;
+    user_id?: string;
+  }): Promise<{
+    success: boolean;
+    memory_id: string;
+    action: string;
+    previous_confidence: number;
+    new_confidence: number;
+    formula_applied: string;
+  }> {
+    try {
+      const res = await safeFetch(`${BASE_URL}/api/outcomes`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      });
+      if (res && res.ok) return await res.json();
+    } catch {}
+
+    const mem = memoryStore.find(m => m._id === data.memory_id || m.id === data.memory_id);
+    const prev = mem ? mem.confidence : 0.8;
+    const successes = data.action === 'APPROVED' ? 1 : 0;
+    const failures = data.action === 'REJECTED' ? 1 : 0;
+    const updated = parseFloat(((prev * 4 + successes) / (4 + successes + 2 * failures)).toFixed(4));
+    if (mem) {
+      mem.confidence = updated;
+      persist();
+    }
+    return {
+      success: true,
+      memory_id: data.memory_id,
+      action: data.action,
+      previous_confidence: prev,
+      new_confidence: updated,
+      formula_applied: '(prior * 4 + successes) / (4 + successes + 2 * failures)'
+    };
+  },
+
+  // JWT-Protected Scripted Demo Endpoints (No shared secret in browser)
+  async demoAlert(): Promise<{ success: boolean; message: string; path?: 'n8n' | 'direct'; alert?: any; triageResult?: any }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/alert`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to run demo alert' };
+  },
+
+  async demoDeploy(service: string = 'payments-api', version: string = 'v1.0.1'): Promise<{ success: boolean; message: string; path?: 'n8n' | 'direct'; staleCount?: number }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/deploy`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ service, version }),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to simulate deploy' };
+  },
+
+  async demoPoison(): Promise<{ success: boolean; message: string; quarantineAction?: string; quarantinedMemoryId?: string }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/poison`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to send poisoned note' };
+  },
+
+  async demoReset(): Promise<{ success: boolean; message: string; memoryCount?: number; eventCount?: number }> {
+    const res = await safeFetch(`${BASE_URL}/api/demo/reset`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    if (res && res.ok) return await res.json();
+    return { success: false, message: 'Failed to reset demo baseline' };
   },
 
   resetDemoData(): void {

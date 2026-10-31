@@ -1,4 +1,4 @@
-export type MemoryType = 'semantic' | 'episodic' | 'procedural';
+export type MemoryType = 'semantic' | 'episodic' | 'procedural' | 'constraint' | 'preference' | 'ephemeral';
 export type MemoryTier = 'hot' | 'warm' | 'archive';
 export type MemoryStatus = 'active' | 'stale' | 'quarantined' | 'superseded' | 'expired';
 
@@ -28,11 +28,16 @@ export interface Memory {
   _id: string;
   id?: string;
   owner: string;
+  ownerId?: string;
   workspace: string;
+  workspaceId?: string;
+  visibility?: 'private' | 'workspace';
   type: MemoryType;
   tier: MemoryTier;
   content: string;
   embedding?: number[];
+  embeddingModel?: string;
+  dimension?: number;
   entities: string[];
   attribute_key: string;
   value: string;
@@ -49,6 +54,7 @@ export interface Memory {
   access_count: number;
   last_used_at: string | null;
   expires_at: string | null;
+  purgeAt?: string | null;
   quarantine_reason?: string;
   created_at?: string;
   updated_at?: string;
@@ -69,6 +75,12 @@ export type EventType =
 export interface MemoryEvent {
   id: string;
   memory_id: string;
+  workspaceId?: string;
+  workspace?: string;
+  ownerId?: string;
+  owner?: string;
+  visibility?: 'private' | 'workspace';
+  idempotencyKey?: string;
   event_type: EventType;
   reason: string;
   actor: string;
@@ -88,6 +100,7 @@ export interface Outcome {
   previous_confidence: number;
   new_confidence: number;
   formula_applied: string;
+  idempotencyKey?: string;
 }
 
 export interface EnvEvent {
@@ -103,41 +116,30 @@ export interface EnvEvent {
 export interface Entity {
   id: string;
   name: string;
-  type: 'service' | 'database' | 'pool' | 'user' | 'component' | 'policy';
-  depends_on: string[];
-  owned_by?: string;
-  metadata?: Record<string, any>;
+  type: string;
+  dependencies: string[];
+  description?: string;
 }
-
-export type AuthProviderType = 'local' | 'google';
 
 export interface User {
   id: string;
-  _id?: string;
   email: string;
-  name: string;
+  name?: string;
   passwordHash?: string;
   googleId?: string;
-  profilePicture?: string;
-  authProviders: AuthProviderType[];
-  workspace: string;
+  avatarUrl?: string;
   createdAt: string;
-  created_at?: string;
-  updatedAt?: string;
-  lastLoginAt?: string;
-  isActive: boolean;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: string;
+  updatedAt: string;
 }
 
 export interface ConversationMessage {
   id: string;
-  sender: 'user' | 'agent';
-  text: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
   timestamp: string;
   mode?: 'none' | 'naive' | 'governed';
-  result?: any;
-  comparison?: any;
+  retrievedMemoryIds?: string[];
+  metadata?: any;
 }
 
 export interface Conversation {
@@ -145,6 +147,7 @@ export interface Conversation {
   _id?: string;
   userId: string;
   title: string;
+  mode: 'none' | 'naive' | 'governed';
   messages: ConversationMessage[];
   createdAt: string;
   updatedAt: string;
@@ -152,15 +155,17 @@ export interface Conversation {
 
 export interface MemoryFilter {
   owner?: string;
+  ownerId?: string;
   workspace?: string;
-  status?: MemoryStatus | string;
-  type?: MemoryType | string;
-  tier?: MemoryTier | string;
-  source?: SourceKind | string;
-  search?: string;
+  workspaceId?: string;
+  status?: string;
+  type?: string;
+  tier?: string;
+  source?: string;
   attribute_key?: string;
   entity?: string;
-  valid_at?: string;
+  search?: string;
+  visibility?: 'private' | 'workspace';
 }
 
 export interface ScoredMemory extends Memory {
@@ -168,7 +173,7 @@ export interface ScoredMemory extends Memory {
   recency_score: number;
   final_score: number;
   excluded?: boolean;
-  exclusion_reason?: 'stale' | 'quarantined' | 'expired' | 'low_score' | 'env_mismatch' | 'conflict_unresolved';
+  exclusion_reason?: string;
 }
 
 export interface RetrievalResult {
@@ -176,5 +181,35 @@ export interface RetrievalResult {
   retrieved: ScoredMemory[];
   excluded: ScoredMemory[];
   abstention: boolean;
-  abstention_reason?: string;
+  abstention_reason: string;
+  mode: 'none' | 'naive' | 'governed';
+  retrievalPath?: 'atlas-hybrid' | 'memory';
+}
+
+export interface AgentRun {
+  _id: string;
+  id?: string;
+  workspaceId: string;
+  ownerId?: string;
+  ts: string;
+  mode: 'none' | 'naive' | 'governed';
+  input: string;
+  retrievalPath: 'atlas-hybrid' | 'memory';
+  candidates: {
+    retrieved: ScoredMemory[];
+    excluded: ScoredMemory[];
+  };
+  structuredOutput: {
+    diagnosis: string;
+    proposedFix: string;
+    citedMemoryIds: string[];
+    confidence: number;
+    warnings: string[];
+    abstain: boolean;
+    abstainReason?: string | null;
+  };
+  latencyMs: number;
+  tokensUsed: number;
+  llmFallback: boolean;
+  answer: string;
 }

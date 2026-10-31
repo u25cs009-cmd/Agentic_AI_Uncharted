@@ -14,9 +14,21 @@ export async function sseStream(req: Request, res: Response) {
   res.write(': connected to ANCHOR SSE stream\n\n');
 
   const repo = await getRepository();
+  const currentWorkspace = req.user?.workspace || 'ws-primary';
+  const currentUserId = req.user?.id;
 
   const unsubscribe = repo.subscribeEvents((event: MemoryEvent) => {
     try {
+      const evtWs = (event as any).workspaceId || (event as any).workspace;
+      if (evtWs && evtWs !== currentWorkspace) {
+        return; // Scoped by workspace
+      }
+      const evtOwner = (event as any).ownerId || (event as any).owner;
+      const evtVis = (event as any).visibility;
+      if (evtVis === 'private' && evtOwner && evtOwner !== currentUserId) {
+        return; // Scoped by owner for private events
+      }
+
       res.write(`data: ${JSON.stringify(event)}\n\n`);
     } catch (err) {
       logger.error({ err }, 'Error writing to SSE stream');
@@ -38,4 +50,3 @@ export async function sseStream(req: Request, res: Response) {
     res.end();
   });
 }
-

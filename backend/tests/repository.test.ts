@@ -25,8 +25,8 @@ describe('ANCHOR Backend Core Utilities & Scoring', () => {
     const freshRecency = calculateRecency(nowISO, 'semantic');
     expect(freshRecency).toBeCloseTo(1.0, 2);
 
-    // Memory aged 60 days for semantic (halfLife = 60) should have recency ~ 0.5
-    const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+    // Memory aged 180 days for semantic (halfLife = 180) should have recency ~ 0.5
+    const sixtyDaysAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
     const halfDecayed = calculateRecency(sixtyDaysAgo, 'semantic');
     expect(halfDecayed).toBeCloseTo(0.5, 2);
   });

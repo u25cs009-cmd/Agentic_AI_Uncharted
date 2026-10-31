@@ -32,7 +32,7 @@ export interface Repository {
   releaseQuarantine(id: string): Promise<Memory>;
   rejectQuarantine(id: string): Promise<boolean>;
 
-  // Outcomes & Human Feedback (Telegram W3)
+  // Outcomes & Human Feedback (Operator Review W3)
   saveOutcome(outcome: OutcomeRecord): Promise<void>;
   getOutcomes(memoryId?: string): Promise<OutcomeRecord[]>;
 

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, Rocket, RotateCcw, CheckCircle2, LogOut, Zap, ShieldCheck, User, Sparkles } from 'lucide-react';
-import { api } from '../../services/api';
+import { Bell, Rocket, RotateCcw, CheckCircle2, LogOut, Zap, ShieldCheck, User, Sparkles, Loader2 } from 'lucide-react';
+import { api, subscribeToWakingState } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface HeaderProps {
@@ -13,6 +13,12 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
   const [isAlerting, setIsAlerting] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [isWaking, setIsWaking] = useState(false);
+
+  useEffect(() => {
+    const unsub = subscribeToWakingState(setIsWaking);
+    return unsub;
+  }, []);
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -72,6 +78,14 @@ export const Header: React.FC<HeaderProps> = ({ onRefresh }) => {
             {isLive ? 'MongoDB Live' : 'High-Fidelity Sandbox'}
           </span>
         </div>
+
+        {/* Waking server status banner (C5) */}
+        {isWaking && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400 shrink-0" />
+            <span className="font-medium whitespace-nowrap">Waking the server, this can take up to a minute</span>
+          </div>
+        )}
 
         {/* Toast notification banner */}
         {notice && (

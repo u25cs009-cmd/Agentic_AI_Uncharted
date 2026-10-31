@@ -69,32 +69,35 @@ const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 export async function deleteMemory(req: Request, res: Response, next: NextFunction) {
   try {
     const repo = await getRepository();
-const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     const existing = await repo.getMemoryById(id, req.user?.id, req.user?.workspace);
     if (!existing) {
       throw new AppError(404, `Memory '${id}' not found`);
     }
 
-    // 1. Delete the primary memory
-    await repo.deleteMemory(id, req.user?.id, req.user?.workspace);
-
-    // 2. Forget Cascade: delete all memories derived from this one
-    const derivedDeleted = await repo.deleteDerivedMemories(id, req.user?.id, req.user?.workspace);
-
-    // 3. Write immutable tombstone event with zero sensitive content
-    await repo.appendEvent({
+    // Step 5: Transactional cascade delete with atomic tombstone event recording
+    const tombstoneEvent = {
       id: `evt-${Date.now()}`,
       memory_id: id,
-      event_type: 'tombstone',
-      reason: `Memory deleted by user. Forget cascade purged ${derivedDeleted} derived memory records.`,
+      workspaceId: req.user?.workspace || 'ws-primary',
+      ownerId: req.user?.id || 'usr-shakti2',
+      event_type: 'tombstone' as const,
+      reason: 'Memory deleted by user. Cascade purged derived memory records.',
       actor: req.user?.email || 'user',
       timestamp: new Date().toISOString()
-    });
+    };
+
+    const { deletedCount } = await repo.cascadeDeleteTransactional(
+      id,
+      [tombstoneEvent],
+      req.user?.id,
+      req.user?.workspace
+    );
 
     return res.json({
       success: true,
-      message: `Memory '${id}' and ${derivedDeleted} derived memories deleted. Tombstone recorded.`
+      message: `Memory '${id}' and derived memories deleted (${deletedCount} total). Tombstone recorded.`
     });
   } catch (err) {
     next(err);

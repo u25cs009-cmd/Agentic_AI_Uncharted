@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoadingIndicator } from './components/common/LoadingIndicator';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LoginPage } from './pages/Auth/LoginPage';
 import { RegisterPage } from './pages/Auth/RegisterPage';
 import { ProfilePage } from './pages/Profile/ProfilePage';
@@ -36,7 +37,7 @@ export const App: React.FC = () => {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Main Application Layout */}
-            <Route path="/" element={<AppLayout />}>
+            <Route path="/" element={<ErrorBoundary><AppLayout /></ErrorBoundary>}>
               <Route index element={<ChatPage />} />
               <Route path="inspector" element={<InspectorPage />} />
               <Route path="explorer" element={<MemoryExplorerPage />} />

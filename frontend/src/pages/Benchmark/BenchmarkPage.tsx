@@ -32,6 +32,7 @@ export const BenchmarkPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [expandedScenarioId, setExpandedScenarioId] = useState<string | null>(null);
   const [lastExecuted, setLastExecuted] = useState<string | null>(null);
+  const [meta, setMeta] = useState<{ embedProvider: string; dimension: number; store: string } | null>(null);
 
   // Dynamic metrics state across None, Naive, Governed (ANCHOR)
   const [metrics, setMetrics] = useState<{
@@ -79,12 +80,16 @@ export const BenchmarkPage: React.FC = () => {
   useEffect(() => {
     const loadResults = async () => {
       try {
-        const data = await api.getBenchmarkResults();
+        const [data, metaData] = await Promise.all([
+          api.getBenchmarkResults().catch(() => null),
+          api.getMeta().catch(() => null)
+        ]);
         if (data) {
           if (data.metrics) setMetrics(data.metrics);
           if (data.categoryData) setCategoryData(data.categoryData);
           if (data.executedAt) setLastExecuted(data.executedAt);
         }
+        if (metaData) setMeta(metaData);
       } catch {}
     };
     loadResults();
@@ -117,9 +122,17 @@ export const BenchmarkPage: React.FC = () => {
             <Award className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-wrap gap-y-1">
               <h1 className="text-2xl font-bold tracking-tight text-[#ffffff]">15-Scenario Benchmark Arena</h1>
               <Badge variant="primary" size="sm">Official Evaluation</Badge>
+              {meta && (
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/35">
+                  Embeddings: {meta.embedProvider} ({meta.dimension}d) | Store: {meta.store}
+                </span>
+              )}
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                {lastExecuted ? 'Live Run' : 'Baseline Reference'}
+              </span>
             </div>
             <p className="text-xs text-[#94a3b8] mt-0.5">
               Rigorous empirical evaluation comparing None, Naive Vector Search, and XYRO101 Governed Memory across 15 production edge-cases.

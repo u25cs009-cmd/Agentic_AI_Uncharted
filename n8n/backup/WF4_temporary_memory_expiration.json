@@ -37,17 +37,13 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/expired-candidates",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/memories",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
-              "name": "reference_timestamp",
-              "value": "={{ $json.sweep_reference_time }}"
-            },
-            {
-              "name": "limit",
-              "value": "500"
+              "name": "status",
+              "value": "active"
             }
           ]
         },
@@ -55,16 +51,16 @@
         "headerParameters": {
           "parameters": [
             {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
-            {
               "name": "Content-Type",
               "value": "application/json"
             },
             {
-              "name": "X-Workflow-ID",
-              "value": "WF4-EXPIRATION"
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
             }
           ]
         },
@@ -83,7 +79,7 @@
         }
       },
       "id": "wf4-node-03",
-      "name": "Query Expired Candidates",
+      "name": "Query Active Memories",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -93,59 +89,15 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "c1",
-              "leftValue": "={{ ($json.candidates || []).length }}",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
-            }
-          ],
-          "combinator": "and"
-        }
+        "jsCode": "// WF4 Node 4: Verify Expiration Dates & Exclude Permanent Memories\nconst memories = Array.isArray($input.item.json) ? $input.item.json : ($input.item.json.data || []);\nconst refTime = new Date($('Compute Sweep Timestamps').first().json.sweep_reference_time).getTime();\n\n// Defensive Filter:\n// 1. Exclude permanent memories (expires_at is null or undefined)\n// 2. Exclude active memories whose expiration date is in the future\nconst expiredCandidates = memories.filter(mem => {\n  if (!mem.expires_at) return false;\n  const expTime = new Date(mem.expires_at).getTime();\n  return !isNaN(expTime) && expTime <= refTime;\n});\n\nreturn {\n  json: {\n    total_active_scanned: memories.length,\n    verified_expired_count: expiredCandidates.length,\n    expired_memory_ids: expiredCandidates.map(m => m._id || m.id),\n    expired_items: expiredCandidates.map(m => ({\n      memory_id: m._id || m.id,\n      attribute_key: m.attribute_key,\n      expires_at: m.expires_at\n    }))\n  }\n};"
       },
       "id": "wf4-node-04",
-      "name": "Has Candidates to Expire?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        760,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// WF4 Node 5a: Log Clean Run Summary\nreturn {\n  json: {\n    status: \"COMPLETED\",\n    items_expired: 0,\n    message: \"No candidate memories required expiration in this sweep.\",\n    timestamp: new Date().toISOString()\n  }\n};"
-      },
-      "id": "wf4-node-05a",
-      "name": "Log Clean Run Summary",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        980,
-        140
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// WF4 Node 5b: Filter Verified Expired & Exclude Permanent\nconst candidates = $input.item.json.candidates || [];\nconst refTime = new Date($('Compute Sweep Timestamps').first().json.sweep_reference_time).getTime();\n\nconst verifiedExpired = candidates.filter(mem => {\n  // 1. Guard against permanent memories\n  if (!mem.is_temporary || mem.is_temporary === false) return false;\n  // 2. Guard against missing expiration timestamps\n  if (!mem.expiration_date) return false;\n  // 3. Confirm date has passed\n  const expTime = new Date(mem.expiration_date).getTime();\n  return !isNaN(expTime) && expTime <= refTime;\n});\n\nreturn {\n  json: {\n    total_candidates_scanned: candidates.length,\n    verified_expired_count: verifiedExpired.length,\n    expired_memory_ids: verifiedExpired.map(m => m.memory_id),\n    expired_items: verifiedExpired.map(m => ({\n      memory_id: m.memory_id,\n      user_id: m.user_id,\n      topic: m.topic,\n      expiration_date: m.expiration_date\n    }))\n  }\n};"
-      },
-      "id": "wf4-node-05b",
       "name": "Verify Expiration & Filter Permanent",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        980,
-        420
+        760,
+        300
       ]
     },
     {
@@ -170,10 +122,61 @@
           "combinator": "and"
         }
       },
-      "id": "wf4-node-06",
+      "id": "wf4-node-05",
       "name": "Any Valid Expired Items?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
+      "position": [
+        980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF4 Node 6a: Log Clean Run Summary\nreturn {\n  json: {\n    status: \"COMPLETED\",\n    items_expired: 0,\n    message: \"No temporary memories have reached their expiration date in this sweep.\",\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf4-node-06a",
+      "name": "Log Clean Run Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BACKEND_BASE_URL || 'https://anchor-backend.onrender.com' }}/api/lifecycle/consolidate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.BACKEND_API_KEY || '' }}"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "={{ $env.INTERNAL_API_KEY || 'shakti2_internal_key_for_n8n_webhooks' }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "wf4-node-06b",
+      "name": "Execute Backend Consolidation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1200,
         420
@@ -181,92 +184,14 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/memories/lifecycle/expire-batch",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "X-Workflow-ID",
-              "value": "WF4-EXPIRATION"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"memory_ids\": {{ JSON.stringify($json.expired_memory_ids) }},\n  \"target_status\": \"EXPIRED\",\n  \"system_caller\": \"WF4_SCHEDULED_MAINTENANCE\"\n}",
-        "options": {
-          "response": {
-            "response": {
-              "neverError": true
-            }
-          }
-        }
+        "jsCode": "// WF4 Node 7: Compile Final Execution Summary\nconst consolidateRes = $('Execute Backend Consolidation').first().json || {};\nconst verifiedData = $('Verify Expiration & Filter Permanent').first().json || {};\n\nreturn {\n  json: {\n    status: \"SUCCESS\",\n    sweep_timestamp: new Date().toISOString(),\n    active_memories_scanned: verifiedData.total_active_scanned || 0,\n    identified_expired_count: verifiedData.verified_expired_count || 0,\n    backend_expired_marked_stale: consolidateRes.expiredCount || verifiedData.verified_expired_count || 0,\n    backend_archived_count: consolidateRes.archivedCount || 0,\n    active_count_remaining: consolidateRes.activeCount || 0,\n    backend_message: consolidateRes.message || \"Consolidation complete.\",\n    idempotent_sweep: true\n  }\n};"
       },
       "id": "wf4-node-07",
-      "name": "Batch Lifecycle Deprecation",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1440,
-        420
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "={{ $env.BACKEND_BASE_URL || 'https://api.anchor.internal' }}/api/v1/audit/logs",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $env.BACKEND_API_KEY || 'PLACEHOLDER_SERVICE_KEY' }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"workflow\": \"WF4-EXPIRATION\",\n  \"event\": \"DAILY_EXPIRATION_SWEEP\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"summary\": {{ JSON.stringify($json) }}\n}",
-        "options": {
-          "response": {
-            "response": {
-              "neverError": true
-            }
-          }
-        }
-      },
-      "id": "wf4-node-08",
-      "name": "Record Batch Audit Log",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1680,
-        420
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// WF4 Node 9: Compile Final Execution Summary\nconst batchRes = $('Batch Lifecycle Deprecation').first().json || {};\nconst verifiedData = $('Verify Expiration & Filter Permanent').first().json || {};\n\nreturn {\n  json: {\n    status: \"SUCCESS\",\n    sweep_timestamp: new Date().toISOString(),\n    candidates_scanned: verifiedData.total_candidates_scanned || 0,\n    memories_expired: verifiedData.verified_expired_count || 0,\n    backend_updated_count: batchRes.updated_count || verifiedData.verified_expired_count || 0,\n    failed_ids: batchRes.failed_ids || [],\n    idempotent_sweep: true\n  }\n};"
-      },
-      "id": "wf4-node-09",
       "name": "Compile Final Execution Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1900,
+        1440,
         420
       ]
     }
@@ -287,36 +212,18 @@
       "main": [
         [
           {
-            "node": "Query Expired Candidates",
+            "node": "Query Active Memories",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Query Expired Candidates": {
-      "main": [
-        [
-          {
-            "node": "Has Candidates to Expire?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Candidates to Expire?": {
+    "Query Active Memories": {
       "main": [
         [
           {
             "node": "Verify Expiration & Filter Permanent",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Log Clean Run Summary",
             "type": "main",
             "index": 0
           }
@@ -338,7 +245,7 @@
       "main": [
         [
           {
-            "node": "Batch Lifecycle Deprecation",
+            "node": "Execute Backend Consolidation",
             "type": "main",
             "index": 0
           }
@@ -352,18 +259,7 @@
         ]
       ]
     },
-    "Batch Lifecycle Deprecation": {
-      "main": [
-        [
-          {
-            "node": "Record Batch Audit Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Record Batch Audit Log": {
+    "Execute Backend Consolidation": {
       "main": [
         [
           {
@@ -379,7 +275,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "1.0.0",
+  "versionId": "1.1.0",
   "meta": {
     "templateCredsSetupCompleted": false,
     "instanceId": "anchor-automation-instance"
@@ -392,7 +288,10 @@
       "name": "Lifecycle"
     },
     {
-      "name": "Memory Expiration"
+      "name": "Expiration"
+    },
+    {
+      "name": "Consolidation"
     }
   ]
 }

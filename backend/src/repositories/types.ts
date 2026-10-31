@@ -7,7 +7,8 @@ import {
   User,
   Conversation,
   MemoryFilter,
-  ScoredMemory
+  ScoredMemory,
+  AgentRun
 } from '../types/index.js';
 
 export interface Repository {
@@ -28,9 +29,32 @@ export interface Repository {
   getEvents(limit?: number, owner?: string, workspace?: string): Promise<MemoryEvent[]>;
   getEventsForMemory(memoryId: string, owner?: string, workspace?: string): Promise<MemoryEvent[]>;
 
+  // Transactions (Step 5)
+  ingestTransactional(memory: Memory, event: MemoryEvent): Promise<{ memory: Memory; event: MemoryEvent }>;
+  supersedeTransactional(
+    oldMemoryId: string,
+    newMemory: Memory,
+    oldEvent: MemoryEvent,
+    newEvent: MemoryEvent,
+    owner?: string,
+    workspace?: string
+  ): Promise<{ newMemory: Memory }>;
+  cascadeDeleteTransactional(
+    targetMemoryId: string,
+    tombstoneEvents: MemoryEvent[],
+    owner?: string,
+    workspace?: string
+  ): Promise<{ deletedCount: number }>;
+
   // Search
   searchVector(embedding: number[], topK: number, filter?: MemoryFilter): Promise<ScoredMemory[]>;
   searchKeyword(query: string, topK: number, filter?: MemoryFilter): Promise<ScoredMemory[]>;
+  searchAtlasHybrid?(
+    queryText: string,
+    queryEmbedding: number[],
+    topK?: number,
+    filter?: MemoryFilter
+  ): Promise<{ results: ScoredMemory[]; retrievalPath: 'atlas-hybrid'; indexError?: string }>;
 
   // Events & Feedback
   saveOutcome(outcome: Outcome): Promise<void>;
@@ -59,4 +83,9 @@ export interface Repository {
 
   // Live SSE listener
   subscribeEvents(listener: (event: MemoryEvent) => void): () => void;
+
+  // Agent Runs (Step 6)
+  saveAgentRun(run: AgentRun): Promise<AgentRun>;
+  getAgentRuns(workspaceId: string, limit?: number): Promise<AgentRun[]>;
+  getAgentRunById(id: string, workspaceId: string): Promise<AgentRun | null>;
 }
