@@ -24,10 +24,42 @@ app.use(helmet({
   contentSecurityPolicy: false // Allow SSE & dashboard iframe interactions
 }));
 
+// CORS configuration: restrict to configured origins; no wildcard in production
+const allowedOrigins = new Set(config.corsOrigins);
+
 app.use(cors({
-  origin: '*', // Allow frontend dev server and production Vercel apps
+  origin: (origin, callback) => {
+    // Allow non-browser requests (e.g. server-to-server, curl, health checks) where origin is undefined
+    if (!origin) return callback(null, true);
+    
+    // In development mode, allow localhost and configured origins
+    if (config.nodeEnv !== 'production') {
+      if (origin.includes('localhost') || origin.includes('127.0.0.1') || allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+    }
+
+    // In production mode, strictly check configured origins (no wildcard '*')
+    const isAllowed = Array.from(allowedOrigins).some(allowed => {
+      if (allowed === '*' && config.nodeEnv !== 'production') return true;
+      if (allowed === origin) return true;
+      try {
+        return new URL(allowed).origin === new URL(origin).origin;
+      } catch {
+        return false;
+      }
+    });
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+    
+    logger.warn({ blockedOrigin: origin }, 'CORS request rejected: origin not permitted in production');
+    callback(new Error(`CORS policy violation: origin ${origin} is not allowed`));
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-internal-key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-internal-key', 'x-engram-secret', 'x-execution-context']
 }));
 
 app.use(express.json({ limit: '10mb' }));
