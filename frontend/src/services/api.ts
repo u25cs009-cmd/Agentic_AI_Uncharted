@@ -719,7 +719,7 @@ export const api = {
     } else {
       // GOVERNED MODE
       if (abstention) {
-        answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Telegram bot?`;
+        answer = `🛡️ [XYRO101 GOVERNED ABSTENTION]\n${abstentionReason}\n\nI have refrained from applying unverified or obsolete instructions. Would you like me to flag this for human approval via the Operator Review Dashboard?`;
       } else if (query.includes('timeout') || query.includes('checkout')) {
         answer = "🛡️ [XYRO101 GOVERNED DECISION]\nBased on human-approved memory `mem-001` (Trust: 1.00, Verified 2026-10-29), checkout DB timeouts are safely resolved by:\n\n1. Restarting the connection pool with `max_connections: 50`.\n2. Verifying the healthy MongoDB connection string.\n\n*Note: Deprecated PostgreSQL restart commands (mem-004) were actively excluded as stale.*";
       } else if (query.includes('database')) {
@@ -1085,7 +1085,7 @@ export const api = {
   },
 
   // JWT-Protected Scripted Demo Endpoints (No shared secret in browser)
-  async demoAlert(): Promise<{ success: boolean; message: string; alert?: any; triageResult?: any }> {
+  async demoAlert(): Promise<{ success: boolean; message: string; path?: 'n8n' | 'direct'; alert?: any; triageResult?: any }> {
     const res = await safeFetch(`${BASE_URL}/api/demo/alert`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -1094,7 +1094,7 @@ export const api = {
     return { success: false, message: 'Failed to run demo alert' };
   },
 
-  async demoDeploy(service: string = 'payments-api', version: string = 'v1.0.1'): Promise<{ success: boolean; message: string; staleCount?: number }> {
+  async demoDeploy(service: string = 'payments-api', version: string = 'v1.0.1'): Promise<{ success: boolean; message: string; path?: 'n8n' | 'direct'; staleCount?: number }> {
     const res = await safeFetch(`${BASE_URL}/api/demo/deploy`, {
       method: 'POST',
       headers: getAuthHeaders(),

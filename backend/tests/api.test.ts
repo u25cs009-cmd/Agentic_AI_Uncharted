@@ -66,7 +66,7 @@ describe('ANCHOR Express REST API Integration Tests', () => {
       .send({
         memory_id: 'mem-002',
         action: 'APPROVED',
-        feedback_source: 'Telegram Approval Bot',
+        feedback_source: 'Operator Dashboard Approval',
         user_id: 'ayush-lead'
       });
 

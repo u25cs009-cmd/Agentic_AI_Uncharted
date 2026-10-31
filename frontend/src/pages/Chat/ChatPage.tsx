@@ -299,8 +299,9 @@ export const ChatPage: React.FC = () => {
     try {
       if (action === 'alert') {
         const res = await api.demoAlert();
+        const prefix = res.path === 'n8n' ? '[via n8n] ' : '';
         setDemoToast({
-          text: res.message || 'Demo alert executed: payments-api pool exhaustion triaged',
+          text: `${prefix}${res.message || 'payments-api pool exhaustion triaged'}`,
           type: 'success'
         });
         if (res.triageResult) {
@@ -327,8 +328,9 @@ export const ChatPage: React.FC = () => {
         }
       } else if (action === 'deploy') {
         const res = await api.demoDeploy('payments-api', 'v1.0.1');
+        const prefix = res.path === 'n8n' ? '[via n8n] ' : '';
         setDemoToast({
-          text: res.message || `payments-api v1.0.1 deployed; ${res.staleCount ?? 2} memories marked stale`,
+          text: `${prefix}${res.message || `payments-api v1.0.1 deployed; ${res.staleCount ?? 2} memories marked stale`}`,
           type: 'warn'
         });
       } else if (action === 'poison') {

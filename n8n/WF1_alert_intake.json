@@ -1,0 +1,90 @@
+{
+  "name": "WF1 - Incident Alert Intake & Governance",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alert",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf1-node-01",
+      "name": "Webhook - Alert Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "engram-alert-intake"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.ENGRAM_API_URL }}/api/agent/triage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-engram-secret",
+              "value": "={{ $vars.ENGRAM_SHARED_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "wf1-node-02",
+      "name": "HTTP Request - Agent Triage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "wf1-node-03",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [580, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Alert Intake": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Agent Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Agent Triage": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

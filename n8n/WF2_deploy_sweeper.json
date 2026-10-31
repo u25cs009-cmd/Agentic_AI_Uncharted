@@ -1,0 +1,140 @@
+{
+  "name": "WF2 - Production Deploy Invalidation Sweeper",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deploy",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "wf2-node-01",
+      "name": "Webhook - Deploy Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [100, 300],
+      "webhookId": "engram-deploy-sweeper"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.ENGRAM_API_URL }}/api/events/deploy",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-engram-secret",
+              "value": "={{ $vars.ENGRAM_SHARED_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "wf2-node-02",
+      "name": "HTTP Request - Deploy Sweep",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-stale-count",
+              "leftValue": "={{ ($json.staleCount || $json.affectedCount || 0) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "wf2-node-03",
+      "name": "IF Stale Count > 0",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [580, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.NOTIFY_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event: 'deploy_staleness_invalidation', service: $json.service, staleCount: $json.staleCount || $json.affectedCount, timestamp: new Date().toISOString() }) }}",
+        "options": {}
+      },
+      "id": "wf2-node-04",
+      "name": "HTTP Request - Notify Operator",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [820, 200]
+    }
+  ],
+  "connections": {
+    "Webhook - Deploy Event": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Deploy Sweep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Deploy Sweep": {
+      "main": [
+        [
+          {
+            "node": "IF Stale Count > 0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Stale Count > 0": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Notify Operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

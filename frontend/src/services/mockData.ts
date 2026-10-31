@@ -167,8 +167,8 @@ export const INITIAL_EVENTS: MemoryEvent[] = [
     id: "evt-101",
     memory_id: "mem-001",
     event_type: "feedback_approved",
-    reason: "Lead DevOps human approved connection pool fix through Telegram bot",
-    actor: "Telegram @DevOpsLead (Member 3)",
+    reason: "Lead DevOps human approved connection pool fix through Operator Review Dashboard",
+    actor: "Operator @DevOpsLead (Member 3)",
     timestamp: "2026-10-29T18:10:00Z"
   },
   {

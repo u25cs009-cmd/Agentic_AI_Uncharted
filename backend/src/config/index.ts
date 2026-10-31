@@ -39,10 +39,7 @@ export const config = {
     openaiKey: process.env.OPENAI_API_KEY || '',
   },
 
-  telegram: {
-    botToken: process.env.TELEGRAM_BOT_TOKEN || '',
-    chatId: process.env.TELEGRAM_CHAT_ID || '',
-  },
+  notifyWebhookUrl: process.env.NOTIFY_WEBHOOK_URL || '',
 
   n8n: {
     webhookUrl: process.env.N8N_WEBHOOK_URL || '',
