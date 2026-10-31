@@ -23,13 +23,14 @@ import { EmptyState } from '../../components/common/EmptyState';
 import { MEMORY_HALF_LIVES, HalfLifeType } from '../../config/halfLives';
 
 /** Large, high-contrast score bar component (>= 4.5:1 contrast) */
-const LargeScoreBar: React.FC<{ label: string; value: number; colorHex: string }> = ({ label, value, colorHex }) => {
-  const pct = Math.max(0, Math.min(100, Math.round(value * 100)));
+const LargeScoreBar: React.FC<{ label: string; value?: number | null; colorHex: string }> = ({ label, value, colorHex }) => {
+  const num = typeof value === 'number' && !isNaN(value) ? value : 0;
+  const pct = Math.max(0, Math.min(100, Math.round(num * 100)));
   return (
     <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl space-y-1.5 shadow-sm">
       <div className="flex justify-between items-center text-xs font-mono">
         <span className="text-slate-300 font-medium text-[11px]">{label}</span>
-        <span className="font-bold text-white text-xs">{value.toFixed(2)}</span>
+        <span className="font-bold text-white text-xs">{num.toFixed(2)}</span>
       </div>
       <div className="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800">
         <div
@@ -149,26 +150,33 @@ export const InspectorPage: React.FC = () => {
 
   // Plain language reason generator
   const getPlainLanguageReason = (m: RetrievalScoring, isChosen: boolean): string => {
+    const similarity = typeof m?.similarity === 'number' ? m.similarity : 0;
+    const trust = typeof m?.trust === 'number' ? m.trust : 0;
+    const finalScore = typeof m?.final_score === 'number' ? m.final_score : 0;
+    const recency = typeof (m as any)?.recency === 'number' 
+      ? (m as any).recency 
+      : (typeof (m as any)?.recency_score === 'number' ? (m as any).recency_score : 1.0);
+
     if (!isChosen) {
-      if (m.status === 'stale' || m.exclusion_reason === 'stale') {
+      if (m?.status === 'stale' || m?.exclusion_reason === 'stale') {
         return 'Rejected because stale after deployment (validity 0.15; dependency altered by production release).';
       }
-      if (m.status === 'quarantined' || m.exclusion_reason === 'quarantined') {
+      if (m?.status === 'quarantined' || m?.exclusion_reason === 'quarantined') {
         return 'Rejected because quarantined by deterministic security screener (adversarial prompt injection or unverified external payload).';
       }
-      if (m.trust < 0.5) {
-        return `Rejected because trust (${m.trust.toFixed(2)}) is below operational safety floor (minimum 0.50).`;
+      if (trust < 0.5) {
+        return `Rejected because trust (${trust.toFixed(2)}) is below operational safety floor (minimum 0.50).`;
       }
-      if (m.similarity < 0.35) {
-        return `Rejected because semantic similarity (${m.similarity.toFixed(2)}) is below retrieval threshold.`;
+      if (similarity < 0.35) {
+        return `Rejected because semantic similarity (${similarity.toFixed(2)}) is below retrieval threshold.`;
       }
-      if (m.final_score < 0.25) {
-        return `Rejected because composite score (${m.final_score.toFixed(2)}) is below floor threshold (0.25).`;
+      if (finalScore < 0.25) {
+        return `Rejected because composite score (${finalScore.toFixed(2)}) is below floor threshold (0.25).`;
       }
       return 'Rejected because composite evaluation failed governance rules.';
     }
 
-    return `Chosen because high semantic similarity (${m.similarity.toFixed(2)}), verified trust (${m.trust.toFixed(2)}), and valid recency (${m.recency.toFixed(2)}) produced composite score ${m.final_score.toFixed(2)} ≥ 0.25 threshold.`;
+    return `Chosen because high semantic similarity (${similarity.toFixed(2)}), verified trust (${trust.toFixed(2)}), and valid recency (${recency.toFixed(2)}) produced composite score ${finalScore.toFixed(2)} ≥ 0.25 threshold.`;
   };
 
   return (
@@ -342,7 +350,7 @@ export const InspectorPage: React.FC = () => {
                     <div className="flex items-center space-x-1.5 font-mono">
                       <span className="text-xs text-slate-400">Score:</span>
                       <span className="text-sm font-extrabold text-emerald-400">
-                        {m.final_score.toFixed(3)}
+                        {(m.final_score ?? 0).toFixed(3)}
                       </span>
                     </div>
                   </div>
@@ -358,12 +366,12 @@ export const InspectorPage: React.FC = () => {
 
                   {/* Large High-Contrast Score Bars */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-slate-800">
-                    <LargeScoreBar label="Similarity" value={m.similarity} colorHex="#06b6d4" />
-                    <LargeScoreBar label="Trust" value={m.trust} colorHex="#10b981" />
-                    <LargeScoreBar label="Confidence" value={m.confidence} colorHex="#38bdf8" />
-                    <LargeScoreBar label="Recency" value={m.recency} colorHex="#a855f7" />
+                    <LargeScoreBar label="Similarity" value={m.similarity ?? 0} colorHex="#06b6d4" />
+                    <LargeScoreBar label="Trust" value={m.trust ?? 1.0} colorHex="#10b981" />
+                    <LargeScoreBar label="Confidence" value={m.confidence ?? 0.9} colorHex="#38bdf8" />
+                    <LargeScoreBar label="Recency" value={m.recency ?? (m as any).recency_score ?? 1.0} colorHex="#a855f7" />
                     <LargeScoreBar label="Validity" value={m.status === 'stale' ? 0.15 : 1.0} colorHex="#f59e0b" />
-                    <LargeScoreBar label="Final" value={m.final_score} colorHex={m.final_score >= 0.25 ? "#22c55e" : "#ef4444"} />
+                    <LargeScoreBar label="Final" value={m.final_score ?? 0} colorHex={(m.final_score ?? 0) >= 0.25 ? "#22c55e" : "#ef4444"} />
                   </div>
                 </div>
               ))}
@@ -405,7 +413,7 @@ export const InspectorPage: React.FC = () => {
                     <div className="flex items-center space-x-1.5 font-mono">
                       <span className="text-xs text-slate-500">Score:</span>
                       <span className="text-xs font-bold text-rose-400">
-                        {m.final_score.toFixed(3)}
+                        {(m.final_score ?? 0).toFixed(3)}
                       </span>
                     </div>
                   </div>
@@ -421,12 +429,12 @@ export const InspectorPage: React.FC = () => {
 
                   {/* Large High-Contrast Score Bars */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-slate-800">
-                    <LargeScoreBar label="Similarity" value={m.similarity} colorHex="#06b6d4" />
-                    <LargeScoreBar label="Trust" value={m.trust} colorHex="#10b981" />
-                    <LargeScoreBar label="Confidence" value={m.confidence} colorHex="#38bdf8" />
-                    <LargeScoreBar label="Recency" value={m.recency} colorHex="#a855f7" />
+                    <LargeScoreBar label="Similarity" value={m.similarity ?? 0} colorHex="#06b6d4" />
+                    <LargeScoreBar label="Trust" value={m.trust ?? 0} colorHex="#10b981" />
+                    <LargeScoreBar label="Confidence" value={m.confidence ?? 0} colorHex="#38bdf8" />
+                    <LargeScoreBar label="Recency" value={m.recency ?? (m as any).recency_score ?? 1.0} colorHex="#a855f7" />
                     <LargeScoreBar label="Validity" value={m.status === 'stale' || m.exclusion_reason === 'stale' ? 0.15 : 1.0} colorHex="#f59e0b" />
-                    <LargeScoreBar label="Final" value={m.final_score} colorHex="#ef4444" />
+                    <LargeScoreBar label="Final" value={m.final_score ?? 0} colorHex="#ef4444" />
                   </div>
                 </div>
               ))}

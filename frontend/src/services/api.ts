@@ -578,9 +578,13 @@ export const api = {
       const res = await safeFetch(`${BASE_URL}/api/memories/events`, {
         headers: getAuthHeaders(),
       });
-      if (res && res.ok) return await res.json();
+      if (res && res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.events)) return data.events;
+      }
     } catch {}
-    return eventStore;
+    return Array.isArray(eventStore) && eventStore.length > 0 ? eventStore : [...INITIAL_EVENTS];
   },
 
   async getTimeTravelState(timestamp: string): Promise<Memory[]> {
@@ -588,12 +592,16 @@ export const api = {
       const res = await safeFetch(`${BASE_URL}/api/timetravel?timestamp=${encodeURIComponent(timestamp)}`, {
         headers: getAuthHeaders(),
       });
-      if (res && res.ok) return await res.json();
+      if (res && res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.memories)) return data.memories;
+      }
     } catch {}
 
-    // In mock fallback: filter memories that were created on or before timestamp
     const targetTime = new Date(timestamp).getTime();
-    return memoryStore.filter(m => {
+    const sourceStore = Array.isArray(memoryStore) && memoryStore.length > 0 ? memoryStore : INITIAL_MEMORIES;
+    return sourceStore.filter(m => {
       const createdTime = new Date(m.created_at || m.valid_from).getTime();
       return createdTime <= targetTime;
     });
@@ -748,7 +756,11 @@ export const api = {
       const res = await safeFetch(`${BASE_URL}/api/agent/runs`, {
         headers: getAuthHeaders(),
       });
-      if (res && res.ok) return await res.json();
+      if (res && res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data.runs)) return data.runs;
+      }
     } catch {}
     return [];
   },
