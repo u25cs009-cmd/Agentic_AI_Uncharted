@@ -105,10 +105,11 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
         }
       }
 
-      // Check if relevant instructions were invalidated by a recent deploy
-      if (!abstention && retrieved.length === 0 && excluded.some(e => e.exclusion_reason === 'stale')) {
+      // Check if relevant instructions were invalidated by a recent deploy (only if relevant to the query!)
+      const relevantStaleMemory = excluded.find(e => e.exclusion_reason === 'stale' && e.similarity >= 0.40);
+      if (!abstention && retrieved.length === 0 && relevantStaleMemory) {
         abstention = true;
-        abstentionReason = 'Relevant prior operational fix was invalidated following a recent deployment. Deprecated fix excluded from execution.';
+        abstentionReason = `Relevant prior operational fix ('${relevantStaleMemory.attribute_key}') was invalidated following a recent deployment. Deprecated fix excluded from execution.`;
       }
     }
 
@@ -256,18 +257,37 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
           answer += `\n\n⚠️ **Validation Warnings**:\n${citationWarnings.map(w => `- ${w}`).join('\n')}`;
         }
       } else {
-        abstention = true;
-        abstentionReason = 'No qualifying memories passed score threshold (>= 0.25).';
-        answer = '🛡️ [XYRO101 GOVERNED DECISION]\nNo sufficiently trusted memory found meeting threshold (final score >= 0.25). Abstaining from blind resolution.';
-        structuredAnswer = {
-          diagnosis: 'No qualifying memories passed score threshold (>= 0.25)',
-          proposedFix: 'Request operator clarification or seed verified operational facts',
-          citedMemoryIds: [],
-          confidence: 0.1,
-          warnings: ['Score threshold not met'],
-          abstain: true,
-          abstainReason: 'Final score below 0.25 threshold'
-        };
+const isGreeting = /^(hi|hello|hey|greetings|morning|evening|afternoon|help)\b/i.test(query.trim());
+        if (isGreeting) {
+          // No corporate memory needed for natural greetings -> Answer politely using general knowledge as XYRO101
+          const llmPrompt = `You are XYRO101, the ANCHOR Governed AI Memory Engine. A user says: "${query}". Answer courteously and helpfully in 1-2 sentences as an AI engineering assistant.`;
+          const llmRes = await LLMService.complete(llmPrompt, {
+            systemPrompt: 'You are XYRO101, an intelligent agentic memory assistant. Be concise, polite, and helpful.'
+          });
+          answer = `🛡️ [XYRO101 GOVERNED AGENT]\n${llmRes.content}`;
+          structuredAnswer = {
+            diagnosis: 'Natural conversational greeting',
+            proposedFix: llmRes.content,
+            citedMemoryIds: [],
+            confidence: 0.9,
+            warnings: [],
+            abstain: false,
+            abstainReason: null
+          };
+        } else {
+          abstention = true;
+          abstentionReason = 'No qualifying memories passed score threshold (>= 0.25).';
+          answer = '🛡️ [XYRO101 GOVERNED DECISION]\nNo sufficiently trusted memory found meeting threshold (final score >= 0.25). Abstaining from blind resolution.';
+          structuredAnswer = {
+            diagnosis: 'No qualifying memories passed score threshold (>= 0.25)',
+            proposedFix: 'Request operator clarification or seed verified operational facts',
+            citedMemoryIds: [],
+            confidence: 0.1,
+            warnings: ['Score threshold not met'],
+            abstain: true,
+            abstainReason: 'Final score below 0.25 threshold'
+          };
+        }
       }
     }
 
