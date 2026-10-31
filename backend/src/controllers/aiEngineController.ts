@@ -5,7 +5,9 @@ import { Memory, RetrievalResult, ScoredMemory } from '../types/index.js';
 import { LLMService } from '../services/llm.js';
 import { CandidateFactExtractor, TRUST_LADDER } from '../engine/extractor.js';
 import { SourceKind } from '../engine/types.js';
-import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
+import { calculateRecency, calculateFinalScore } from '../utils/scoring.js';
+import { getEmbedding } from '../services/embedding.js';
+import { config } from '../config/index.js';
 
 export async function chat(req: Request, res: Response, next: NextFunction) {
   try {
@@ -23,6 +25,8 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
     const excluded: ScoredMemory[] = [];
     let abstention = false;
     let abstentionReason = '';
+    let retrievalPath: 'atlas-hybrid' | 'memory' = config.store === 'mongo' ? 'atlas-hybrid' : 'memory';
+    let indexError: string | undefined;
 
     const queryTokens = query.toLowerCase().split(/\W+/).filter((w: string) => w.length > 2);
 
@@ -33,7 +37,8 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       const sim = Number(Math.min(0.98, Math.max(0.15, overlap > 0 ? 0.70 + (overlap * 0.25) : 0.20)).toFixed(3));
 
       const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
-      const finalScore = calculateFinalScore(sim, mem.trust, mem.confidence, recency);
+      const validity = mem.status === 'stale' ? 0.15 : 1.0;
+      const finalScore = calculateFinalScore(sim, mem.trust, mem.confidence, recency, validity);
 
       const scoredMem: ScoredMemory = {
         ...mem,
@@ -140,6 +145,8 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
       excluded_memories: excluded,
       abstention,
       abstention_reason: abstentionReason,
+      retrievalPath,
+      indexError,
       latency_ms: activeMode === 'none' ? 120 : activeMode === 'naive' ? 240 : 380,
       tokens_used: activeMode === 'none' ? 85 : activeMode === 'naive' ? 320 : 540
     });
@@ -150,7 +157,7 @@ export async function chat(req: Request, res: Response, next: NextFunction) {
 
 export async function ingestObservation(req: Request, res: Response, next: NextFunction) {
   try {
-    const { text, source } = req.body;
+    const { text, source, visibility } = req.body;
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Observation text is required' });
     }
@@ -158,8 +165,9 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
     const repo = await getRepository();
     const owner = req.user?.id || 'usr-shakti2';
     const workspace = req.user?.workspace || 'ws-primary';
+    const memoryVisibility: 'private' | 'workspace' = visibility === 'private' ? 'private' : 'workspace';
 
-    // 1. PII Masking (Implementation Plan Module 3)
+    // 1. PII Masking
     const scrubbedText = maskPII(text);
     const sourceKind: SourceKind = (source?.kind as SourceKind) || 'user_stated';
 
@@ -173,15 +181,23 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
       lower.includes('attacker') ||
       lower.includes('system:');
 
+    const embResult = await getEmbedding(scrubbedText);
+
     if (isInjection) {
       const qMem: Memory = {
         _id: `mem-${Date.now()}`,
         id: `mem-${Date.now()}`,
         owner,
+        ownerId: owner,
         workspace,
+        workspaceId: workspace,
+        visibility: memoryVisibility,
         type: 'semantic',
         tier: 'warm',
         content: scrubbedText,
+        embedding: embResult.embedding,
+        embeddingModel: embResult.embeddingModel,
+        dimension: embResult.dimension,
         attribute_key: 'security.suspicious.input',
         value: 'FLAGGED_INJECTION',
         entities: ['security'],
@@ -206,6 +222,9 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
       await repo.appendEvent({
         id: `evt-${Date.now()}`,
         memory_id: qMem._id,
+        workspaceId: workspace,
+        ownerId: owner,
+        visibility: memoryVisibility,
         event_type: 'quarantined',
         reason: 'Flagged by safety screener: Prompt injection signature',
         actor: 'DeterministicSafetyGuard',
@@ -236,7 +255,7 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
 
     const candidateTrust = (TRUST_LADDER as Record<string, number>)[sourceKind] ?? 0.80;
 
-    // Guard Rule #3: Deduplication - duplicate facts with identical key and value are IGNORED
+    // Guard Rule #3: Deduplication
     const isDuplicate = existingMemories.some(m => m.value.trim().toLowerCase() === candidate.value.trim().toLowerCase());
     if (isDuplicate) {
       return res.json({
@@ -246,17 +265,23 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
       });
     }
 
-    // Guard Rule #2: Trust Supremacy - lower trust cannot supersede higher trust (QUARANTINE instead)
+    // Guard Rule #2: Trust Supremacy
     const higherTrustExisting = existingMemories.find(m => m.trust > candidateTrust);
     if (higherTrustExisting) {
       const qMem: Memory = {
         _id: `mem-${Date.now()}`,
         id: `mem-${Date.now()}`,
         owner,
+        ownerId: owner,
         workspace,
+        workspaceId: workspace,
+        visibility: memoryVisibility,
         type: candidate.type,
         tier: 'warm',
         content: scrubbedText,
+        embedding: embResult.embedding,
+        embeddingModel: embResult.embeddingModel,
+        dimension: embResult.dimension,
         attribute_key: candidate.attribute_key,
         value: candidate.value,
         entities: candidate.entities,
@@ -281,6 +306,9 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
       await repo.appendEvent({
         id: `evt-${Date.now()}`,
         memory_id: qMem._id,
+        workspaceId: workspace,
+        ownerId: owner,
+        visibility: memoryVisibility,
         event_type: 'quarantined',
         reason: `Trust Supremacy: incoming trust ${candidateTrust} < active fact ${higherTrustExisting.trust}`,
         actor: 'TrustSupremacyGuard',
@@ -310,6 +338,9 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
         await repo.appendEvent({
           id: `evt-sup-${Date.now()}`,
           memory_id: oldMem._id,
+          workspaceId: workspace,
+          ownerId: owner,
+          visibility: memoryVisibility,
           event_type: 'superseded',
           reason: `Superseded by higher/equal trust fact: ${newMemId}`,
           actor: 'GovernanceEngine',
@@ -323,10 +354,16 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
       _id: newMemId,
       id: newMemId,
       owner,
+      ownerId: owner,
       workspace,
+      workspaceId: workspace,
+      visibility: memoryVisibility,
       type: candidate.type,
       tier: 'hot',
       content: scrubbedText,
+      embedding: embResult.embedding,
+      embeddingModel: embResult.embeddingModel,
+      dimension: embResult.dimension,
       attribute_key: candidate.attribute_key,
       value: candidate.value,
       entities: candidate.entities,
@@ -350,6 +387,9 @@ export async function ingestObservation(req: Request, res: Response, next: NextF
     await repo.appendEvent({
       id: `evt-add-${Date.now()}`,
       memory_id: newMemId,
+      workspaceId: workspace,
+      ownerId: owner,
+      visibility: memoryVisibility,
       event_type: 'created',
       reason: existingMemories.length > 0 ? 'Superseded previous fact with verified update' : 'Extracted new candidate fact',
       actor: 'IngestionPipeline',
@@ -374,13 +414,27 @@ export async function retrieveMemories(req: Request, res: Response, next: NextFu
     const owner = req.user?.id || 'usr-shakti2';
     const workspace = req.user?.workspace || 'ws-primary';
 
-    const results = await repo.searchKeyword(query || '', 20, { owner, workspace });
+    let retrievalPath: 'atlas-hybrid' | 'memory' = config.store === 'mongo' ? 'atlas-hybrid' : 'memory';
+    let indexError: string | undefined;
+    let scored: ScoredMemory[] = [];
+
+    if (config.store === 'mongo' && typeof repo.searchAtlasHybrid === 'function') {
+      const { embedding } = await getEmbedding(query || '');
+      const hybridRes = await repo.searchAtlasHybrid(query || '', embedding, 20, { owner, workspace });
+      scored = hybridRes.results;
+      retrievalPath = hybridRes.retrievalPath;
+      indexError = hybridRes.indexError;
+    } else {
+      scored = await repo.searchKeyword(query || '', 20, { owner, workspace });
+    }
 
     return res.json({
       query: query || '',
-      retrieved: results.filter(r => r.status === 'active'),
-      excluded: results.filter(r => r.status !== 'active'),
-      total: results.length
+      retrieved: scored.filter(r => r.status === 'active'),
+      excluded: scored.filter(r => r.status !== 'active'),
+      total: scored.length,
+      retrievalPath,
+      indexError
     });
   } catch (err) {
     next(err);
@@ -407,4 +461,3 @@ export async function agentTriage(req: Request, res: Response, next: NextFunctio
     next(err);
   }
 }
-

@@ -31,6 +31,12 @@ export interface Repository {
   // Search
   searchVector(embedding: number[], topK: number, filter?: MemoryFilter): Promise<ScoredMemory[]>;
   searchKeyword(query: string, topK: number, filter?: MemoryFilter): Promise<ScoredMemory[]>;
+  searchAtlasHybrid?(
+    queryText: string,
+    queryEmbedding: number[],
+    topK?: number,
+    filter?: MemoryFilter
+  ): Promise<{ results: ScoredMemory[]; retrievalPath: 'atlas-hybrid'; indexError?: string }>;
 
   // Events & Feedback
   saveOutcome(outcome: Outcome): Promise<void>;

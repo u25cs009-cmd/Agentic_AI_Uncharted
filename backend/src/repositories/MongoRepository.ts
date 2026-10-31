@@ -15,7 +15,7 @@ import {
 } from '../types/index.js';
 import { Repository } from './types.js';
 import { generateEmbedding } from '../services/embedding.js';
-import { calculateRecency, calculateFinalScore, cosineSimilarity } from '../utils/scoring.js';
+import { calculateRecency, calculateFinalScore, cosineSimilarity, fuseRRF } from '../utils/scoring.js';
 import {
   ScopedAccessContext,
   buildScopedMongoMemoryFilter,
@@ -85,7 +85,9 @@ export class MongoRepository implements Repository {
             workspace: ws,
             workspaceId: ws,
             visibility: m.visibility || 'workspace',
-            embedding: m.embedding || generateEmbedding(m.content)
+            embedding: m.embedding || generateEmbedding(m.content),
+            embeddingModel: m.embeddingModel || 'all-MiniLM-L6-v2-local',
+            dimension: m.dimension || 384
           };
         }) as any);
         await this.eventsCol.insertMany(INITIAL_EVENTS.map(e => ({
@@ -163,6 +165,8 @@ export class MongoRepository implements Repository {
       workspace: ws,
       workspaceId: ws,
       visibility: vis,
+      embeddingModel: memory.embeddingModel || 'all-MiniLM-L6-v2-local',
+      dimension: memory.dimension || (memory.embedding ? memory.embedding.length : 384),
       created_at: memory.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -287,30 +291,154 @@ export class MongoRepository implements Repository {
     return await this.eventsCol.find(query).sort({ timestamp: -1 }).toArray();
   }
 
-  // --- Search ---
+  // --- Native Atlas Retrieval & RRF Fusion (Step 3b) ---
 
-  async searchVector(embedding: number[], topK: number = 20, filter?: MemoryFilter): Promise<ScoredMemory[]> {
-    const candidates = await this.findMemories(filter);
-    const scored: ScoredMemory[] = [];
+  async searchAtlasHybrid(
+    queryText: string,
+    queryEmbedding: number[],
+    topK: number = 20,
+    filter?: MemoryFilter
+  ): Promise<{ results: ScoredMemory[]; retrievalPath: 'atlas-hybrid'; indexError?: string }> {
+    const ctx: ScopedAccessContext = {
+      userId: filter?.ownerId || filter?.owner || '',
+      workspaceId: filter?.workspaceId || filter?.workspace || 'ws-primary'
+    };
 
-    for (const mem of candidates) {
-      const sim = mem.embedding && mem.embedding.length > 0
-        ? cosineSimilarity(embedding, mem.embedding)
-        : mem.status === 'active' ? 0.85 : 0.40;
+    const statusFilter = filter?.status && filter.status !== 'all' ? filter.status : { $in: ['active', 'stale'] };
+    const preFilter = buildScopedMongoMemoryFilter(ctx, { status: statusFilter });
 
-      const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
-      const finalScore = calculateFinalScore(sim, mem.trust, mem.confidence, recency);
+    let vectorCandidates: Memory[] = [];
+    let textCandidates: Memory[] = [];
+    let indexError: string | undefined;
 
-      scored.push({
-        ...mem,
-        similarity: Number(sim.toFixed(4)),
-        recency_score: Number(recency.toFixed(4)),
-        final_score: finalScore
-      });
+    // 1. $vectorSearch
+    try {
+      vectorCandidates = await this.memoriesCol
+        .aggregate<Memory>([
+          {
+            $vectorSearch: {
+              index: 'vector_index',
+              path: 'embedding',
+              queryVector: queryEmbedding,
+              numCandidates: Math.max(topK * 10, 100),
+              limit: topK,
+              filter: preFilter
+            }
+          }
+        ])
+        .toArray();
+    } catch (err: any) {
+      logger.error({ err: err.message }, 'MongoRepository: Atlas $vectorSearch failed');
+      indexError = `Atlas $vectorSearch error: ${err.message}`;
     }
 
+    // 2. $search
+    try {
+      textCandidates = await this.memoriesCol
+        .aggregate<Memory>([
+          {
+            $search: {
+              index: 'text_index',
+              compound: {
+                must: [
+                  {
+                    text: {
+                      query: queryText,
+                      path: ['content', 'tags', 'entities.name']
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          { $match: preFilter },
+          { $limit: topK }
+        ])
+        .toArray();
+    } catch (err: any) {
+      logger.error({ err: err.message }, 'MongoRepository: Atlas $search failed');
+      indexError = (indexError ? `${indexError} | ` : '') + `Atlas $search error: ${err.message}`;
+    }
+
+    // Step 3d: Do not silently fall back in production if index fails
+    if (indexError && vectorCandidates.length === 0 && textCandidates.length === 0) {
+      return {
+        results: [],
+        retrievalPath: 'atlas-hybrid',
+        indexError
+      };
+    }
+
+    // 3. Reciprocal Rank Fusion (k = 60)
+    const fused = fuseRRF(vectorCandidates, textCandidates, 60);
+
+    // 4. Scoring Formula
+    const scored: ScoredMemory[] = fused.map(({ memory: mem, relevance }) => {
+      const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
+      const validity = mem.status === 'stale' ? 0.15 : 1.0;
+      const finalScore = Number((relevance * mem.trust * mem.confidence * recency * validity).toFixed(4));
+
+      return {
+        ...mem,
+        similarity: relevance,
+        recency_score: Number(recency.toFixed(4)),
+        final_score: finalScore
+      };
+    });
+
     scored.sort((a, b) => b.final_score - a.final_score);
-    return scored.slice(0, topK);
+    return {
+      results: scored.slice(0, topK),
+      retrievalPath: 'atlas-hybrid',
+      indexError
+    };
+  }
+
+  async searchVector(embedding: number[], topK: number = 20, filter?: MemoryFilter): Promise<ScoredMemory[]> {
+    const ctx: ScopedAccessContext = {
+      userId: filter?.ownerId || filter?.owner || '',
+      workspaceId: filter?.workspaceId || filter?.workspace || 'ws-primary'
+    };
+    const preFilter = buildScopedMongoMemoryFilter(ctx, filter);
+
+    try {
+      const docs = await this.memoriesCol
+        .aggregate<Memory>([
+          {
+            $vectorSearch: {
+              index: 'vector_index',
+              path: 'embedding',
+              queryVector: embedding,
+              numCandidates: Math.max(topK * 10, 100),
+              limit: topK,
+              filter: preFilter
+            }
+          }
+        ])
+        .toArray();
+
+      if (docs.length > 0) {
+        return docs.map((mem) => {
+          const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
+          const validity = mem.status === 'stale' ? 0.15 : 1.0;
+          const sim = mem.embedding && mem.embedding.length === embedding.length
+            ? cosineSimilarity(embedding, mem.embedding)
+            : 0.85;
+          const finalScore = Number((sim * mem.trust * mem.confidence * recency * validity).toFixed(4));
+          return {
+            ...mem,
+            similarity: Number(sim.toFixed(4)),
+            recency_score: Number(recency.toFixed(4)),
+            final_score: finalScore
+          };
+        });
+      }
+    } catch (err: any) {
+      logger.error({ err: err.message }, 'MongoRepository: $vectorSearch execution failed');
+      throw new Error(`Atlas $vectorSearch failed: ${err.message}. Index may not be provisioned or ready.`);
+    }
+
+    return [];
   }
 
   async searchKeyword(query: string, topK: number = 20, filter?: MemoryFilter): Promise<ScoredMemory[]> {
@@ -325,7 +453,8 @@ export class MongoRepository implements Repository {
       const sim = Math.min(0.98, Math.max(0.1, overlap));
 
       const recency = calculateRecency(mem.created_at || mem.valid_from, mem.type, mem.tier);
-      const finalScore = calculateFinalScore(sim, mem.trust, mem.confidence, recency);
+      const validity = mem.status === 'stale' ? 0.15 : 1.0;
+      const finalScore = Number((sim * mem.trust * mem.confidence * recency * validity).toFixed(4));
 
       scored.push({
         ...mem,

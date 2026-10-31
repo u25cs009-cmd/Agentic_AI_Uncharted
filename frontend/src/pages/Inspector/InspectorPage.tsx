@@ -21,6 +21,8 @@ export const InspectorPage: React.FC = () => {
     excluded: RetrievalScoring[];
     abstention: boolean;
     abstentionReason?: string;
+    retrievalPath?: 'atlas-hybrid' | 'memory';
+    indexError?: string;
   }>({
     retrieved: [],
     excluded: [],
@@ -67,6 +69,15 @@ export const InspectorPage: React.FC = () => {
               Retrieval Inspector &amp; Explainability HUD
             </h1>
             <Badge variant="primary">Formula Decomposition</Badge>
+            {results.retrievalPath && (
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold border ${
+                results.retrievalPath === 'atlas-hybrid'
+                  ? 'bg-[rgba(16,185,129,0.15)] text-[#34d399] border-[#059669]'
+                  : 'bg-[rgba(59,130,246,0.15)] text-[#60a5fa] border-[#2563eb]'
+              }`}>
+                Engine: {results.retrievalPath === 'atlas-hybrid' ? 'MongoDB Atlas Hybrid ($vectorSearch + $search)' : 'In-Memory Engine'}
+              </span>
+            )}
           </div>
           <p className="text-sm text-[#94a3b8] mt-1">
             Mathematical breakdown of cosine vector similarity, source trust weighting, confidence calibration, recency decay, and abstention rules.

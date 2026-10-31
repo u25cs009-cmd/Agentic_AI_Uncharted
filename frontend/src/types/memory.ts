@@ -28,11 +28,16 @@ export interface Memory {
   _id: string;
   id?: string;
   owner: string;
+  ownerId?: string;
   workspace: string;
+  workspaceId?: string;
+  visibility?: 'private' | 'workspace';
   type: MemoryType;
   tier: MemoryTier;
   content: string;
   embedding?: number[];
+  embeddingModel?: string;
+  dimension?: number;
   entities: string[];
   attribute_key: string;
   value: string;
@@ -49,6 +54,7 @@ export interface Memory {
   access_count: number;
   last_used_at: string | null;
   expires_at: string | null;
+  purgeAt?: string | null;
   quarantine_reason?: string;
   created_at?: string;
   updated_at?: string;
@@ -57,6 +63,12 @@ export interface Memory {
 export interface MemoryEvent {
   id: string;
   memory_id: string;
+  workspaceId?: string;
+  workspace?: string;
+  ownerId?: string;
+  owner?: string;
+  visibility?: 'private' | 'workspace';
+  idempotencyKey?: string;
   event_type: 'created' | 'updated' | 'superseded' | 'quarantined' | 'released' | 'stale' | 'deleted' | 'feedback_approved' | 'feedback_rejected';
   reason: string;
   actor: string;
@@ -89,6 +101,7 @@ export interface ChatModeResult {
   excluded_memories: RetrievalScoring[];
   abstention: boolean;
   abstention_reason?: string;
+  retrievalPath?: 'atlas-hybrid' | 'memory';
   latency_ms: number;
   tokens_used: number;
 }
@@ -106,4 +119,3 @@ export interface BenchmarkScenario {
     governed: { status: 'passed' | 'failed'; answer: string; harmful: boolean; stale_used: boolean };
   };
 }
-
