@@ -28,6 +28,7 @@ export interface StructuredLLMResult<T> {
 
 // In-memory response cache keyed by SHA-256 prompt hash
 const responseCache = new Map<string, { content: string; timestamp: number }>();
+let geminiDisabledDueToAuth = false;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class LLMService {
@@ -87,8 +88,8 @@ export class LLMService {
       };
     }
 
-    // 2. Primary Provider: Google Gemini
-    if (config.ai.geminiKey) {
+        // 2. Primary Provider: Google Gemini
+    if (config.ai.geminiKey && !geminiDisabledDueToAuth) {
       try {
         const geminiRes = await this.callGemini(prompt, systemPrompt, options);
         if (geminiRes) {
@@ -102,10 +103,27 @@ export class LLMService {
           };
         }
       } catch (err: any) {
-        logger.error({ err: err.message }, 'Google Gemini API request failed.');
+        logger.warn({ err: err.message }, 'Google Gemini API request failed; attempting Groq fallback.');
       }
-    } else {
-      logger.warn('GEMINI_API_KEY is not configured in environment. Using deterministic local fallback.');
+    }
+
+    // 3. High-Speed Secondary Provider: Groq (Qwen / Llama)
+    if (config.ai.groqKey) {
+      try {
+        const groqContent = await this.callGroq(prompt, systemPrompt, options);
+        if (groqContent) {
+          responseCache.set(cacheKey, { content: groqContent, timestamp: Date.now() });
+          return {
+            content: groqContent,
+            provider: 'groq',
+            model: 'qwen/qwen3.8-27b',
+            cached: false,
+            latencyMs: Date.now() - startTime
+          };
+        }
+      } catch (err: any) {
+        logger.warn({ err: err.message }, 'Groq API request failed.');
+      }
     }
 
     const localContent = this.generateLocalFallback(prompt, jsonMode);
@@ -235,7 +253,7 @@ export class LLMService {
   }
 
   private static async callGemini(prompt: string, systemPrompt: string, options: LLMRequestOptions): Promise<{ content: string; model: string } | null> {
-    if (!config.ai.geminiKey) {
+    if (geminiDisabledDueToAuth || !config.ai.geminiKey) {
       logger.warn('GEMINI_API_KEY is not configured in environment. Cannot invoke Google Gemini.');
       return null;
     }
@@ -270,6 +288,11 @@ export class LLMService {
 
         if (!res.ok) {
           logger.warn({ model, status: res.status }, 'Gemini model returned non-200, trying candidate fallback');
+          if (res.status === 401 || res.status === 403) {
+            logger.warn('GEMINI_API_KEY returned 401/403. Disabling Gemini for this session and using Groq.');
+            geminiDisabledDueToAuth = true;
+            return null;
+          }
           continue;
         }
 
